@@ -1,5 +1,5 @@
-import { BsChatDots } from "react-icons/bs";
 import { FaInstagram, FaFacebook, FaLinkedin } from "react-icons/fa";
+import logoImg from "../assets/img/logoImg.png"
 
 const Footer = () => {
   return (
@@ -8,15 +8,36 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {/* Logo and Social Icons */}
           <div className="space-y-8">
-            <BsChatDots size={64} className="text-white" />
+            <a href="/" className="block">
+              <img
+                src={logoImg}
+                alt="Cocoa Logo"
+                className="w-17 h-20" // Adjust width and height as needed
+              />
+            </a>
             <div className="flex space-x-8">
-              <a href="#" className="hover:opacity-80 transition-opacity">
+              <a
+                href="https://www.instagram.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:opacity-80 transition-opacity"
+              >
                 <FaInstagram size={32} />
               </a>
-              <a href="#" className="hover:opacity-80 transition-opacity">
+              <a
+                href="https://www.facebook.com/profile.php?id=61553620930491"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:opacity-80 transition-opacity"
+              >
                 <FaFacebook size={32} />
               </a>
-              <a href="#" className="hover:opacity-80 transition-opacity">
+              <a
+                href="https://www.linkedin.com/company/koral-byte/posts/?feedView=all"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:opacity-80 transition-opacity"
+              >
                 <FaLinkedin size={32} />
               </a>
             </div>
