@@ -1,15 +1,16 @@
-import React from "react";
 import FAQ from "./components/FAQ";
 import Footer from "./components/Footer";
 import Navbar from "./components/Navbar";
+import HowItWorks from "./components/HowItWorks";
 
 function App() {
   return (
 
     <>
-      <nav><Navbar/></nav>
-      <FAQ></FAQ>
-      <footer><Footer/></footer>
+      <Navbar/>
+      <HowItWorks/>
+      <FAQ/>
+      <Footer/>
       
     </>
   )
