@@ -7,7 +7,6 @@ function App() {
   return (
 
     <>
-
       <nav><Navbar/></nav>
       <FAQ></FAQ>
       <footer><Footer/></footer>
