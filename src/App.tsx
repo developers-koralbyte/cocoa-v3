@@ -1,5 +1,6 @@
+
+import './App.css'
 import Footer from './assets/components/Footer'
-import FAQ from './assets/components/FAQ'
 
 function App() {
   return (
@@ -9,15 +10,8 @@ function App() {
           <div className='min-h-screen bg-gray-100 items-center justify-center'>
             <p>Start prompting (or editing) :) </p>
           </div>
-          <div className='relative overflow-hidden'>
-            <div className='absolute w-full h-96 bg-[#5D4C7C] -skew-y-6 transform origin-top-left -translate-y-24'></div>
-            <div className='relative bg-white'>
-              <FAQ/>
-            </div>
-          </div>
         </main>
       <Footer/>
-      </div>
     </>
   )
 
