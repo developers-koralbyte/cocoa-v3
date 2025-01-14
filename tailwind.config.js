@@ -11,7 +11,7 @@ export default {
         gradientStart: '#E6D6FF', // Top of the background gradient
         gradientEnd: '#BBA1E6', // Bottom of the background gradient
         textPrimary: '#343A40', // Text color
-        buttonBg: '#8463E1', // Button background color
+        buttonBg: '#6868AC', // Button background color
         buttonHover: '#6D50C9', // Button hover state
       },
     },
