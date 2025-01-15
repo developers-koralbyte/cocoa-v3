@@ -25,7 +25,7 @@ const HowItWorks = () => {
           </video>
           <div className="absolute inset-0 bg-black/20 rounded-xl flex items-center justify-center group-hover:bg-black/30 transition-colors">
             <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-lg transform group-hover:scale-110 transition-transform">
-              <FaPlay className="w-8 h-8 text-purple-900 ml-1" />
+              <FaPlay className="w-8 h-8 text-purple-800 ml-1" />
             </div>
           </div>
         </div>
