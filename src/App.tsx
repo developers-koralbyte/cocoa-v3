@@ -5,11 +5,14 @@ import Navbar from "./components/Navbar";
 import HeroSection from "./components/HeroSection";
 import HowItWorks from "./components/HowItWorks";
 import LandingPage from "./components/LandingPage";
+import LatestNews from "./components/LatestNews";
+
 function App() {
   return (
 
     <>
       <LandingPage/>
+      <LatestNews/>
       <HowItWorks/>
       <FAQ></FAQ>
       <footer><Footer/></footer>
