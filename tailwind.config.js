@@ -6,6 +6,10 @@ export default {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        nunito: ['"Nunito Sans"', 'sans-serif'],
+        sourceSans: ['"Source Sans 3"', 'sans-serif']
+      },
       colors: {
         primaryPurple: '#D4CDF4', // Example color from the design
         gradientStart: '#E6D6FF', // Top of the background gradient
