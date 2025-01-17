@@ -38,8 +38,8 @@ const LatestNews = () => {
   return (
     <section className="py-16 px-4 max-w-7xl mx-auto">
       <div className="mb-12">
-        <h2 className="text-4xl font-bold mb-2">Our latest News,</h2>
-        <h3 className="text-3xl font-bold">Cocoa stays Press relevant</h3>
+        <h2 className="text-4xl font-nunito font-bold mb-2">Our latest News,</h2>
+        <h3 className="text-3xl font-nunito font-bold">Cocoa stays Press relevant</h3>
       </div>
 
       <div className="grid grid-cols-2 gap-6 md:grid-cols-4 auto-rows-[300px]">
@@ -60,7 +60,7 @@ const LatestNews = () => {
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
             </div>
             <div className="absolute bottom-0 p-6">
-              <h3 className="text-xl font-semibold text-pink-200">
+              <h3 className="text-xl font-semibold text-pink-200 font-nunito">
                 {item.title}
               </h3>
             </div>
