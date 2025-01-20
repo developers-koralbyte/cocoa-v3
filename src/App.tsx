@@ -1,15 +1,20 @@
 
-import FAQ from "./components/FAQ";
-import Footer from "./components/Footer";
-import Navbar from "./components/Navbar";
-import HeroSection from "./components/HeroSection";
-import HowItWorks from "./components/HowItWorks";
-import LandingPage from "./components/LandingPage";
+import FAQ from "./components/Landing Page/FAQ";
+import Footer from "./components/Landing Page/Footer";
+import HowItWorks from "./components/Landing Page/HowItWorks";
+import LandingPage from "./components/Landing Page/LandingPage";
+import ColaborationSection from "./components/Landing Page/CollaborationSection";
+import LatestNews from "./components/Landing Page/LatestNews";
+import UserTestimonial from "./components/Landing Page/UserTestimonial";
+
 function App() {
   return (
 
     <>
       <LandingPage/>
+      <ColaborationSection/>
+      <UserTestimonial/>
+      <LatestNews/>
       <HowItWorks/>
       <FAQ></FAQ>
       <footer><Footer/></footer>
