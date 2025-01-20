@@ -1,4 +1,3 @@
-
 import bgWave from "../../assets/img/MainSection/bgWave.png";
 import cocoaLogo from "../../assets/img/cocoa-logo.png";
 
