@@ -6,12 +6,14 @@ import HeroSection from "./components/HeroSection";
 import HowItWorks from "./components/HowItWorks";
 import LandingPage from "./components/LandingPage";
 import LatestNews from "./components/LatestNews";
+import UserTestimonial from "./components/UserTestimonial";
 
 function App() {
   return (
 
     <>
       <LandingPage/>
+      <UserTestimonial/>
       <LatestNews/>
       <HowItWorks/>
       <FAQ></FAQ>
