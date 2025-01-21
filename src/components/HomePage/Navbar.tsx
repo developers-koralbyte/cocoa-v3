@@ -1,6 +1,5 @@
 import React from "react";
-import logo from "../assets/img/cocoa-logo.png"; // Replace with your actual logo path
-
+import logo from "../../assets/img/cocoa-logo.png"; // Replace with your actual logo path
 const Navbar: React.FC = () => {
   return (
     <nav className="h-16 flex justify-between items-center px-8 py-2 bg-primaryPurple shadow-lg">
