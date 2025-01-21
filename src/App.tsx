@@ -4,17 +4,21 @@ import Footer from "./components/HomePage/Footer";
 import HowItWorks from "./components/HomePage/HowItWorks";
 import LandingPage from "./components/HomePage/LandingPage";
 import ColaborationSection from "./components/HomePage/CollaborationSection";
-import ProcurementSection from "./components/HomePage/ProcurementSection";
+import LatestNews from "./components/HomePage/LatestNews";
+import UserTestimonial from "./components/HomePage/UserTestimonial";
+
 function App() {
   return (
 
     <>
       <LandingPage/>
       <ColaborationSection/>
-      <ProcurementSection/>
+      <UserTestimonial/>
+      <LatestNews/>
       <HowItWorks/>
       <FAQ/>
       <footer><Footer/></footer>
+      
     </>
   )
 }

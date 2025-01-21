@@ -37,12 +37,12 @@ const testimonials: Testimonial[] = [
 const UserTestimonial = () =>{
   return (
     <section className="py-16 px-4 bg-[#c3c0e6]">
-      <div className="max-w-7xl mx-auto">
-        <div className="mb-12">
+      <div className="max-w-7xl mx-auto flex-auto">
+        <div className="mb-12 text-center">
           <h2 className="text-6xl font-bold text-white drop-shadow-md font-nunito">
             What our Users are saying
           </h2>
-          <p className="mt-4 text-gray-800 max-w-2xl font-sans">
+          <p className="mt-4 text-gray-800 max-w-2xl font-sans mx-auto">
             We're proud to help people like you succeed! But don't just take our
             word for it—here's what some of our happy users have to say:
           </p>
@@ -63,36 +63,33 @@ const UserTestimonial = () =>{
           ))}
         </div>
 
-        {/* Featured testimonial */}
-        <div className="relative">
-          <div className="grid grid-cols-2 gap-8">
-            {/* Left side - Image container */}
-            <div className="relative bg-[#a8a7a7] rounded-3xl overflow-hidden">
-              {/* Quote mark top left */}
-              <div className="absolute top-0 left-0 w-16 h-16 bg-[#6B6BDF] rounded-br-3xl flex items-center justify-center text-4xl text-white">
-                "
-              </div>
-              {/* Image placeholder - you can add your image here */}
-              <div className="w-full h-[500px]" />
+        {/* Testimonial container */}
+        <div className="relative mt-8 flex justify-center items-center">
+          <div className="flex items-start gap-0 relative">
+            {/* Image box */}
+            <div className="w-[500px] h-[400px] bg-[#D3D3E7] rounded-[32px] overflow-hidden">
+              {/* Placeholder for your image */}
+              <div className="w-full h-full bg-[#C4C4C4]" />
             </div>
 
-            {/* Right side - Content */}
-            <div className="flex items-center">
-              <div className="bg-[#838383] rounded-2xl p-8 relative">
-                <p className="text-white mb-6">
-                  Lorem ipsum dolor sit amet consectetur. Leo facilisis pretium
-                  diam imperdiet pellentesque nibh mattis. Adipiscing morbi nibh
-                  massa velit posuere etiam faucibus. Nunc sed placerat in
-                  ornare amet in sagittis. Eget at congue eu suspendisse
-                  convallis eget odio.
-                </p>
-                {/* Quote mark bottom right */}
-                <div className="absolute -bottom-4 -right-4 w-16 h-16 bg-[#6B6BDF] rounded-tl-3xl flex items-center justify-center text-4xl text-white rotate-180">
-                  "
-                </div>
-              </div>
+            {/* Text box */}
+            <div className="w-[550px] bg-[#dbdbde] rounded-[32px] p-8 ml-[-32px] mt-[100px] ">
+              <p className="text-gray-700 mb-6">
+                The growing oligopoly in the HORECA supply is a major barrier
+                for small businesses, as a few suppliers dominate, driving up
+                costs and limiting access for smaller players. COCOA was built
+                to level the playing field by connecting buyers directly with
+                diverse vendors, enabling fair pricing, real-time negotiations
+                and lasting partnerships. We're excited to empower small
+                businesses in the food industry with an accessible, fair
+                platform design for their success.
+              </p>
+              <p className="text-gray-600 font-medium italic">
+                COCOA CEO Ibne Ali
+              </p>
             </div>
           </div>
+
         </div>
       </div>
     </section>
