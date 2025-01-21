@@ -1,24 +1,20 @@
 
-import FAQ from "./components/Landing Page/FAQ";
-import Footer from "./components/Landing Page/Footer";
-import HowItWorks from "./components/Landing Page/HowItWorks";
-import LandingPage from "./components/Landing Page/LandingPage";
-import ColaborationSection from "./components/Landing Page/CollaborationSection";
-import LatestNews from "./components/Landing Page/LatestNews";
-import UserTestimonial from "./components/Landing Page/UserTestimonial";
-
+import FAQ from "./components/HomePage/FAQ";
+import Footer from "./components/HomePage/Footer";
+import HowItWorks from "./components/HomePage/HowItWorks";
+import LandingPage from "./components/HomePage/LandingPage";
+import ColaborationSection from "./components/HomePage/CollaborationSection";
+import ProcurementSection from "./components/HomePage/ProcurementSection";
 function App() {
   return (
 
     <>
       <LandingPage/>
       <ColaborationSection/>
-      <UserTestimonial/>
-      <LatestNews/>
+      <ProcurementSection/>
       <HowItWorks/>
-      <FAQ></FAQ>
+      <FAQ/>
       <footer><Footer/></footer>
-      
     </>
   )
 }
