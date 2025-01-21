@@ -1,8 +1,10 @@
-
 import bgWave from "../../assets/img/MainSection/bgWave.png";
 import cocoaLogo from "../../assets/img/cocoa-logo.png";
+import { useNavigate } from "react-router-dom";
 
 const LandingPage = () => {
+  const navigate = useNavigate(); // Hook for navigation
+
   return (
     <>
       <section
@@ -36,8 +38,11 @@ const LandingPage = () => {
             <button className="text-buttonBg font-large px-4 py-2 ">
               Services <span className="ml-1">&#9662;</span>
             </button>
-            <button className="text-buttonBg font-large px-4 py-2">
-              Log in
+            <button
+              className="text-buttonBg font-large px-4 py-2 bg-transparent rounded-full hover:bg-buttonBg hover:text-white transition-colors duration-200"
+              onClick={() => navigate("/login")}
+            >
+              Get Started
             </button>
           </div>
         </nav>
