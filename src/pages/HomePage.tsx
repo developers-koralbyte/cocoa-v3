@@ -6,6 +6,8 @@ import CollaborationSection from "../components/HomePage/CollaborationSection";
 import LatestNews from "../components/HomePage/LatestNews";
 import UserTestimonial from "../components/HomePage/UserTestimonial";
 import ProcurementSection from "../components/HomePage/ProcurementSection";
+import TopSuppliers from "../components/HomePage/TopSuppliers";
+import BusinessFeatures from "../components/HomePage/BusinessFeatures";
 
 
 function App() {
@@ -15,6 +17,8 @@ function App() {
       <LandingPage />
       <CollaborationSection />
       <ProcurementSection />
+      <TopSuppliers/>
+      <BusinessFeatures/>
       <UserTestimonial />
       <LatestNews />
       <HowItWorks />
