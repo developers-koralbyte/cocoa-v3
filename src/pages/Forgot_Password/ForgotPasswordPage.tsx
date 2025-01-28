@@ -1,8 +1,8 @@
 import React from "react";
-import background from "../assets/img/ForgotPassword/Background.png";
+import background from "../../assets/img/ForgotPassword/Background.png";
 
-import ForgotPasswordForm from "../components/ForgotPassword/ForgotPasswordForm";
-import logo from "../assets/img/login/cocoaLoginLogo.png";
+import ForgotPasswordForm from "../../components/ForgotPassword/ForgotPasswordForm";
+import logo from "../../assets/img/login/cocoaLoginLogo.png";
 
 const ForgotPasswordPage: React.FC = () => {
   return (

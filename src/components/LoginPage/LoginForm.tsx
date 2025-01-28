@@ -3,7 +3,6 @@ import { Eye, EyeOff } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 
-
 const LoginForm = () => {
 
   const navigate= useNavigate();
@@ -40,6 +39,7 @@ const LoginForm = () => {
     setFormError("");
   };
 
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
@@ -58,6 +58,7 @@ const LoginForm = () => {
       setFormError("");
 
       await new Promise((resolve) => setTimeout(resolve, 1000));
+      setTimeout(() => navigate("/"), 1000);
       console.log("Form submitted:", formData);
     } catch (error) {
       setFormError("An error occurred during login. Please try again.");
