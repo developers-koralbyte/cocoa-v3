@@ -49,11 +49,19 @@ const VendorVerification = () => {
   }
 
   return (
-    <div className="min-h-screen bg-white flex flex-col items-center justify-center p-4 relative">
+    <div className="h-screen bg-white flex flex-col items-center justify-center p-4 relative overflow-hidden">
       {/* Cocoa logo in the top-left corner */}
       <div className="absolute top-4 left-4">
-        <a href="https://cocoa-app.com/" target="_blank" rel="noopener noreferrer">
-          <img src={cocoaImg} alt="Cocoa Logo" className="w-[140px] h-[100px]" />
+        <a
+          href="https://cocoa-app.com/"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <img
+            src={cocoaImg}
+            alt="Cocoa Logo"
+            className="w-[180px] h-[90px]"
+          />
         </a>
       </div>
 

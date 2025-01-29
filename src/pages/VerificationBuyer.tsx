@@ -7,7 +7,7 @@ const VerificationSuccess = () => {
       {/* Cocoa logo in the top-left corner */}
       <div className="absolute top-4 left-4 mb-6">
        <a href="https://cocoa-app.com/" target="_blank" rel="noopener noreferrer">
-          <img src={cocoaImg} alt="Cocoa Logo" className="w-[140px] h-[100px]" />
+          <img src={cocoaImg} alt="Cocoa Logo" className="w-[180px] h-[90px]" />
         </a>
       </div>
 
