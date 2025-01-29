@@ -168,7 +168,7 @@ const LoginForm = () => {
           </button>
         </div>
         <div className="ml-5 mt-6 text-sourceSans text-[20px]">
-          <a href="/register" className="text-buttonBg hover:underline">
+          <a href="/create-account" className="text-buttonBg hover:underline" onClick={()=>navigate("/create-account")}>
             Create an account <span className="pl-3">|</span>
           </a>
           <a
