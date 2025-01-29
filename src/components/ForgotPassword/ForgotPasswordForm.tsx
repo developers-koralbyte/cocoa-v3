@@ -39,11 +39,16 @@ const ForgotPasswordForm = () => {
       // Simulate an API call for password reset
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
+      // Navigate to verification page with email passed in state
+      navigate("/verification", { state: { email } });
+
       setSuccessMessage(
         "A password reset link has been sent to your email address."
       );
     } catch (err) {
-      setError("An error occurred while sending the reset link. Please try again.");
+      setError(
+        "An error occurred while sending the reset link. Please try again."
+      );
     } finally {
       setIsSubmitting(false);
     }
