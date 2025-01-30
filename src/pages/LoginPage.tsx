@@ -1,5 +1,5 @@
 import React from "react";
-import image1 from "../assets/img/login/LoginImage.png";
+import image1 from "../assets/img/login/Cocoa Login .png";
 import LoginForm from "../components/LoginPage/LoginForm";
 import logo from "../assets/img/login/cocoaLoginLogo.png";
 
@@ -7,17 +7,17 @@ const LoginPage: React.FC = () => {
   return (
     <div className="min-h-full flex">
       {/* Left Section with the Image */}
-      <div className="lg:w-1/2 w-full h-[1050px]">
+      <div className="hidden lg:flex lg:w-1/2 ">
         <img
           src={image1}
           alt="Welcome Back Illustration"
-          className="w-full h-full object-cover"
+          className="w-full h-screen object-fit"
         />
       </div>
 
       {/* Right Section */}
       <div className="lg:w-1/2 w-full h-screen flex items-center justify-center">
-        <div className="max-w-md w-full px-8 text-center">
+        <div className="max-w-md w-full px-8">
           {/* Logo */}
           <img
             src={logo}
