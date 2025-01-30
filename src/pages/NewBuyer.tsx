@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import cocoaLogo from "../assets/img/cocoa-logo-white.png";
 import VerificationSuccess from "./VerificationBuyer";
 
-type FormData = {
+interface FormData {
   email: string;
   password: string;
   firstName: string;
@@ -12,7 +12,7 @@ type FormData = {
   industry: string;
   categories: string;
   services: string;
-};
+}
 
 const initialFormData: FormData = {
   email: "",
@@ -37,12 +37,40 @@ const NewBuyer = () => {
       [name]: value,
     }));
   };
-
-  const handleSubmit = (e: React.FormEvent) => {
+  //const SCRIPT_URL   = "https://script.google.com/macros/s/AKfycbzjYNiO0tUGLFi5-wGS5mMQgDFeoPwAeMOSN4Swl1J1GvHozBLaHUW_xR151CY5F3Hj3Q/exec"; // Replace with updated Google Apps Script URL
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Form submitted:", formData);
-    setIsSubmitted(true);
+  
+    console.log("Form Data before submission:", formData);
+  
+    try {
+      const formDataEncoded = new URLSearchParams();
+      (Object.keys(formData) as Array<keyof FormData>).forEach(key => {
+        formDataEncoded.append(key, formData[key]);
+      });
+  
+      await fetch(
+        'https://script.google.com/macros/s/AKfycbxZKxGvyuluknmLcgcy6P4MR_V0jIbJa0LJMVPiR6FdvdFLdXc_hc_q9zZ5-AwJAmoTMQ/exec',
+        {
+          redirect: 'follow',
+          method: 'POST',
+          mode: 'no-cors',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: formDataEncoded.toString()
+        }
+      );
+  
+      console.log("Form submitted successfully");
+      setIsSubmitted(true);
+    } catch (error) {
+      console.error("Error submitting form:", error);
+    }
   };
+  // Rest of your component remains the same...
+  
+  
 
   if (isSubmitted) {
     return <VerificationSuccess />;
@@ -279,3 +307,5 @@ const NewBuyer = () => {
 };
 
 export default NewBuyer;
+
+
