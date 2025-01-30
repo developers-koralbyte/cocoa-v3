@@ -4,9 +4,8 @@ import { useNavigate } from "react-router-dom";
 import { toast } from 'react-toastify';
 import { 
   sendPasswordResetEmail, 
-  confirmPasswordReset,
+
   verifyPasswordResetCode,
-  applyActionCode
 } from "firebase/auth";
 import { auth } from "../../utils/firebase";
 

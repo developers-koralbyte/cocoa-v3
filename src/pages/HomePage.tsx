@@ -13,12 +13,11 @@ import BusinessFeatures from "../components/HomePage/BusinessFeatures";
 function App() {
   return (
     <>
-
       <LandingPage />
       <CollaborationSection />
       <ProcurementSection />
       <TopSuppliers/>
-      <BusinessFeatures/>
+      <BusinessFeatures />
       <UserTestimonial />
       <LatestNews />
       <HowItWorks />
@@ -29,5 +28,6 @@ function App() {
     </>
   );
 }
+
 
 export default App;

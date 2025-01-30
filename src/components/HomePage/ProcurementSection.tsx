@@ -1,7 +1,9 @@
 import background from "../../assets/img/SellingPointSection/Vector 10.png";
 import section1 from "../../assets/img/SellingPointSection/pro1.png";
 import section2 from "../../assets/img/SellingPointSection/pro2.png";
-import section3 from "../../assets/img/SellingPointSection/pro3.png";
+import invoice from "../../assets/img/SellingPointSection/invoice.png";
+import rectangle from "../../assets/img/SellingPointSection/rectangle.png";
+
 const ProcurementSection = () => {
   return (
     <section
@@ -72,19 +74,28 @@ const ProcurementSection = () => {
           </div>
         </div>
 
-        {/* Third Row */}
-        <div className="mt-10 md:flex items-center gap-x-12 font-sourceSans">
-          {/* Left coloumn image*/}
-          <div className="flex justify-center md:justify-start">
+        {/* Third Row - Live Document Sharing */}
+        <div className="mt-16 md:flex items-center gap-x-14 font-sourceSans">
+          {/* Left Column: Image with Background */}
+          <div className="relative flex justify-center md:justify-start">
+            {/* White rounded background */}
             <img
-              src={section3}
-              alt="Product bubble with strawberry"
-              className="max-w-2xl"
+              src={rectangle}
+              alt="White background bubble"
+              className="absolute w-[600px] h-[250px] top-0 left-0"
+            />
+            {/* Invoice Table - Move it upwards slightly */}
+            <img
+              src={invoice}
+              alt="Invoice History List"
+              className="relative w-auto h-auto ml-10 mt-[-31px]" // <-- Added negative margin
             />
           </div>
 
           {/* Right Column: Text */}
-          <div className="mt-[-80px]">
+          <div className="mt-[-30px]">
+            {" "}
+            {/* Slight upward adjustment */}
             <h3 className="text-[24px] font-bold leading-[2.75rem]">
               Live Document Sharing
             </h3>
@@ -92,7 +103,7 @@ const ProcurementSection = () => {
               Share and review crucial documents in real <br />
               time during chat conversations. Instantly
               <br />
-              exchange quotes,specifications, and contracts
+              exchange quotes, specifications, and contracts
               <br />
               while discussing details with suppliers.
             </p>

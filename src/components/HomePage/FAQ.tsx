@@ -10,7 +10,7 @@ const faqData: FAQItem[] = [
   {
     question: "What is Cocoa?",
     answer:
-      "Cocoa is an innovative platform designed to streamline restaurant operations and enhance vendor-buyer relationships in the food service industry.",
+      "COCOA is Canada's first chat-based procurement platform connecting enterprises with verified solution providers. Through real-time communication, we streamline procurement across corporate services, enterprise software, commercial equipment, and industry solutions - transforming traditional procurement into an efficient, integrated experience.",
   },
   {
     question: "Is Cocoa a POS?",
@@ -18,14 +18,14 @@ const faqData: FAQItem[] = [
       "No, Cocoa is not just a POS system. It's a comprehensive solution that connects restaurants with vendors and streamlines the entire supply chain process.",
   },
   {
-    question: "Is Cocoa FREE for Restaurants?",
+    question: "Is COCOA Free for businesses?",
     answer:
-      "Yes, basic features are available for free to restaurants. Premium features are available through our subscription plans.",
+      "COCOA offers freemium version for businesses but with limited features. They can always upgrade to unlock advanced features with subscriptions.",
   },
   {
     question: "How can Cocoa benefit vendors and buyers?",
     answer:
-      "Cocoa provides a centralized platform for vendors and buyers to connect, streamline ordering processes, manage inventory, and optimize their supply chain operations.",
+      "COCOA revolutionizes the B2B procurement process through instant communication and streamlined processes. For enterprises, our platform enables real-time negotiation with verified providers, comprehensive solution comparison, and efficient implementation management. For solution providers, COCOA offers direct access to qualified corporate clients, streamlined deal management, and automated documentation flow - from quotes to contracts. Our chat-based platform eliminates traditional procurement delays while maintaining complete audit trails and compliance documentation.",
   },
 ];
 
