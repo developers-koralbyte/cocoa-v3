@@ -21,20 +21,18 @@ const VerificationSuccess = () => {
       </div>
 
       <h1 className="text-3xl font-bold text-gray-900 mb-4 text-center font-nunito">
-        Your Account is Now Verified!
+        Your Account has been created! Stay tuned for further updates!
       </h1>
 
       <p className="text-gray-600 text-center max-w-md mb-12 font-nunito">
-        Congratulations, your email address has been successfully verified!
-        You're all set to explore and enjoy everything{" "}
-        <span className="font-semibold">COCOA</span> has to offer.
+      Thanks for signing up! We’re currently reviewing your account information, and it may take a few moments for your email verification to complete.
       </p>
 
       <button
         className="px-8 py-3 bg-[#7C77C1] text-white rounded-full hover:bg-[#6661B0] transition-colors"
-        onClick={() => (window.location.href = "/dashboard")}
+        onClick={() => (window.location.href = "/")}
       >
-        Start Exploring
+        Explore Homepage
       </button>
     </div>
   );

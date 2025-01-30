@@ -7,7 +7,6 @@ import NewVendor from "../pages/NewVendor";
 import ForgotPasswordPage from  "../pages/Forgot_Password/ForgotPasswordPage";
 import NewPasswordPage from "../pages/Forgot_Password/NewPasswordPage";
 import VerificationPage from "../pages/Forgot_Password/VerificationPage";
-import SignupSelection from "../components/LoginPage/SignUpSelection";
 import SignupSelectionPage from "../pages/SignUpSelectionPage";
 const AppRoutes: React.FC = () => {
   return (

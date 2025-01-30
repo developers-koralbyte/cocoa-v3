@@ -14,6 +14,7 @@ export default {
         textPrimary: "#343A40", // Text color
         buttonBg: "#6868AC", // Button background color
         buttonHover: "#6D50C9", // Button hover state
+        bgGrad:"#D4CDF4A1",
       },
     },
   },

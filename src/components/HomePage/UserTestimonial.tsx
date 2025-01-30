@@ -39,13 +39,10 @@ const UserTestimonial = () =>{
     <section className="py-16 px-4 bg-[#c3c0e6]">
       <div className="max-w-7xl mx-auto flex-auto">
         <div className="mb-12 text-center">
-          <h2 className="text-6xl font-bold text-white drop-shadow-md font-nunito">
-            What our Users are saying
+          <h2 className="font-nunito text-[60px] font-extrabold text-black drop-shadow-md font-nunito">
+          A successful journey always begins with <br/>strong collaboration!
           </h2>
-          <p className="mt-4 text-gray-800 max-w-2xl font-sans mx-auto">
-            We're proud to help people like you succeed! But don't just take our
-            word for it—here's what some of our happy users have to say:
-          </p>
+
         </div>
 
         {/* Top testimonial cards */}
@@ -75,14 +72,7 @@ const UserTestimonial = () =>{
             {/* Text box */}
             <div className="w-[550px] bg-[#dbdbde] rounded-[32px] p-8 ml-[-32px] mt-[100px] ">
               <p className="text-gray-700 mb-6">
-                The growing oligopoly in the HORECA supply is a major barrier
-                for small businesses, as a few suppliers dominate, driving up
-                costs and limiting access for smaller players. COCOA was built
-                to level the playing field by connecting buyers directly with
-                diverse vendors, enabling fair pricing, real-time negotiations
-                and lasting partnerships. We're excited to empower small
-                businesses in the food industry with an accessible, fair
-                platform design for their success.
+              In today's evolving enterprise procurement landscape, large providers dominate the market, creating high barriers for businesses seeking corporate and software solutions. COCOA disrupts this dynamic by providing an accessible platform that connects enterprises directly with verified solution providers through real-time chat communication. From ERP implementations to corporate services, we enable transparent negotiations, competitive pricing, and efficient partnerships.
               </p>
               <p className="text-gray-600 font-medium italic">
                 COCOA CEO Ibne Ali
