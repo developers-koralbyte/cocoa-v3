@@ -1,0 +1,70 @@
+.capture-audio {
+  display: flex; /* 'flex' */
+  font-size: 1.5rem; /* 'text-2xl' */
+  width: 100%; /* 'w-full' */
+  justify-content: flex-end; /* 'justify-end' */
+  align-items: center; /* 'items-center' */
+border-top: 1px solid #dddddd35;
+
+}
+
+.delete-audio {
+  display: flex;
+  align-items: center;
+}
+
+.w-60 {
+  width: 25%;
+}
+
+.audio-recorder{
+    	margin-left: 1rem; /* 16px */
+margin-right: 1rem;
+padding-top: 0.5rem; /* 8px */
+color: 	rgb(255 255 255);
+font-size: 1.125rem; /* 18px */
+	gap: 0.75rem;
+    	justify-content: center;
+        justify-items: center;
+}
+
+
+.recording-pulse {
+    margin-left: 20px;
+  color: rgb(239, 68, 68);
+  text-align: center;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.send-button img {
+  width: 30px;
+  cursor: pointer;
+}
+
+/* img {
+  width: 20px;
+  cursor: pointer;
+} */
+
+.m4-4 {
+  margin: 16px;
+}
+
+.capture-audio img{
+     width: 20px;
+  cursor: pointer;
+}
+
+
+.send-button {
+    padding: 18px;
+}

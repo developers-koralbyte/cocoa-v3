@@ -1,0 +1,477 @@
+.chat {
+    flex: 3;
+    border-left: 1px solid #dddddd35;
+    border-right: 1px solid #dddddd35;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+
+    .top {
+        padding: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 1px solid #dddddd35;
+
+        @media screen and (max-width: 475px) {
+            padding: 10px;
+        }
+
+        .user {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+
+            img {
+                width: 60px;
+                height: 60px;
+                border-radius: 50%;
+                object-fit: cover;
+            }
+
+            .texts {
+                display: flex;
+                flex-direction: column;
+                gap: 5px;
+
+                span {
+                    font-size: 18px;
+                    font-weight: bold;
+                }
+
+                p {
+                    font-size: 14px;
+                    font-weight: 300;
+                    color: #a5a5a5;
+                }
+            }
+        }
+
+        .icons {
+            display: flex;
+            gap: 20px;
+
+            img {
+                width: 20px;
+                height: 20px;
+            }
+        }
+    }
+
+    .center {
+        scrollbar-width: none;
+        padding: 20px;
+        flex: 1;
+        overflow-y: scroll;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+
+        .message {
+            max-width: 85%;
+            display: flex;
+            gap: 20px;
+
+            &.own {
+                align-self: flex-end;
+
+                .texts {
+                    p {
+                        background-color: #5183fe;
+                    }
+                }
+            }
+
+            img {
+                width: 30px;
+                height: 30px;
+                border-radius: 50%;
+                object-fit: cover;
+            }
+            .texts {
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                gap: 5px;
+
+                img {
+                    width: 41%;
+                    height: 100%;
+                    border-radius: 10px;
+                    object-fit: cover;
+
+                    @media screen and (max-width: 475px) {
+                        width: 81%; /* Force hiding the container */
+                    }
+                }
+
+                p {
+                    padding: 20px;
+                    background-color: rgba(17, 25, 40, 0.3);
+                    border-radius: 10px;
+                }
+
+                span {
+                    font-size: 13px;
+                }
+            }
+        }
+    }
+
+    .center:hover {
+        scrollbar-width: thin !important;
+    }
+
+    /* Hide scrollbar track */
+    .center::-webkit-scrollbar {
+        width: 6px; /* Set scrollbar width */
+    }
+
+    .center::-webkit-scrollbar-track {
+        background: transparent; /* Hide the scrollbar track */
+    }
+
+    .center::-webkit-scrollbar-thumb {
+        background-color: rgba(0, 0, 0, 0.4); /* Scrollbar color */
+        border-radius: 10px;
+    }
+
+    /* Customize scrollbar appearance for Firefox */
+    .center {
+        scrollbar-width: thin; /* Makes scrollbar thin */
+        scrollbar-color: rgba(145, 145, 145, 0.4) transparent; /* Thumb color and transparent track */
+    }
+    .bottom {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-top: 1px solid #dddddd35;
+        gap: 10px;
+        margin-top: auto;
+
+        .icons {
+            display: flex;
+            gap: 20px;
+        }
+
+        img {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        input {
+            background-color: rgba(17, 25, 40, 0.5);
+            border: none;
+            outline: none;
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            font-size: 16px;
+
+            &:disabled {
+                cursor: not-allowed;
+            }
+        }
+
+        .emoji {
+            position: relative;
+
+            .picker {
+                position: absolute;
+                bottom: 50px;
+                left: 0;
+            }
+        }
+
+        .sendButton {
+            background-color: #5183fe;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+
+            &:disabled {
+                background-color: #5182feb4;
+                cursor: not-allowed;
+            }
+        }
+    }
+}
+
+.no-chat {
+    flex: 2 1;
+    border-left: 1px solid #dddddd35;
+    border-right: 1px solid #dddddd35;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center !important;
+    justify-content: center !important  ;
+    display: flex;
+}
+
+/* Modal styles */
+.modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1000;
+    background-color: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    width: 100%;
+    max-width: 600px;
+}
+
+.modal-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal video {
+    width: 100%;
+    max-width: 500px;
+    height: auto;
+    border-radius: 10px;
+    margin-bottom: 15px;
+}
+
+.modal img {
+    max-width: 100%;
+    max-height: 400px;
+    border-radius: 10px;
+    margin-bottom: 15px;
+}
+
+.modal button {
+    margin: 5px;
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.modal button:hover {
+    background-color: #0056b3;
+}
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+}
+
+.sendMessage {
+    padding: 10px;
+    background-color: #1a73e8;
+}
+
+.background-container {
+    border-left: 1px solid #dddddd35;
+    border-right: 1px solid #dddddd35;
+    position: relative;
+    width: 75%;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.background-container img {
+    position: absolute;
+    height: 90%;
+    object-fit: cover;
+    opacity: 0.1;
+    z-index: 1;
+}
+
+.background-content {
+    position: relative;
+    z-index: 2;
+    color: white;
+    text-align: center;
+    padding: 20px;
+    background-color: rgba(
+        0,
+        0,
+        0,
+        0.5
+    ); /* Semi-transparent background for better readability */
+    border-radius: 8px;
+}
+
+/* Hide background-container on mobile devices */
+@media screen and (max-width: 768px) {
+    .background-container {
+        display: none !important; /* Force hiding the container */
+    }
+}
+
+/* More options button (three dots) */
+.more-options-btn {
+    background-color: transparent;
+    border: none;
+    cursor: pointer;
+    display: inline-block; /* Shown on mobile */
+    padding: 0px !important;
+}
+
+.more-options-btn img {
+    width: 24px;
+    height: 24px;
+}
+
+/* Drop-up menu container */
+.dropdown-menu {
+    position: absolute;
+    bottom: 60px; /* Adjust to make it a drop-up menu above the input bar */
+    left: 10px; /* Place it above the three dots button */
+    background-color: white;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+    z-index: 10;
+    width: 180px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* Dropdown item */
+.dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    color: #000000;
+}
+
+.dropdown-item img {
+    width: 20px;
+    height: 20px;
+}
+
+.dropdown-item span {
+    font-size: 14px;
+    color: #333;
+}
+
+.dropdown-item:hover {
+    background-color: #f1f1f1;
+    border-radius: 5px;
+}
+
+/* Bottom input and icons styling */
+.bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px;
+    /* background-color: #f5f5f5; */
+    position: relative; /* For drop-up positioning */
+}
+
+.send-btn {
+    width: 24px;
+    height: 24px;
+    cursor: pointer;
+}
+
+/* Responsive dropdown for mobile */
+@media screen and (max-width: 768px) {
+    .more-options-btn {
+        display: inline-block; /* Show the 3 dots button only on mobile */
+    }
+
+    .icons > label,
+    .icons > img {
+        display: none; /* Hide the icons in the normal state on mobile */
+    }
+
+    /* Ensure dropdown menu behaves like a drop-up */
+    .dropdown-menu {
+        bottom: 60px; /* Make sure it appears above the input area */
+    }
+}
+
+/* Hide dropdown on larger screens */
+@media screen and (min-width: 769px) {
+    .icons > label,
+    .icons > img {
+        display: inline-block; /* Display normal icons on larger screens */
+    }
+}
+
+.message a {
+    color: #007bff;
+    text-decoration: none;
+    word-break: break-word;
+}
+
+.message a:hover {
+    text-decoration: underline;
+}
+
+/* chat.css */
+
+.bottom {
+    display: flex;
+    align-items: center;
+}
+
+.bottom.recording-mode .sendMessage {
+    background-color: #f5f5f5; /* Change background for recording */
+    border: 1px solid red; /* Example of visual feedback for recording */
+    color: red;
+    pointer-events: none; /* Disable input during recording */
+}
+
+.sendMessage {
+    flex: 1;
+    border: none;
+    border-radius: 20px;
+    padding: 10px;
+    outline: none;
+}
+
+.mic-btn {
+    width: 30px;
+    cursor: pointer;
+}
+
+.send-btn {
+    width: 30px;
+    cursor: pointer;
+}
+
+.dropdown-menu {
+    position: absolute;
+    bottom: 50px;
+    display: flex;
+    flex-direction: column;
+}
+
+.back-btn {
+    height: 25px !important;
+    width: 25px !important;
+}
+
+@media screen and (max-width: 475px) {
+    .user-avatar {
+        width: 45px !important;
+        height: 45px !important;
+    }
+}
