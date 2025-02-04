@@ -5,13 +5,13 @@ import {
     createUserWithEmailAndPassword,
     signInWithEmailAndPassword,
 } from 'firebase/auth'
-import { auth, db } from '../../lib/firebase'
+import { auth, db } from '../../utils/firebase'
 import { doc, setDoc } from 'firebase/firestore'
 import { setPersistence, browserLocalPersistence } from 'firebase/auth'
-import upload from '../../lib/upload'
+import upload from '../../utils/upload'
 import bg from '../../assets/images/bg.png'
 import fictLogo from '../../assets/images/FICT-Login-Logo.png'
-import { useUserStore } from '../../lib/userStore'
+import { useUserStore } from '../../utils/userStore'
 
 const Login = () => {
     const { fetchUserInfo } = useUserStore()

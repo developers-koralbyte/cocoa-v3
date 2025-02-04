@@ -38,15 +38,6 @@ const App = () => {
         }
     }, [fetchUserInfo])
 
-    if (isLoading)
-        return (
-            <div className="loading">
-                Loading<span className="dot1">.</span>
-                <span className="dot2">.</span>
-                <span className="dot3">.</span>
-            </div>
-        )
-
     // Function to toggle between list and chat views for mobile
     const handleChatClick = () => {
         if (isMobile) {
