@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import logo from "../../assets/img/cocoa-logo.png";
 import vendorImage from "../../assets/img/login/vendor.png";
-import buyerEnhanced from "../../assets/img/login/buyer_Enhanced.png";
+import buyerEnhanced from '../../assets/img/login/buyer_enhanced.png'
 
 const SignupSelection = () => {
   const navigate = useNavigate();
