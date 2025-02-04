@@ -2,12 +2,11 @@ import { useState, useEffect } from 'react'
 import Chat from '../components/chat/Chat'
 import Detail from '../components/detail/Detail'
 import List from '../components/list/List'
-import Homepage from '../pages/homepage/'
+import Homepage from '../pages/HomePage'
 import { onAuthStateChanged } from 'firebase/auth'
 import { auth } from '../utils/firebase'
 import { useUserStore } from '../utils/userStore'
 import { useChatStore } from '../utils/chatStore'
-import './index.css'
 
 const App = () => {
     const { currentUser, isLoading, fetchUserInfo, showDetailPage } =
@@ -53,7 +52,7 @@ const App = () => {
     }
 
     return currentUser ? (
-        <div className="container">
+        <div className="flex justify-center h-screen text-white bg-[rgba(17,25,40,0.75)] backdrop-blur-[2px] backdrop-saturate-[180%] border border-[rgba(255,255,255,0.125)]">
             {isMobile ? (
                 <>
                     {!showChat && chatId !== null ? (

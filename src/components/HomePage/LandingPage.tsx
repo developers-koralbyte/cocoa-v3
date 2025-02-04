@@ -17,7 +17,7 @@ const LandingPage = () => {
                 }}
             >
                 {/* ✅ FIX: Navbar Full Width */}
-                <nav className="flex justify-between items-center px-16 py-4  w-full sticky top-0 left-0">
+                <nav className="flex justify-between items-center px-16 py-10 w-full absolute top-0 left-0">
                     {/* Logo Section */}
                     <div>
                         <a href="/">
@@ -28,7 +28,6 @@ const LandingPage = () => {
                             />
                         </a>
                     </div>
-
                     {/* Navigation Links */}
                     <div className="font-nunito flex space-x-12 font-nunito font-extrabold text-[22px]">
                         <button className="text-buttonBg  px-4 py-2 ">
