@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import logo from "../../assets/img/cocoa-logo.png";
+import vendorImage from "../../assets/img/login/vendor.png";
+import buyerEnhanced from "../../assets/img/login/buyer_Enhanced.png";
 
-import vendorImage from "../../assets/img/login/vendor.png"; // Use correct path
-import buyerEnhanced from "../../assets/img/login/buyer_Enhanced.png"; // Use correct path"
 const SignupSelection = () => {
   const navigate = useNavigate();
   const [selectedRole, setSelectedRole] = useState<"vendor" | "buyer" | null>(
@@ -21,60 +21,59 @@ const SignupSelection = () => {
   };
 
   return (
-    <div>
-      <div className="flex flex-col items-center text-center ">
-        {/* Logo */}
-        <img src={logo} alt="Cocoa Logo" className=" h-[120px] w-[220px] " />
-
-        {/* Title & Subtitle */}
-        <h1 className="text-[80px] font-extrabold font-nunito text-buttonBg">
+    <div className="flex flex-col items-center justify-center h-[85vh] w-full">
+      {/* Logo Section */}
+      <div className="flex flex-col items-center text-center">
+        <img src={logo} alt="Cocoa Logo" className="h-[80px] w-auto" />
+        <h1 className="text-[50px] font-extrabold font-nunito text-buttonBg">
           Create an account
         </h1>
-        <p className="font-sourceSans text-[22px] ">
-          Welcome to COCOA! Sign up and unlock an innovative world <br /> to
+        <p className="font-sourceSans text-[18px]">
+          Welcome to COCOA! Sign up and unlock an innovative world of
           procurement services.
         </p>
+      </div>
 
-        {/* Selection Cards */}
-        <div className="flex gap-8">
-          {/* Vendor Card */}
-          <div
-            onClick={() => handleSelection("vendor")}
-            className={`cursor-pointer transition transform ${
-              selectedRole === "vendor" ? "scale-105" : "scale-100"
-            }`}
-          >
-            <img
-              src={vendorImage}
-              alt="Vendor"
-              className="w-[395px] h-[350px]"
-            />
-          </div>
-
-          {/* Buyer Card */}
-          <div
-            onClick={() => handleSelection("buyer")}
-            className={`cursor-pointer transition transform ${
-              selectedRole === "buyer" ? "scale-105" : "scale-100"
-            }`}
-          >
-            <img
-              src={buyerEnhanced}
-              alt="Buyer"
-              className="mt-[-6px] h-[350px] w-[395px]"
-            />
-          </div>
+      {/* Selection Cards */}
+      <div className="flex gap-10 mt-6">
+        <div
+          onClick={() => handleSelection("vendor")}
+          className={`cursor-pointer transition transform ${
+            selectedRole === "vendor" ? "scale-105" : "scale-100"
+          }`}
+        >
+          <img
+            src={vendorImage}
+            alt="Vendor"
+            className="w-[280px] max-h-[250px] object-contain"
+          />
+        </div>
+        <div
+          onClick={() => handleSelection("buyer")}
+          className={`cursor-pointer transition transform ${
+            selectedRole === "buyer" ? "scale-105" : "scale-100"
+          }`}
+        >
+          <img
+            src={buyerEnhanced}
+            alt="Buyer"
+            className="w-[280px] max-h-[250px] object-contain"
+          />
         </div>
       </div>
-      {/* Navigation Buttons */}
-      <div className="flex justify-end items-center w-full max-w-[800px] mt-8 mx-auto">
-        <a href="/login" className=" pr-5 text-[25px] font-sourceSans text-buttonBg underline text-lg">
+
+      {/* Navigation Buttons (Aligned in a Single Line) */}
+      <div className="w-full max-w-[800px] flex justify-end items-center mt-6 space-x-6">
+        <a
+          href="/login"
+          className="text-[18px] font-sourceSans text-buttonBg underline"
+        >
           Back to login
         </a>
         <button
           onClick={handleContinue}
           disabled={!selectedRole}
-          className="px-8 py-3 text-lg font-semibold text-white bg-buttonBg rounded-full hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition"
+          className="px-6 py-3 text-lg font-semibold text-white bg-buttonBg rounded-full hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition"
         >
           Continue
         </button>
