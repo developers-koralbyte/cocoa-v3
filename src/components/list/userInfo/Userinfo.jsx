@@ -1,9 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react'
 import './userInfo.css'
-import { useUserStore } from '../../../lib/userStore'
+import { useUserStore } from '../../../utils/userStore'
 import more from '../../../assets/img/chatImages/more.png'
-import { auth } from '../../../lib/firebase'
-import { useChatStore } from '../../../lib/chatStore'
+import { auth } from '../../../utils/firebase'
+import { useChatStore } from '../../../utils/chatStore'
 import { toast } from 'react-toastify'
 
 const Userinfo = ({ currentUser }) => {

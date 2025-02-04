@@ -1,5 +1,5 @@
 import './addUser.css'
-import { db } from '../../../../lib/firebase'
+import { db } from '../../../../utils/firebase'
 import {
     arrayUnion,
     collection,
@@ -13,7 +13,7 @@ import {
     where,
 } from 'firebase/firestore'
 import { useState, useEffect } from 'react'
-import { useUserStore } from '../../../../lib/userStore'
+import { useUserStore } from '../../../../utils/userStore'
 
 const AddUser = ({ setAddMode, searchIcon }) => {
     const [user, setUser] = useState(null)
