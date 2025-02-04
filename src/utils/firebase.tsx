@@ -1,21 +1,24 @@
-// Import the functions you need from the SDKs you need
-import { initializeApp } from 'firebase/app'
-import { getAuth, signOut } from 'firebase/auth'
-import { getStorage } from 'firebase/storage'
-import { getFirestore } from 'firebase/firestore'
+// Import required Firebase functions and services
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+import { getFirestore } from "firebase/firestore"; // Firestore for database
+import { getAuth } from "firebase/auth"; // Firebase Authentication (if needed)
 
+// Your web app's Firebase configuration
 const firebaseConfig = {
-    apiKey: 'AIzaSyD_GCb4vx2f5N1qYQd1mdMD9pAQEnZmrYE',
-    authDomain: 'cocoa-41963.firebaseapp.com',
-    projectId: 'cocoa-41963',
-    storageBucket: 'cocoa-41963.appspot.com',
-    messagingSenderId: '240199251239',
-    appId: '1:240199251239:web:75a4bf2c18905abd15e502',
-    measurementId: 'G-4XD7MTWHVD',
-}
+  apiKey: "AIzaSyA7eZnsehmwwSsIHB7pypNiTgtTpPLLy_0",
+  authDomain: "cocoa-f8fa4.firebaseapp.com",
+  projectId: "cocoa-f8fa4",
+  storageBucket: "cocoa-f8fa4.appspot.com", // corrected storage bucket URL
+  messagingSenderId: "1011521722110",
+  appId: "1:1011521722110:web:602896b0f95afe8e06f7af",
+  measurementId: "G-877B6SX92K"
+};
+
 // Initialize Firebase
-export const app = initializeApp(firebaseConfig)
-export const auth: any = getAuth()
-export const db = getFirestore()
-export const storage = getStorage()
-export const userSignOut: any = signOut(auth)
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
+const db = getFirestore(app); // Firestore instance
+const auth = getAuth(app); // Auth instance (if needed)
+
+export { app, analytics, db, auth };
