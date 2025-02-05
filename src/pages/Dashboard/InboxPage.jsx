@@ -53,7 +53,7 @@ const InboxPage = () => {
         <>
             <BaseLayout>
                 <div className="flex justify-center h-screen text-white bg-[rgba(17,25,40,0.75)] backdrop-blur-[2px] backdrop-saturate-[180%] border border-[rgba(255,255,255,0.125)]">
-                    {isMobile && !isLoading ? (
+                    {isMobile ? (
                         <>
                             {!showChat && chatId !== null ? (
                                 showDetailPage ? (
@@ -66,14 +66,12 @@ const InboxPage = () => {
                             )}
                         </>
                     ) : (
-                        isLoading && (
-                            <>
-                                {/* On desktop, show both chat and chatlist at the same time */}
-                                <List currentUser={currentUser} />
-                                <Chat />
-                                {chatId && showDetailPage}
-                            </>
-                        )
+                        <>
+                            {/* On desktop, show both chat and chatlist at the same time */}
+                            <List currentUser={currentUser} />
+                            <Chat />
+                            {chatId && showDetailPage}
+                        </>
                     )}
                 </div>
                 <></>
