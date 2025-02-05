@@ -1,6 +1,10 @@
 import React, { useState } from "react";
+import {auth, db } from "../utils/firebase"; // Import Firestore instance
+import { collection, addDoc } from "firebase/firestore";
+import { createUserWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
 import cocoaLogo from "../assets/img/cocoa-logo-white.png";
 import VerificationSuccess from "./VerificationBuyer";
+import VerificationWaitTime from "../pages/VerificationWaitTime";
 
 interface FormData {
   email: string;
@@ -37,43 +41,40 @@ const NewBuyer = () => {
       [name]: value,
     }));
   };
-  //const SCRIPT_URL   = "https://script.google.com/macros/s/AKfycbzjYNiO0tUGLFi5-wGS5mMQgDFeoPwAeMOSN4Swl1J1GvHozBLaHUW_xR151CY5F3Hj3Q/exec"; // Replace with updated Google Apps Script URL
+  console.log("Firestore DB:", db);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-  
-    console.log("Form Data before submission:", formData);
-  
-    try {
-      const formDataEncoded = new URLSearchParams();
-      (Object.keys(formData) as Array<keyof FormData>).forEach(key => {
-        formDataEncoded.append(key, formData[key]);
-      });
-  
-      await fetch(
-        'https://script.google.com/macros/s/AKfycbxZKxGvyuluknmLcgcy6P4MR_V0jIbJa0LJMVPiR6FdvdFLdXc_hc_q9zZ5-AwJAmoTMQ/exec',
-        {
-          redirect: 'follow',
-          method: 'POST',
-          mode: 'no-cors',
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-          },
-          body: formDataEncoded.toString()
-        }
+    console.log("Submitting form:", formData); // Debugging
+    
+    try{
+      const userCredentials =await createUserWithEmailAndPassword(
+        auth,
+        formData.email,
+        formData.password
       );
-  
-      console.log("Form submitted successfully");
-      setIsSubmitted(true);
-    } catch (error) {
-      console.error("Error submitting form:", error);
+      const user=userCredentials.user;
+      
+      //send email verification
+      await sendEmailVerification(user);
+      console.log("Verification email sent to email",user.email);
+
+      //store buyer data in firestore database
+      const docRef = await addDoc(collection(db,'Buyers'),{
+        ...formData,
+        emailVerfied :false,   //will be updated after the verification
+        uid:user.uid, //store firebase auth uID
+      });
+      console.log("Buyer added with ID:", docRef.id);
+     setIsSubmitted(true);
+    }catch (error) {
+      console.error("Error adding buyer:", error);
     }
   };
-  // Rest of your component remains the same...
-  
   
 
   if (isSubmitted) {
-    return <VerificationSuccess />;
+    return <VerificationWaitTime />;
   }
 
   return (
@@ -194,8 +195,8 @@ const NewBuyer = () => {
               </div>
             </div>
           </div>
-          
-          {/*Business Name & Country/Region*/}
+
+          {/* Business & Country */}
           <div className="col-span-2">
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -235,8 +236,7 @@ const NewBuyer = () => {
             </div>
           </div>
 
-
-          {/* Industry of Interest */}
+          {/* Industry, Categories, Services */}
           <div>
             <label
               htmlFor="industry"
@@ -271,11 +271,9 @@ const NewBuyer = () => {
               required
             />
           </div>
-
-          {/* Services */}
-          <div className="col-span-2">
+          <div>
             <label
-              htmlFor="services"
+              htmlFor="categories"
               className="block text-sm font-medium text-[#7C77C1]"
             >
               Services
@@ -307,5 +305,3 @@ const NewBuyer = () => {
 };
 
 export default NewBuyer;
-
-
