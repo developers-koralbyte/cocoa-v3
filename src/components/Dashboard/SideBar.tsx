@@ -1,11 +1,11 @@
-import { Layout, Inbox, FileText, Calendar, LogOut } from 'lucide-react';
-import { useNavigate, useLocation, To } from 'react-router-dom';
-import logo from '../../assets/img/Dashboard/CocoaLogo.png';
+import { Layout, Inbox, FileText, Calendar, LogOut } from 'lucide-react'
+import { useNavigate, useLocation, To } from 'react-router-dom'
+import logo from '../../assets/img/Dashboard/CocoaLogo.png'
 
 const SideBar = () => {
-    const navigate = useNavigate();
-    const location = useLocation();
-    
+    const navigate = useNavigate()
+    const location = useLocation()
+
     const menuItems = [
         {
             icon: Layout,
@@ -15,24 +15,24 @@ const SideBar = () => {
         {
             icon: Inbox,
             label: 'Inbox',
-            path: '/dashboard/inbox',
+            path: '/inbox',
         },
         {
             icon: FileText,
             label: 'Invoices',
-            path: '/dashboard/invoices',
+            path: '/invoices',
         },
         {
             icon: Calendar,
             label: 'Calendar',
-            path: '/dashboard/calendar',
+            path: '/calendar',
         },
-    ];
+    ]
 
     // Handle menu item click
     const handleNavigation = (path: To) => {
-        navigate(path);
-    };
+        navigate(path)
+    }
 
     return (
         <div className="fixed h-screen w-64 bg-[#8B85C1] text-white p-8">
@@ -46,30 +46,32 @@ const SideBar = () => {
             </div>
 
             {/* Navigation sidebar */}
-            <nav className='ml-5 font-nunito text-[25px] space-y-14'>
+            <nav className="ml-5 font-nunito text-[25px] space-y-14">
                 {menuItems.map((item, index) => {
-                    const Icon = item.icon;
-                    const isActive = location.pathname === item.path;
-                    
+                    const Icon = item.icon
+                    const isActive = location.pathname === item.path
+
                     return (
                         <div
                             key={index}
                             onClick={() => handleNavigation(item.path)}
                             className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer
-                                ${isActive 
-                                    ? 'bg-white text-[#8B85C1]' 
-                                    : 'hover:bg-white/10'}`}
+                                ${
+                                    isActive
+                                        ? 'bg-white text-[#8B85C1]'
+                                        : 'hover:bg-white/10'
+                                }`}
                         >
                             <Icon size={30} />
                             <span>{item.label}</span>
                         </div>
-                    );
+                    )
                 })}
             </nav>
 
             {/* Logout Section */}
             <div className="absolute bottom-8 left-8">
-                <div 
+                <div
                     onClick={() => navigate('/login')} // or your logout logic
                     className="pb-4 font-nunito text-[20px] flex items-center gap-3 pl-10 rounded-lg cursor-pointer hover:bg-white/10"
                 >
@@ -78,7 +80,7 @@ const SideBar = () => {
                 </div>
             </div>
         </div>
-    );
-};
+    )
+}
 
-export default SideBar;
+export default SideBar

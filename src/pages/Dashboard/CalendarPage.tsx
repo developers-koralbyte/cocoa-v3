@@ -1,31 +1,29 @@
-import { useNavigate } from 'react-router-dom';
-import BaseLayout from "../../components/Dashboard/BaseLayout";
-import chatImage from "../../assets/img/Dashboard/chatImage.png";
+import { useNavigate } from 'react-router-dom'
+import BaseLayout from '../../components/Dashboard/BaseLayout'
+import chatImage from '../../assets/img/Dashboard/chatImage.png'
 
-const CalendarPage =() =>{
-    const navigate = useNavigate();
-    
+const CalendarPage = () => {
+    const navigate = useNavigate()
+
     return (
         <>
             <BaseLayout>
-               <></>
+                <></>
             </BaseLayout>
-            
+
             {/* Chat Image/Button */}
-            <div 
+            <div
                 className="fixed bottom-3 right-10  cursor-pointer z-50"
-                onClick={() => navigate('/chat')}
+                onClick={() => navigate('/inbox')}
             >
-                <img 
-                    src={chatImage} 
-                    alt="Chat" 
+                <img
+                    src={chatImage}
+                    alt="Chat"
                     className=" hover:opacity-90 transition-opacity"
                 />
             </div>
         </>
-    );
-
+    )
 }
 
-export default CalendarPage;
-
+export default CalendarPage
