@@ -310,7 +310,7 @@ const Chat = ({ onBackClick }) => {
             {/* Toggle button for mobile to show/hide chat */}
 
             <div className={'chat'}>
-                <div className="top">
+                <div className="top bg-darkPurple">
                     <div className="user">
                         {isMobile && (
                             <img
@@ -326,7 +326,7 @@ const Chat = ({ onBackClick }) => {
                         />
 
                         <div
-                            className="texts"
+                            className="texts "
                             onClick={() => setShowDetailPage()}
                         >
                             <span>{user?.username}</span>
@@ -471,7 +471,8 @@ const Chat = ({ onBackClick }) => {
                         </div>
 
                         <input
-                            className="sendMessage"
+                            // className="sendMessage"
+                            class="w-full bg-gray-300 py-5 px-3 rounded-xl"
                             type="text"
                             placeholder={
                                 isCurrentUserBlocked || isReceiverBlocked

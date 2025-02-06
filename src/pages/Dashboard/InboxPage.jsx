@@ -5,6 +5,7 @@ import Homepage from '../HomePage'
 import { useUserStore } from '../../utils/userStore'
 import { useChatStore } from '../../utils/chatStore'
 import BaseLayout from '../../components/Dashboard/BaseLayout'
+import Header from '../../components/Dashboard/Invoices/HeaderProps'
 
 const InboxPage = () => {
     const { currentUser, isLoading, fetchUserInfo, showDetailPage } =
@@ -52,7 +53,7 @@ const InboxPage = () => {
     return (
         <>
             <BaseLayout>
-                <div className="flex justify-center h-screen text-white bg-[rgba(17,25,40,0.75)] backdrop-blur-[2px] backdrop-saturate-[180%] border border-[rgba(255,255,255,0.125)]">
+                <div>
                     {isMobile ? (
                         <>
                             {!showChat && chatId !== null ? (
@@ -68,9 +69,39 @@ const InboxPage = () => {
                     ) : (
                         <>
                             {/* On desktop, show both chat and chatlist at the same time */}
-                            <List currentUser={currentUser} />
-                            <Chat />
-                            {chatId && showDetailPage}
+                            {/* <List currentUser={currentUser} />
+                            <Chat /> */}
+                            <div className="p-6">
+                                {/* Header Section */}
+                                <Header
+                                    userName={currentUser?.username || 'User'}
+                                    userRole={currentUser?.role || 'Buyer'}
+                                    userImage={
+                                        currentUser?.avatar ||
+                                        '/path-to-default-avatar.jpg'
+                                    }
+                                    title={'Inbox'}
+                                />
+
+                                {/* Invoice History Section */}
+                                <div className="mt-8">
+                                    {/* Invoice Table will go here */}
+                                    <div className="container mx-auto shadow-lg rounded-lg border-b-2 flex py-5">
+                                        <div className="flex flex-row justify-between bg-white w-full">
+                                            <div className="flex flex-col w-2/5 border-r-2 overflow-y-auto">
+                                                <List
+                                                    className="flex flex-row py-4 px-2 justify-center items-center border-b-2"
+                                                    currentUser={currentUser}
+                                                />
+                                            </div>
+
+                                            <div className="w-full  flex flex-col justify-between">
+                                                <Chat />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </>
                     )}
                 </div>

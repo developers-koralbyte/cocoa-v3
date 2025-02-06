@@ -10,7 +10,7 @@ const SideBar = () => {
         {
             icon: Layout,
             label: 'Dashboard',
-            path: '/dashboard',
+            path: '/vendor-dashboard',
         },
         {
             icon: Inbox,
