@@ -1,78 +1,94 @@
-import { Layout, Inbox, FileText, Calendar, LogOut } from 'lucide-react'
+import { Layout, Inbox, FileText, Calendar, LogOut, Grid } from 'lucide-react'
 import { useNavigate, useLocation, To } from 'react-router-dom'
 import logo from '../../assets/img/Dashboard/CocoaLogo.png'
+import { ComponentType } from 'react'
 
-const SideBar = () => {
+interface MenuItem {
+    icon: ComponentType<{ size?: number }>
+    label: string
+    path: string
+}
+
+interface SideBarProps {
+    isOpen: boolean
+    toggleSidebar: () => void
+}
+
+const SideBar = ({ isOpen, toggleSidebar }: SideBarProps) => {
     const navigate = useNavigate()
     const location = useLocation()
 
-    const menuItems = [
-        {
-            icon: Layout,
-            label: 'Dashboard',
-            path: '/vendor-dashboard',
-        },
-        {
-            icon: Inbox,
-            label: 'Inbox',
-            path: '/inbox',
-        },
-        {
-            icon: FileText,
-            label: 'Invoices',
-            path: '/invoices',
-        },
-        {
-            icon: Calendar,
-            label: 'Calendar',
-            path: '/calendar',
-        },
+    const menuItems: MenuItem[] = [
+        { icon: Grid, label: 'Dashboard', path: '/vendor-dashboard' },
+        { icon: Inbox, label: 'Inbox', path: '/inbox' },
+        { icon: FileText, label: 'Invoices', path: '/invoices' },
+        { icon: Calendar, label: 'Calendar', path: '/calendar' },
     ]
 
-    // Handle menu item click
     const handleNavigation = (path: To) => {
         navigate(path)
+        toggleSidebar()
     }
 
     return (
-        <div className="fixed h-screen w-64 bg-[#8B85C1] text-white p-8 flex flex-col justify-between">
-            <div>
-                <img
-                    src={logo}
-                    alt="Logo"
-                    className="pt-10 pl-5 h-auto w-auto pb-20"
-                />
+        <div
+            className={`fixed top-0 left-0 z-50 h-screen w-64 bg-[#9082C6] text-white p-6 shadow-lg 
+            transition-transform duration-300 ease-in-out 
+            ${isOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}
+        >
+            {/* Logo */}
+            <div className="flex justify-center py-5">
+                <img src={logo} alt="Cocoa Logo" className=" w-auto" />
             </div>
 
-            <nav className="ml-5 font-nunito text-[25px] space-y-14 flex-1">
-                {menuItems.map((item, index) => {
-                    const Icon = item.icon
-                    const isActive = location.pathname === item.path
-
+            {/* Navigation Menu */}
+            <nav className="mt-6 space-y-6">
+                {menuItems.map(({ icon: Icon, label, path }, index) => {
+                    const isActive = location.pathname === path
                     return (
                         <div
                             key={index}
-                            onClick={() => handleNavigation(item.path)}
-                            className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer
-                        ${
-                            isActive
-                                ? 'bg-white text-[#8B85C1]'
-                                : 'hover:bg-white/10'
-                        }`}
+                            onClick={() => handleNavigation(path)}
+                            onKeyDown={(e) =>
+                                e.key === 'Enter' || e.key === ' '
+                                    ? handleNavigation(path)
+                                    : null
+                            }
+                            aria-label={`Navigate to ${label}`}
+                            role="button"
+                            tabIndex={0}
+                            className={`flex items-center gap-3 px-5 py-3 rounded-lg cursor-pointer 
+                                transition-all duration-200 text-lg font-medium relative 
+                                ${isActive ? 'bg-white text-[#9082C6] shadow-md' : 'hover:bg-white/10'} 
+                                group`}
                         >
-                            <Icon size={30} />
-                            <span>{item.label}</span>
+                            <Icon
+                                size={24}
+                                className="transition-transform duration-200 group-hover:scale-110"
+                            />
+                            <span className="transition-opacity duration-200 group-hover:opacity-80">
+                                {label}
+                            </span>
                         </div>
                     )
                 })}
             </nav>
 
-            <div
-                onClick={() => navigate('/login')}
-                className="font-nunito text-[20px] flex items-center gap-3 pl-10 rounded-lg cursor-pointer hover:bg-white/10 pb-4"
-            >
-                <LogOut size={20} />
-                <span>Log out</span>
+            {/* Logout */}
+            <div className="absolute bottom-6 left-0 w-full">
+                <div
+                    onClick={() => navigate('/login')}
+                    className="flex items-center gap-3 px-5 py-3 text-lg font-medium cursor-pointer transition-all 
+                    hover:bg-white/10 rounded-lg group"
+                >
+                    <LogOut
+                        size={24}
+                        className="transition-transform duration-200 group-hover:scale-110"
+                    />
+                    <span className="transition-opacity duration-200 group-hover:opacity-80">
+                        Log out
+                    </span>
+                </div>
             </div>
         </div>
     )
