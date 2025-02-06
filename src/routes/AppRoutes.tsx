@@ -10,8 +10,8 @@ import VerificationPage from '../pages/Forgot_Password/VerificationPage'
 import SignupSelectionPage from '../pages/SignUpSelectionPage'
 import Dashboard from '../pages/Dashboard/Dashboard'
 import InvoicePage from '../pages/Dashboard/InvoicesPage'
-import CalendarPage from '../pages/Dashboard/CalendarPage'
-import InboxPage from '../pages/Dashboard/InboxPage'
+import CalendarPage from '../pages/Dashboard/CalendarPage';
+import InboxPage from '../pages/Dashboard/InboxPage';
 
 const AppRoutes: React.FC = () => {
     return (
@@ -25,9 +25,9 @@ const AppRoutes: React.FC = () => {
             <Route path="/new-password" element={<NewPasswordPage />} />
             <Route path="/verification" element={<VerificationPage />} />
             <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/invoices" element={<InvoicePage />} />
-            <Route path="/calendar" element={<CalendarPage />} />
-            <Route path="/inbox" element={<InboxPage />} />
+            <Route path="/dashboard/invoices" element={<InvoicePage />} />
+            <Route path="dashboard/calendar" element={<CalendarPage />} />
+            <Route path="dashboard/inbox" element={<InboxPage />} />
         </Routes>
     )
 }
