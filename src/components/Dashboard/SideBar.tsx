@@ -35,8 +35,7 @@ const SideBar = () => {
     }
 
     return (
-        <div className="fixed h-screen w-64 bg-[#8B85C1] text-white p-8">
-            {/* Logo */}
+        <div className="fixed h-screen w-64 bg-[#8B85C1] text-white p-8 flex flex-col justify-between">
             <div>
                 <img
                     src={logo}
@@ -45,8 +44,7 @@ const SideBar = () => {
                 />
             </div>
 
-            {/* Navigation sidebar */}
-            <nav className="ml-5 font-nunito text-[25px] space-y-14">
+            <nav className="ml-5 font-nunito text-[25px] space-y-14 flex-1">
                 {menuItems.map((item, index) => {
                     const Icon = item.icon
                     const isActive = location.pathname === item.path
@@ -56,11 +54,11 @@ const SideBar = () => {
                             key={index}
                             onClick={() => handleNavigation(item.path)}
                             className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer
-                                ${
-                                    isActive
-                                        ? 'bg-white text-[#8B85C1]'
-                                        : 'hover:bg-white/10'
-                                }`}
+                        ${
+                            isActive
+                                ? 'bg-white text-[#8B85C1]'
+                                : 'hover:bg-white/10'
+                        }`}
                         >
                             <Icon size={30} />
                             <span>{item.label}</span>
@@ -69,15 +67,12 @@ const SideBar = () => {
                 })}
             </nav>
 
-            {/* Logout Section */}
-            <div className="absolute bottom-8 left-8">
-                <div
-                    onClick={() => navigate('/login')} // or your logout logic
-                    className="pb-4 font-nunito text-[20px] flex items-center gap-3 pl-10 rounded-lg cursor-pointer hover:bg-white/10"
-                >
-                    <LogOut size={20} />
-                    <span>Log out</span>
-                </div>
+            <div
+                onClick={() => navigate('/login')}
+                className="font-nunito text-[20px] flex items-center gap-3 pl-10 rounded-lg cursor-pointer hover:bg-white/10 pb-4"
+            >
+                <LogOut size={20} />
+                <span>Log out</span>
             </div>
         </div>
     )
