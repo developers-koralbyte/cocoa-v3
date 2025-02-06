@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import './chatList.css'
 import AddUser from './addUser/addUser'
 import { useUserStore } from '../../../utils/userStore'
 import { doc, getDoc, onSnapshot, updateDoc } from 'firebase/firestore'
@@ -72,78 +71,59 @@ const ChatList = () => {
 
     return (
         <>
-            <div className="chatList">
-                <div className="search">
-                    <div className="searchBar">
-                        <img src={searchIcon} alt="search" />
-                        <input
-                            type="text"
-                            placeholder="Search"
-                            onChange={(e) => setInput(e.target.value)}
-                        />
-                    </div>
-                    <img
-                        src={addMode ? minus : plus}
-                        alt="toggle add user"
-                        className="add"
-                        onClick={() => setAddMode((prev) => !prev)}
-                    />
-                </div>
-
-                {/* Conditional rendering for either the chat list or AddUser */}
-                {!addMode ? (
-                    filteredChats.map((chat) => (
-                        <div
-                            className="item"
-                            key={chat.chatId}
-                            onClick={() => handleSelect(chat)}
-                            style={{
-                                backgroundColor:
-                                    chat?.chatId === chatId
-                                        ? 'rgba(17, 25, 40, 0.9)' // Ensure the rgba value is a string
-                                        : 'transparent',
-                                position: 'relative', // Make the parent relatively positioned for correct placement of the green dot
-                            }}
-                        >
-                            <img
-                                src={
-                                    chat.user.blocked.includes(currentUser.id)
-                                        ? './avatar.png'
-                                        : chat.user.avatar || './avatar.png'
-                                }
-                                alt="avatar"
-                            />
-                            <div className="texts">
-                                <span>
-                                    {chat.user.blocked.includes(currentUser.id)
-                                        ? 'User'
-                                        : chat.user.username}
-                                </span>
-                                <p>{chat.lastMessage}</p>
-                            </div>
-
-                            {/* Green dot for seen chats */}
-                            {!chat.isSeen && (
-                                <div
-                                    className="seen-dot"
-                                    style={{
-                                        width: '15px',
-                                        height: '15px',
-                                        backgroundColor: '#17b617',
-                                        borderRadius: '50%',
-                                        position: 'absolute',
-                                        right: '10px', // Adjust this value to match your design
-                                        top: '50%',
-                                        transform: 'translateY(-50%)',
-                                    }}
-                                ></div>
-                            )}
-                        </div>
-                    ))
-                ) : (
-                    <AddUser setAddMode={setAddMode} searchIcon={searchIcon} />
-                )}
+            <div class="border-b-2 py-4 px-2 border-t-2">
+                <input
+                    type="text"
+                    placeholder="Search"
+                    onChange={(e) => setInput(e.target.value)}
+                    class="py-2 px-2 border-2 border-gray-200 rounded-2xl w-full"
+                />
             </div>
+            {!addMode ? (
+                filteredChats.map((chat) => (
+                    <div
+                        className="flex flex-row py-4 px-2 items-center border-b-2"
+                        key={chat.chatId}
+                        onClick={() => handleSelect(chat)}
+                    >
+                        <div className="w-1/4">
+                            <img
+                                src={chat.user.avatar || './avatar.png'}
+                                className="object-cover h-12 w-12 rounded-full"
+                                alt=""
+                            />
+                        </div>
+                        <div className="w-full">
+                            <div className="text-lg font-semibold">
+                                {chat.user.blocked.includes(currentUser.id)
+                                    ? 'User'
+                                    : chat.user.username}
+                            </div>
+                            <span className="text-gray-500">
+                                {chat.lastMessage}
+                            </span>
+                        </div>
+
+                        {!chat.isSeen && (
+                            <div
+                                className="seen-dot"
+                                style={{
+                                    width: '15px',
+                                    height: '15px',
+                                    backgroundColor: '#17b617',
+                                    borderRadius: '50%',
+                                    position: 'absolute',
+                                    right: '10px', // Adjust this value to match your design
+                                    top: '50%',
+                                    transform: 'translateY(-50%)',
+                                }}
+                            ></div>
+                        )}
+                    </div>
+                ))
+            ) : (
+                <AddUser setAddMode={setAddMode} searchIcon={searchIcon} />
+            )}{' '}
         </>
     )
 }
