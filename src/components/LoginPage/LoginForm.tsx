@@ -92,7 +92,7 @@ const LoginForm = () => {
 
                 localStorage.setItem('user', JSON.stringify(userId))
                 fetchUserInfo(userId)
-                navigate('/dashboard')
+                navigate('/vendor-dashboard')
             })
 
             toast.success('Login successful!')
