@@ -306,7 +306,7 @@ const BuyerDashboard = () => {
             </BaseLayout>
 
             {/* Chat Image/Button - Fixed at bottom-right */}
-            <div
+            {/* <div
                 className="fixed bottom-3 right-10 cursor-pointer z-50"
                 onClick={() => navigate('/chat')}
             >
@@ -315,7 +315,7 @@ const BuyerDashboard = () => {
                     alt="Chat"
                     className="hover:opacity-90 transition-opacity"
                 />
-            </div>
+            </div> */}
         </>
     )
 }
