@@ -1,5 +1,6 @@
 import React, { Suspense } from 'react';
 import { Routes, Route } from 'react-router-dom';
+import BuyerCalendarPage from '../pages/Dashboard/BuyerCalendarPage';
 
 // Lazy load all the components
 const HomePage = React.lazy(() => import('../pages/HomePage'));
@@ -32,6 +33,7 @@ const AppRoutes: React.FC = () => {
                 <Route path="/buyer-dashboard" element={<BuyerDashboard />} />
                 <Route path="/invoices" element={<InvoicePage />} />
                 <Route path="/calendar" element={<CalendarPage />} />
+                <Route path="/buyer-calendar" element={<BuyerCalendarPage />} />
                 <Route path="/inbox" element={<InboxPage />} />
             </Routes>
         </Suspense>
