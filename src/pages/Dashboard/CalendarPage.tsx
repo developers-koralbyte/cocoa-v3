@@ -12,7 +12,7 @@ const CalendarPage = () => {
             </BaseLayout>
 
             {/* Chat Image/Button */}
-            <div
+            {/* <div
                 className="fixed bottom-3 right-10  cursor-pointer z-50"
                 onClick={() => navigate('/inbox')}
             >
@@ -21,7 +21,7 @@ const CalendarPage = () => {
                     alt="Chat"
                     className=" hover:opacity-90 transition-opacity"
                 />
-            </div>
+            </div> */}
         </>
     )
 }

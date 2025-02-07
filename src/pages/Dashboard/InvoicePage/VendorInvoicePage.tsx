@@ -107,11 +107,15 @@ const VendorInvoicesPage = () => {
                         className="hover:opacity-90 transition-opacity"
                     />
                     <div className="ml-5 mt-5 font-nunito text-[20px] text-buttonBg ">
-                      <button>Create New Invoice</button>
+                        <button>Create New Invoice</button>
                     </div>
                 </div>
 
-                <StatsSection totalSales={''} todayRevenue={''} inEscrow={''}></StatsSection>
+                <StatsSection
+                    totalSales={''}
+                    todayRevenue={''}
+                    inEscrow={''}
+                ></StatsSection>
 
                 {/* Invoice Table */}
                 <VendorInvoiceTable
@@ -122,7 +126,7 @@ const VendorInvoicesPage = () => {
             </div>
 
             {/* Chat Button */}
-            <div
+            {/* <div
                 className="fixed bottom-3 right-10 cursor-pointer z-50"
                 onClick={() => navigate('/chat')}
             >
@@ -131,7 +135,7 @@ const VendorInvoicesPage = () => {
                     alt="Chat"
                     className="hover:opacity-90 transition-opacity"
                 />
-            </div>
+            </div> */}
         </BaseLayout>
     )
 }
