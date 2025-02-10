@@ -17,6 +17,7 @@ const BuyerInvoicePage = React.lazy(() => import('../pages/Dashboard/InvoicePage
 const VendorInvoicePage = React.lazy(() => import('../pages/Dashboard/InvoicePage/VendorInvoicePage'));
 const CalendarPage = React.lazy(() => import('../pages/Dashboard/CalendarPage'));
 const InboxPage = React.lazy(() => import('../pages/Dashboard/InboxPage'));
+const AccountingSoftware = React.lazy(() => import('../pages/Dashboard/AccountingSoftware'));
 
 const AppRoutes: React.FC = () => {
     const { currentUser } = useUserStore(); // Get the user from the store
@@ -42,6 +43,8 @@ const AppRoutes: React.FC = () => {
 
                 <Route path="/calendar" element={<CalendarPage />} />
                 <Route path="/inbox" element={<InboxPage />} />
+                <Route path="/accounting-software" element={<AccountingSoftware />} />
+
             </Routes>
         </Suspense>
     );
