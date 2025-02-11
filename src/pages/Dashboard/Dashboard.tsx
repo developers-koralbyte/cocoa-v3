@@ -1,18 +1,18 @@
-import { useNavigate } from 'react-router-dom';
-import BaseLayout from "../../components/Dashboard/BaseLayout";
-import chatImage from "../../assets/img/Dashboard/chatImage.png";
+import { useNavigate } from 'react-router-dom'
+import BaseLayout from '../../components/Dashboard/BaseLayout'
+import chatImage from '../../assets/img/Dashboard/chatImage.png'
 
 function Dashboard() {
-    const navigate = useNavigate();
-    
+    const navigate = useNavigate()
+
     return (
         <>
             <BaseLayout>
-               <></>
+                <></>
             </BaseLayout>
-            
+
             {/* Chat Image/Button */}
-            <div 
+            {/* <div 
                 className="fixed bottom-3 right-10  cursor-pointer z-50"
                 onClick={() => navigate('/chat')}
             >
@@ -21,9 +21,9 @@ function Dashboard() {
                     alt="Chat" 
                     className=" hover:opacity-90 transition-opacity"
                 />
-            </div>
+            </div> */}
         </>
-    );
+    )
 }
 
-export default Dashboard;
+export default Dashboard
