@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import moment from 'moment'
@@ -18,7 +17,7 @@ import chatImage from '../../assets/img/Dashboard/chatImage.png'
 // 1) Setup for react-big-calendar
 const localizer = momentLocalizer(moment)
 
-// 2) Inline CSS overrides (events, RBC toolbar, react-calendar)
+// 2) Inline CSS for RBC & ReactCalendar
 const calendarOverrides = `
 /* BigCalendar event styling */
 .rbc-event,
@@ -98,7 +97,7 @@ const calendarOverrides = `
 `
 
 
-function MyToolbar(props: any) {
+function CustomToolbar(props: any) {
   const goToBack = () => props.onNavigate('PREV')
   const goToNext = () => props.onNavigate('NEXT')
   const goToToday = () => props.onNavigate('TODAY')
@@ -106,7 +105,7 @@ function MyToolbar(props: any) {
 
   return (
     <div className="rbc-toolbar flex items-center justify-between mb-4">
-
+ 
       <div className="flex items-center space-x-2">
         <button
           className="bg-gray-200 text-gray-700 px-2 py-1 rounded hover:bg-gray-300"
@@ -121,7 +120,6 @@ function MyToolbar(props: any) {
           Favourites
         </button>
       </div>
-
 
       <div className="flex items-center space-x-4">
         <button
@@ -141,7 +139,7 @@ function MyToolbar(props: any) {
         </button>
       </div>
 
-  
+      
       <div className="flex space-x-2">
         <button
           className={`px-2 py-1 rounded hover:bg-gray-300 ${
@@ -178,7 +176,8 @@ function MyToolbar(props: any) {
   )
 }
 
-interface AppointmentEvent {
+
+interface BuyerCalendarEvent {
   id: number
   title: string
   start: Date
@@ -186,44 +185,56 @@ interface AppointmentEvent {
   desc?: string
 }
 
-const CalendarPage: React.FC = () => {
+
+interface AppointmentItem {
+  name: string
+  dateTime: string 
+  image: string
+}
+
+const BuyerCalendarPage: React.FC = () => {
   const navigate = useNavigate()
 
-  // RBC events
-  const [events, setEvents] = useState<AppointmentEvent[]>([
+  const [events, setEvents] = useState<BuyerCalendarEvent[]>([
     {
       id: 1,
-      title: 'Gustavo, Creative Hive',
-      start: new Date(2025, 0, 15, 10),
-      end: new Date(2025, 0, 15, 11),
-      desc: 'Catchup meeting about new products'
+      title: 'Ali, Koralbyte Tech',
+      start: new Date(2025, 0, 9, 10, 0),
+      end: new Date(2025, 0, 9, 11, 0),
+      desc: '40% match with your products'
     },
     {
       id: 2,
-      title: 'Anaïs, Startup Hub',
-      start: new Date(2025, 0, 26, 14),
-      end: new Date(2025, 0, 26, 15, 30),
-      desc: 'Project discussion'
+      title: 'Peter, Accountix',
+      start: new Date(2025, 0, 15, 14, 0),
+      end: new Date(2025, 0, 15, 15, 0),
+      desc: 'Catchup meeting about new products'
     }
   ])
 
+ 
   const [view, setView] = useState<View>('month')
+ 
   const [showModal, setShowModal] = useState(false)
-  const [modalData, setModalData] = useState<AppointmentEvent | null>(null)
+  const [modalData, setModalData] = useState<BuyerCalendarEvent | null>(null)
   const [isEditing, setIsEditing] = useState(false)
 
-  // For the "availability" list
-  const [availability] = useState([
-    { day: 'Mon', time: '8:00 am - 5:00 pm' },
-    { day: 'Tue', time: 'Not Available' },
-    { day: 'Wed', time: '8:00 am - 5:00 pm' },
-    { day: 'Thu', time: 'Not Available' },
-    { day: 'Fri', time: '8:00 am - 5:00 pm' },
-    { day: 'Sat', time: 'Not Available' },
-    { day: 'Sun', time: 'Not Available' }
-  ])
+  const allAppointments: AppointmentItem[] = [
+    {
+      name: 'Ali, Koralbyte Tech',
+      dateTime: 'Wed, Jan 9, 10:00 AM',
+      image:
+        'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&h=150&q=80'
+    },
+    {
+      name: 'Peter, Accountix',
+      dateTime: 'Wed, Jan 15, 2:00 PM',
+      image:
+        'https://images.unsplash.com/photo-1586486855514-8c633cc6fd38?auto=format&fit=crop&w=150&h=150&q=80'
+    }
+  ]
 
-  // RBC actions
+  
   const handleSelectSlot = (slotInfo: SlotInfo) => {
     setModalData({
       id: Date.now(),
@@ -234,8 +245,8 @@ const CalendarPage: React.FC = () => {
     setIsEditing(false)
     setShowModal(true)
   }
-
-  const handleSelectEvent = (event: AppointmentEvent) => {
+  // RBC: handle event click -> edit
+  const handleSelectEvent = (event: BuyerCalendarEvent) => {
     setModalData(event)
     setIsEditing(true)
     setShowModal(true)
@@ -247,6 +258,7 @@ const CalendarPage: React.FC = () => {
     setIsEditing(false)
   }
 
+  
   const handleSaveEvent = () => {
     if (!modalData) return
     if (isEditing) {
@@ -259,47 +271,35 @@ const CalendarPage: React.FC = () => {
     closeModal()
   }
 
-  // Show earliest event as "Next Appointment"
-  const upcoming = events.sort(
-    (a, b) => a.start.getTime() - b.start.getTime()
-  )[0]
+  // Next appointment (earliest future event)
+  const upcoming = events
+    .sort((a, b) => a.start.getTime() - b.start.getTime())[0]
 
   return (
     <>
       <BaseLayout>
-      
+        
         <style dangerouslySetInnerHTML={{ __html: calendarOverrides }} />
 
         <div className="p-6 font-nunito">
-        
+       
           <div className="flex items-center justify-between mb-6">
-            <h1 className="text-4xl font-bold text-gray-800">Calendar</h1>
-            <div className="flex items-center gap-x-5 gap-4">
-              <div>
-                <h2 className="font-bold">Peter, Accountix</h2>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-600">Vendor</span>
-                  <span className="text-xs bg-purple-200 px-2 py-1 rounded-full">
-                    Premium Account
-                  </span>
-                </div>
-              </div>
-              <div className="w-12 h-12 rounded-full overflow-hidden">
-                <img
-                  src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=150&h=150"
-                  alt="Peter"
-                  className="w-full h-full object-cover"
-                />
-              </div>
+            <h1 className="text-4xl font-bold text-gray-800">
+              Buyer Calendar
+            </h1>
+            <div className="text-right">
+              <h2 className="text-lg font-semibold text-gray-700">
+                Diana, TechNest (Buyer)
+              </h2>
+              <p className="text-sm text-purple-600">★ Premium Account</p>
             </div>
           </div>
 
          
-          <div className="flex gap-0">
-           
-            <div className="flex-1 border-4 border-[#6868AC] rounded-l-[3.5rem] bg-white p-6">
-              
-              <div className="shadow rounded-lg p-4 h-full">
+          <div className=" rounded-[3rem] bg-white p-6">
+            <div className="flex ">
+             
+              <div className="flex-1 border-4 border-[#6868AC] rounded-l-[3.5rem] bg-white p-6">
                 <BigCalendar
                   localizer={localizer}
                   events={events}
@@ -308,7 +308,7 @@ const CalendarPage: React.FC = () => {
                   selectable
                   onSelectSlot={handleSelectSlot}
                   onSelectEvent={handleSelectEvent}
-                  components={{ toolbar: MyToolbar }}
+                  components={{ toolbar: CustomToolbar }}
                   views={['month', 'week', 'day']}
                   view={view}
                   onView={(newView) => setView(newView)}
@@ -316,107 +316,104 @@ const CalendarPage: React.FC = () => {
                   style={{ height: '70vh' }}
                 />
               </div>
-            </div>
+
+      
+              <div className="w-80 border-4 border-[#6868AC] border-l-0 rounded-r-[3.5rem] bg-white p-6 space-y-6">
+            
+                <div className="bg-white shadow rounded-lg p-4">
+                  <ReactCalendar
+                    defaultValue={new Date(2025, 0, 15)}
+                    next2Label={null}
+                    prev2Label={null}
+                    minDetail="month"
+                    maxDetail="month"
+                    formatMonthYear={(locale, date) =>
+                      moment(date).format('MMMM YYYY')
+                    }
+                  />
+                </div>
 
            
-            <div className="w-80 border-4 border-[#6868AC] border-l-0 rounded-r-[3.5rem] bg-white p-6 space-y-6">
-             
-              <div className="bg-white shadow rounded-lg p-4">
-                <ReactCalendar
-                  defaultValue={new Date(2025, 0, 15)}
-                  next2Label={null}
-                  prev2Label={null}
-                  minDetail="month"
-                  maxDetail="month"
-                  formatMonthYear={(locale, date) =>
-                    moment(date).format('MMMM YYYY')
-                  }
-                />
-              </div>
-
-           
-              <div className="bg-white rounded-[2rem] p-6 shadow">
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="font-bold">Next Appointment</h3>
-                  <div className="flex gap-2">
-                    <button className="text-purple-600">&lt;</button>
-                    <button className="text-purple-600">&gt;</button>
+                <div className="bg-white rounded-[2rem] p-6 shadow">
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="font-bold">Next Appointment</h3>
+                 
+                    <div className="flex gap-2">
+                      <button className="text-purple-600">&lt;</button>
+                      <button className="text-purple-600">&gt;</button>
+                    </div>
+                  </div>
+                  <div className="space-y-4">
+                    {upcoming ? (
+                      <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-full overflow-hidden">
+                          <img
+                            src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&h=150&q=80"
+                            alt={upcoming.title}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex justify-between">
+                            <h4 className="font-medium">
+                              {upcoming.title},{' '}
+                              <span className="text-purple-600">
+                                {upcoming.desc || 'No company info'}
+                              </span>
+                            </h4>
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            {moment(upcoming.start).format('ddd, MMM Do, h:mm A')}{' '}
+                            – {moment(upcoming.end).format('h:mm A')}
+                          </div>
+                        </div>
+                        <div
+                          className="cursor-pointer"
+                          onClick={() =>
+                            alert(`Reminder set for ${upcoming.title}`)
+                          }
+                        >
+                          <Bell className="w-4 h-4 text-purple-600" />
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-gray-500">
+                        No upcoming appointments.
+                      </p>
+                    )}
                   </div>
                 </div>
-                <div className="space-y-4">
-                  {upcoming ? (
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-full overflow-hidden">
-                        <img
-                          src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=150&h=150"
-                          alt={upcoming.title}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex justify-between">
-                          <h4 className="font-medium">
-                            {upcoming.title},{' '}
-                            <span className="text-purple-600">
-                              {upcoming.desc || 'No company info'}
-                            </span>
-                          </h4>
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          {moment(upcoming.start).format('ddd, MMM Do, h:mm A')} –{' '}
-                          {moment(upcoming.end).format('h:mm A')}
-                        </div>
-                      </div>
-                      <div
-                        className="cursor-pointer"
-                        onClick={() =>
-                          alert(`Reminder set for ${upcoming.title}`)
-                        }
-                      >
-                        <Bell className="w-4 h-4 text-purple-600" />
-                      </div>
-                    </div>
-                  ) : (
-                    <p className="text-sm text-gray-500">
-                      No upcoming appointments.
-                    </p>
-                  )}
-                </div>
-              </div>
 
-         
-              <div className="bg-white shadow rounded-lg p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-md font-semibold text-gray-700">
-                    My Availability
-                  </h3>
-                  <button
-                    onClick={() => alert('Add new availability logic here')}
-                    className="bg-[#5F4B8B] text-white px-2 py-1 rounded shadow hover:bg-[#4A3971]"
-                  >
-                    +
-                  </button>
+                {/* All Appointments card */}
+                <div className="bg-white shadow rounded-lg p-4">
+                  <h3 className="font-bold mb-3">All Appointments</h3>
+                  <div className="space-y-3">
+                    {allAppointments.map((apt, idx) => (
+                      <div key={idx} className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full overflow-hidden">
+                          <img
+                            src={apt.image}
+                            alt={apt.name}
+                            className="object-cover w-full h-full"
+                          />
+                        </div>
+                        <div>
+                          <p className="font-medium text-sm">{apt.name}</p>
+                          <p className="text-xs text-gray-500">{apt.dateTime}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-                <ul className="text-sm text-gray-600 space-y-1">
-                  {availability.map((slot) => (
-                    <li key={slot.day} className="flex justify-between">
-                      <span className="font-medium text-gray-700">
-                        {slot.day}:
-                      </span>
-                      <span>{slot.time}</span>
-                    </li>
-                  ))}
-                </ul>
               </div>
             </div>
           </div>
         </div>
       </BaseLayout>
 
-    
       <div
         className="fixed bottom-3 right-10 cursor-pointer z-50"
-        onClick={() => navigate('/inbox')}
+        onClick={() => navigate('/buyer-chat')}
       >
         <img
           src={chatImage}
@@ -425,7 +422,7 @@ const CalendarPage: React.FC = () => {
         />
       </div>
 
-      {/* Modal for create/edit event */}
+      {/* Modal for create/edit RBC event */}
       {showModal && modalData && (
         <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
           <div className="bg-white rounded shadow-lg p-6 w-96">
@@ -510,4 +507,4 @@ const CalendarPage: React.FC = () => {
   )
 }
 
-export default CalendarPage
+export default BuyerCalendarPage
