@@ -8,6 +8,7 @@ import UserTestimonial from "../components/HomePage/UserTestimonial";
 import ProcurementSection from "../components/HomePage/ProcurementSection";
 import TopSuppliers from "../components/HomePage/TopSuppliers";
 import BusinessFeatures from "../components/HomePage/BusinessFeatures";
+import Pricing from "../components/HomePage/Pricing";
 
 
 function App() {
@@ -20,6 +21,7 @@ function App() {
       <BusinessFeatures />
       <UserTestimonial />
       <LatestNews />
+      <Pricing/>
       <HowItWorks />
       <FAQ />
       <footer>
