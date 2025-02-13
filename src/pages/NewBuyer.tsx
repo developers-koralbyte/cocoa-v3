@@ -5,6 +5,9 @@ import { createUserWithEmailAndPassword, sendEmailVerification } from "firebase/
 import cocoaLogo from "../assets/img/cocoa-logo-white.png";
 import VerificationSuccess from "./VerificationBuyer";
 import VerificationWaitTime from "../pages/VerificationWaitTime";
+import { useLocation } from "react-router-dom";
+
+
 
 interface FormData {
   email: string;
@@ -16,22 +19,41 @@ interface FormData {
   industry: string;
   categories: string;
   services: string;
+  role:string
 }
 
-const initialFormData: FormData = {
-  email: "",
-  password: "",
-  firstName: "",
-  lastName: "",
-  businessName: "",
-  countryRegion: "",
-  industry: "",
-  categories: "",
-  services: "",
-};
+// const initialFormData: FormData = {
+//   email: "",
+//   password: "",
+//   firstName: "",
+//   lastName: "",
+//   businessName: "",
+//   countryRegion: "",
+//   industry: "",
+//   categories: "",
+//   services: "",
+// };
 
 const NewBuyer = () => {
-  const [formData, setFormData] = useState<FormData>(initialFormData);
+  const location = useLocation();
+  const params = new URLSearchParams(location.search);
+  const role = params.get("role") || "Vendor";
+
+  console.log("role:" , role)
+  
+  const [formData, setFormData] = useState<FormData>({
+    email: "",
+    password: "",
+    firstName: "",
+    lastName: "",
+    businessName: "",
+    countryRegion: "",
+    industry: "",
+    categories: "",
+    services: "",
+    role,
+  });
+
   const [isSubmitted, setIsSubmitted] = useState(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {

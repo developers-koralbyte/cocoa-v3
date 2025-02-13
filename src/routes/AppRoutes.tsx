@@ -1,6 +1,7 @@
 import React, { Suspense } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import BuyerCalendarPage from '../pages/Dashboard/BuyerCalendarPage';
+import ProtectedRoute from "../utils/ProtectedRoute";
 import { useUserStore } from '../utils/userStore'; // Import user store
 
 // Lazy load all the components
@@ -20,13 +21,12 @@ const CreateNewInvoice = React.lazy(() => import('../pages/Dashboard/InvoicePage
 const CalendarPage = React.lazy(() => import('../pages/Dashboard/CalendarPage'));
 const InboxPage = React.lazy(() => import('../pages/Dashboard/InboxPage'));
 const AccountingSoftware = React.lazy(() => import('../pages/Dashboard/AccountingSoftware'));
-
 const AppRoutes: React.FC = () => {
-    const { currentUser } = useUserStore(); // Get the user from the store
-
+    
     return (
         <Suspense fallback={<div>Loading...</div>}>
             <Routes>
+                {/* Public Routes */}
                 <Route path="/" element={<HomePage />} />
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/create-account" element={<SignupSelectionPage />} />
@@ -35,22 +35,27 @@ const AppRoutes: React.FC = () => {
                 <Route path="/forgot-password" element={<ForgotPasswordPage />} />
                 <Route path="/new-password" element={<NewPasswordPage />} />
                 <Route path="/verification" element={<VerificationPage />} />
-                <Route path="/vendor-dashboard" element={<VendorDashboard />} />
-                <Route path="/buyer-dashboard" element={<BuyerDashboard />} />
 
-                <Route 
-                    path="/invoices" 
-                    element={currentUser?.role === 'vendor' ? <BuyerInvoicePage /> : <VendorInvoicePage />} 
-                />
-                <Route path="/create-new-invoice" element={<CreateNewInvoice />} />
-                <Route path="/calendar" element={<CalendarPage />} />
-                <Route path="/buyer-calendar" element={<BuyerCalendarPage />} />
-                <Route path="/inbox" element={<InboxPage />} />
-                <Route path="/accounting-software" element={<AccountingSoftware />} />
+                {/* Protected Routes for Vendors */}
+                <Route element={<ProtectedRoute allowedRoles={["vendor"]} />}>
+                    <Route path="/vendor-dashboard" element={<VendorDashboard />} />
+                    <Route path="/invoices" element={<VendorInvoicePage />} />
+                    <Route path="/calendar" element={<CalendarPage />} />
+                    <Route path="/inbox" element={<InboxPage />} />
+                    <Route path="/accounting-software" element={<AccountingSoftware />} />
+                    <Route path="/create-new-invoice" element={<CreateNewInvoice />} />
+                </Route>
 
+                {/* Protected Routes for Buyers */}
+                <Route element={<ProtectedRoute allowedRoles={["buyer"]} />}>
+                    <Route path="/buyer-dashboard" element={<BuyerDashboard />} />
+                    <Route path="/buyer-calendar" element={<BuyerCalendarPage />} />
+                    <Route path="/invoices" element={<BuyerInvoicePage />} />
+                </Route>
             </Routes>
         </Suspense>
     );
 };
+
 
 export default AppRoutes;
