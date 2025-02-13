@@ -1,34 +1,51 @@
-import { Layout, Inbox, FileText, Calendar, LogOut, Grid } from 'lucide-react'
-import { useNavigate, useLocation, To } from 'react-router-dom'
-import logo from '../../assets/img/Dashboard/CocoaLogo.png'
-import { ComponentType } from 'react'
+import { Layout, Inbox, FileText, Calendar, LogOut, Grid } from 'lucide-react';
+import { useNavigate, useLocation, To } from 'react-router-dom';
+import logo from '../../assets/img/Dashboard/CocoaLogo.png';
+import { ComponentType } from 'react';
 
 interface MenuItem {
-    icon: ComponentType<{ size?: number }>
-    label: string
-    path: string
+    icon: ComponentType<{ size?: number }>;
+    label: string;
+    vendorPath?: string;
+    buyerPath?: string;
 }
 
 interface SideBarProps {
-    isOpen: boolean
-    toggleSidebar: () => void
+    isOpen: boolean;
+    toggleSidebar: () => void;
 }
 
 const SideBar = ({ isOpen, toggleSidebar }: SideBarProps) => {
-    const navigate = useNavigate()
-    const location = useLocation()
+    const navigate = useNavigate();
+    const location = useLocation();
 
-    const menuItems: MenuItem[] = [
-        { icon: Grid, label: 'Dashboard', path: '/vendor-dashboard' },
-        { icon: Inbox, label: 'Inbox', path: '/inbox' },
-        { icon: FileText, label: 'Invoices', path: '/invoices' },
-        { icon: Calendar, label: 'Calendar', path: '/calendar' },
-    ]
+    
+    const userData = localStorage.getItem("user");
+    const user = userData ? JSON.parse(userData) : null;
+    const userRole = user?.role;  
 
-    const handleNavigation = (path: To) => {
-        navigate(path)
-        toggleSidebar()
+    if (!userRole) {
+        console.error(" User role not found!");
+        return null; // Return early if role is missing
     }
+
+    // Define menu items for both roles
+    const menuItems: MenuItem[] = [
+        { icon: Grid, label: 'Dashboard', vendorPath: '/vendor-dashboard', buyerPath: '/buyer-dashboard' },
+        { icon: Inbox, label: 'Inbox', vendorPath: '/inbox', buyerPath: '/buyer-inbox' }, // ✅ Fixed path
+        { icon: FileText, label: 'Invoices', vendorPath: '/invoices', buyerPath: '/buyer-invoices' },
+        { icon: Calendar, label: 'Calendar', vendorPath: '/calendar', buyerPath: '/buyer-calendar' },
+    ];
+
+    const handleNavigation = (vendorPath?: string, buyerPath?: string) => {
+        const path = userRole === "vendor" ? vendorPath : buyerPath;
+        if (path) {
+            navigate(path);
+            if (window.innerWidth < 768) {
+                toggleSidebar(); // Close sidebar only on mobile
+            }
+        }
+    };
 
     return (
         <div
@@ -38,22 +55,20 @@ const SideBar = ({ isOpen, toggleSidebar }: SideBarProps) => {
         >
             {/* Logo */}
             <div className="flex justify-center py-5">
-                <img src={logo} alt="Cocoa Logo" className=" w-auto" />
+                <img src={logo} alt="Cocoa Logo" className="w-auto" />
             </div>
 
             {/* Navigation Menu */}
             <nav className="mt-6 space-y-6">
-                {menuItems.map(({ icon: Icon, label, path }, index) => {
-                    const isActive = location.pathname === path
-                    return (
+                {menuItems.map(({ icon: Icon, label, vendorPath, buyerPath }, index) => {
+                    const path = userRole === "vendor" ? vendorPath : buyerPath;
+                    const isActive = location.pathname === path;
+
+                    return path ? (
                         <div
                             key={index}
-                            onClick={() => handleNavigation(path)}
-                            onKeyDown={(e) =>
-                                e.key === 'Enter' || e.key === ' '
-                                    ? handleNavigation(path)
-                                    : null
-                            }
+                            onClick={() => handleNavigation(vendorPath, buyerPath)}
+                            onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ' ? handleNavigation(vendorPath, buyerPath) : null)}
                             aria-label={`Navigate to ${label}`}
                             role="button"
                             tabIndex={0}
@@ -70,14 +85,17 @@ const SideBar = ({ isOpen, toggleSidebar }: SideBarProps) => {
                                 {label}
                             </span>
                         </div>
-                    )
+                    ) : null;
                 })}
             </nav>
 
             {/* Logout */}
             <div className="absolute bottom-6 left-0 w-full">
                 <div
-                    onClick={() => navigate('/login')}
+                    onClick={() => {
+                        localStorage.removeItem("user");
+                        navigate("/login");
+                    }}
                     className="flex items-center gap-3 px-5 py-3 text-lg font-medium cursor-pointer transition-all 
                     hover:bg-white/10 rounded-lg group"
                 >
@@ -91,7 +109,7 @@ const SideBar = ({ isOpen, toggleSidebar }: SideBarProps) => {
                 </div>
             </div>
         </div>
-    )
-}
+    );
+};
 
-export default SideBar
+export default SideBar;

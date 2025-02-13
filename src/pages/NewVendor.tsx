@@ -1,6 +1,14 @@
+
 import React, { useState } from "react";
 import cocoaLogo from "../assets/img/cocoa-logo-white.png";
 import VendorVerification from "./VerificationVendor";
+import {auth, db } from "../utils/firebase";
+// import { auth, db } from "../firebaseConfig"; // Ensure firebaseConfig is imported
+import { createUserWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
+import { collection, addDoc } from "firebase/firestore";
+import { useLocation } from "react-router-dom";
+
+
 
 type FormData = {
   email: string;
@@ -12,23 +20,41 @@ type FormData = {
   industry: string;
   categories: string;
   services: string;
+  role:string;
 };
 
-const initialFormData: FormData = {
-  email: "",
-  password: "",
-  firstName: "",
-  lastName: "",
-  businessName: "",
-  countryRegion: "", // Add initial value for country/region
-  industry: "",
-  categories: "",
-  services: "",
-};
+// const initialFormData: FormData = {
+//   email: "",
+//   password: "",
+//   firstName: "",
+//   lastName: "",
+//   businessName: "",
+//   countryRegion: "", // Add initial value for country/region
+//   industry: "",
+//   categories: "",
+//   services: "",
+// };
 
 const NewVendor = () => {
-  const [formData, setFormData] = useState<FormData>(initialFormData);
+  const location = useLocation();
+  const params = new URLSearchParams(location.search);
+  const role = params.get("role") || "Vendor";
+  
+  const [formData, setFormData] = useState<FormData>({
+    email: "",
+    password: "",
+    firstName: "",
+    lastName: "",
+    businessName: "",
+    countryRegion: "",
+    industry: "",
+    categories: "",
+    services: "",
+    role,
+  });
   const [isSubmitted, setIsSubmitted] = useState(false);
+
+  
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -38,10 +64,35 @@ const NewVendor = () => {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Form submitted:", formData);
-    setIsSubmitted(true);
+    console.log("Submitting form:", formData);
+  
+    try {
+      // Create vendor account in Firebase Auth
+      const userCredentials = await createUserWithEmailAndPassword(
+        auth,
+        formData.email,
+        formData.password
+      );
+      const user = userCredentials.user;
+  
+      // Send email verification
+      await sendEmailVerification(user);
+      console.log("Verification email sent to:", user.email);
+  
+      // Store vendor data in Firestore
+      const docRef = await addDoc(collection(db, "Vendors"), {
+        ...formData,
+        emailVerified: false, // Will be updated after verification
+        uid: user.uid, // Store Firebase Auth UID
+      });
+  
+      console.log("Vendor added with ID:", docRef.id);
+      setIsSubmitted(true);
+    } catch (error) {
+      console.error("Error adding vendor:", error);
+    }
   };
 
   if (isSubmitted) {

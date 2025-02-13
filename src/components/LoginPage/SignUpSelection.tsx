@@ -16,9 +16,10 @@ const SignupSelection = () => {
 
   const handleContinue = () => {
     if (selectedRole) {
-      navigate(`/new-${selectedRole}`);
+      navigate(`/new-${selectedRole}?role=${selectedRole}`);
     }
   };
+  
 
   return (
     <div className="flex flex-col items-center justify-center h-[85vh] w-full">
