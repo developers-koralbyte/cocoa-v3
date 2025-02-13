@@ -1,7 +1,10 @@
 import React, { useState } from 'react'
 import { Eye, EyeOff } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
-import { auth } from '../../utils/firebase'
+import {  auth, db } from '../../utils/firebase'
+// import { doc, getDoc } from "firebase/firestore";
+import { collection, query, where, getDocs } from "firebase/firestore";
+
 import {
     browserLocalPersistence,
     setPersistence,
@@ -74,36 +77,59 @@ const LoginForm = () => {
     //   }
     // };
 
-    const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault()
-        setLoading(true)
+ 
+const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setLoading(true);
 
-        try {
-            // Set local persistence so that user is not logged out on refresh or browser close
-            await setPersistence(auth, browserLocalPersistence)
+    try {
+        // Set local persistence so user remains logged in
+        await setPersistence(auth, browserLocalPersistence);
 
-            // After persistence is set, sign in the user
-            await signInWithEmailAndPassword(
-                auth,
-                formData.email,
-                formData.password
-            ).then((res) => {
-                const userId = res.user.uid
+        // Sign in the user
+        const res = await signInWithEmailAndPassword(auth, formData.email, formData.password);
+        const userId = res.user.uid;
 
-                localStorage.setItem('user', JSON.stringify(userId))
-                fetchUserInfo(userId)
-                navigate('/vendor-dashboard')
-            })
+        let userRole = null;
 
-            toast.success('Login successful!')
-        } catch (err: any) {
-            console.error('Login error:', err.message)
-            toast.error(`Login failed: ${err.message}`)
-        } finally {
-            setLoading(false)
+        // Check "Vendors" collection
+        const vendorQuery = query(collection(db, "Vendors"), where("uid", "==", userId));
+        const vendorSnapshot = await getDocs(vendorQuery);
+
+        if (!vendorSnapshot.empty) {
+            userRole = "vendor";
+        } else {
+            // If not found in Vendors, check "Buyers" collection
+            const buyerQuery = query(collection(db, "Buyers"), where("uid", "==", userId));
+            const buyerSnapshot = await getDocs(buyerQuery);
+            // console.log("buyer", buyerQuery)
+
+            if (!buyerSnapshot.empty) {
+                userRole = "buyer";
+            }
         }
-    }
 
+        if (userRole) {
+            localStorage.setItem("user", JSON.stringify({ uid: userId, role: userRole }));
+            fetchUserInfo(userId);
+            toast.success("Login successful!");
+
+            if (userRole === "vendor") {
+                navigate("/vendor-dashboard");
+            } else {
+                navigate("/buyer-dashboard");
+            }
+        } else {
+            toast.error("User role not found. Please contact support.");
+        }
+    } catch (err: any) {
+        console.error("Login error:", err.message);
+        toast.error(`Login failed: ${err.message}`);
+    } finally {
+        setLoading(false);
+    }
+};
+    
     return (
         <form onSubmit={handleLogin} className="space-y-5 max-w-md " noValidate>
             {formError && (
