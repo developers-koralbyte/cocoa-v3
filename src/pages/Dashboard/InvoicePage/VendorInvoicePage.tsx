@@ -10,6 +10,7 @@ import { collection, query, where, getDocs } from 'firebase/firestore'
 import CreateNewInvoice from '../../../assets/icons/VendorNewInvoice.svg'
 import StatsSection from '../../../components/Dashboard/Invoices/StatsSection'
 
+
 interface VendorInvoice {
     id: string
     date: string
@@ -107,7 +108,7 @@ const VendorInvoicesPage = () => {
                         className="hover:opacity-90 transition-opacity"
                     />
                     <div className="ml-5 mt-5 font-nunito text-[20px] text-buttonBg ">
-                        <button>Create New Invoice</button>
+                        <button onClick ={()=> navigate('/create-new-invoice')}>Create New Invoice</button>
                     </div>
                 </div>
 
