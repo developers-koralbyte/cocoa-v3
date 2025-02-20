@@ -21,6 +21,7 @@ const CreateNewInvoice = React.lazy(() => import('../pages/Dashboard/InvoicePage
 const CalendarPage = React.lazy(() => import('../pages/Dashboard/CalendarPage'));
 const InboxPage = React.lazy(() => import('../pages/Dashboard/InboxPage'));
 const AccountingSoftware = React.lazy(() => import('../pages/Dashboard/AccountingSoftware'));
+const BecomingAVendor = React.lazy(() => import('../components/BecomeAVendor/BecomingAVendor'));
 const AppRoutes: React.FC = () => {
     
     return (
@@ -52,6 +53,9 @@ const AppRoutes: React.FC = () => {
                     <Route path="/buyer-calendar" element={<BuyerCalendarPage />} />
                     <Route path="/invoices" element={<BuyerInvoicePage />} />
                 </Route>
+
+                {/* Becoming a Vendor*/}
+                <Route path="/become-a-vendor" element={<BecomingAVendor />} />
             </Routes>
         </Suspense>
     );
