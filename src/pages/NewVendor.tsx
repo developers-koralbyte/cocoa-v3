@@ -1,14 +1,11 @@
-
 import React, { useState } from "react";
 import cocoaLogo from "../assets/img/cocoa-logo-white.png";
 import VendorVerification from "./VerificationVendor";
-import {auth, db } from "../utils/firebase";
-// import { auth, db } from "../firebaseConfig"; // Ensure firebaseConfig is imported
+import { auth, db } from "../utils/firebase";
 import { createUserWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
 import { collection, addDoc } from "firebase/firestore";
 import { useLocation } from "react-router-dom";
-
-
+import upload from "../utils/upload"; 
 
 type FormData = {
   email: string;
@@ -16,30 +13,20 @@ type FormData = {
   firstName: string;
   lastName: string;
   businessName: string;
-  countryRegion: string; // Add country/region
+  countryRegion: string; 
   industry: string;
   categories: string;
   services: string;
-  role:string;
+  role: string;
 };
 
-// const initialFormData: FormData = {
-//   email: "",
-//   password: "",
-//   firstName: "",
-//   lastName: "",
-//   businessName: "",
-//   countryRegion: "", // Add initial value for country/region
-//   industry: "",
-//   categories: "",
-//   services: "",
-// };
-
 const NewVendor = () => {
+ 
   const location = useLocation();
   const params = new URLSearchParams(location.search);
   const role = params.get("role") || "Vendor";
-  
+
+  // Form data state
   const [formData, setFormData] = useState<FormData>({
     email: "",
     password: "",
@@ -52,10 +39,15 @@ const NewVendor = () => {
     services: "",
     role,
   });
+
+  
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string>("");
+
+
   const [isSubmitted, setIsSubmitted] = useState(false);
 
   
-
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -64,37 +56,70 @@ const NewVendor = () => {
     }));
   };
 
+  
+  const handleAvatarSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setAvatarFile(file);
+      setAvatarPreview(URL.createObjectURL(file));
+    }
+  };
+
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     console.log("Submitting form:", formData);
-  
+
     try {
-      // Create vendor account in Firebase Auth
+      // 1) Create user in Firebase Auth
       const userCredentials = await createUserWithEmailAndPassword(
         auth,
         formData.email,
         formData.password
       );
       const user = userCredentials.user;
-  
-      // Send email verification
+
+      // 2) Send email verification
       await sendEmailVerification(user);
       console.log("Verification email sent to:", user.email);
-  
-      // Store vendor data in Firestore
-      const docRef = await addDoc(collection(db, "Vendors"), {
-        ...formData,
-        emailVerified: false, // Will be updated after verification
-        uid: user.uid, // Store Firebase Auth UID
+
+      
+      let avatarUrl = "";
+      if (avatarFile) {
+        avatarUrl = await upload(avatarFile); 
+      }
+
+      // 4) Store user data in "users" collection
+      await addDoc(collection(db, "users"), {
+        id: user.uid,
+        email: formData.email,
+        role: formData.role.toLowerCase(), // "vendor" or "buyer"
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        avatar: avatarUrl,
+        blocked: [],           
+        createdAt: new Date(),
       });
-  
-      console.log("Vendor added with ID:", docRef.id);
+
+      // 5) Store vendor-specific data in "Vendors" collection
+      await addDoc(collection(db, "Vendors"), {
+        ...formData,
+        role: formData.role.toLowerCase(),
+        emailVerified: false,
+        uid: user.uid,
+        avatar: avatarUrl,     
+        blocked: [],           
+        createdAt: new Date(),
+      });
+
+      console.log("Vendor added successfully in both 'users' and 'Vendors'.");
       setIsSubmitted(true);
     } catch (error) {
       console.error("Error adding vendor:", error);
     }
   };
 
+  // Show vendor verification after successful submission
   if (isSubmitted) {
     return <VendorVerification />;
   }
@@ -114,7 +139,9 @@ const NewVendor = () => {
           </h2>
           <p className="text-white/90 text-lg mb-2 leading-relaxed">
             To help you get started, we've put together a quick and easy
-            onboarding process. <br /><br />Let's get you set up and ready to go!
+            onboarding process. 
+            <br /><br />
+            Let's get you set up and ready to go!
           </p>
         </div>
         <div>
@@ -216,6 +243,48 @@ const NewVendor = () => {
             </div>
           </div>
 
+          {/* Avatar (Optional) */}
+          <div className="col-span-2">
+            <label className="block text-sm font-medium text-[#7C77C1] mb-1">
+              Profile Picture
+            </label>
+            <div className="mb-2">
+              {avatarPreview ? (
+                <img
+                  src={avatarPreview}
+                  alt="Avatar Preview"
+                  className="w-16 h-16 object-cover rounded-full"
+                />
+              ) : (
+                <p className="text-sm text-gray-500">No image selected</p>
+              )}
+            </div>
+        
+            <label className="inline-flex items-center px-3 py-2 bg-[#7C77C1] text-white text-sm font-medium leading-4 rounded-md shadow-sm hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 cursor-pointer">
+              
+              <svg
+                className="w-5 h-5 mr-2"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M9 8l3-3m0 0l3 3m-3-3v12"
+                />
+              </svg>
+              <span>Upload Avatar</span>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleAvatarSelect}
+                className="hidden"
+              />
+            </label>
+          </div>
+
           {/* Business Name & Country/Region */}
           <div className="col-span-2">
             <div className="grid grid-cols-2 gap-4">
@@ -256,7 +325,7 @@ const NewVendor = () => {
             </div>
           </div>
 
-          {/* Industry of Interest */}
+          {/* Industry, Categories, Services */}
           <div>
             <label
               htmlFor="industry"
@@ -291,8 +360,6 @@ const NewVendor = () => {
               required
             />
           </div>
-
-          {/* Services */}
           <div className="col-span-2">
             <label
               htmlFor="services"

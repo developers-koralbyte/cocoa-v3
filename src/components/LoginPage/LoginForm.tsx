@@ -78,57 +78,63 @@ const LoginForm = () => {
     // };
 
  
-const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setLoading(true);
-
-    try {
-        // Set local persistence so user remains logged in
-        await setPersistence(auth, browserLocalPersistence);
-
-        // Sign in the user
-        const res = await signInWithEmailAndPassword(auth, formData.email, formData.password);
-        const userId = res.user.uid;
-
-        let userRole = null;
-
-        // Check "Vendors" collection
-        const vendorQuery = query(collection(db, "Vendors"), where("uid", "==", userId));
-        const vendorSnapshot = await getDocs(vendorQuery);
-
-        if (!vendorSnapshot.empty) {
-            userRole = "vendor";
-        } else {
-            // If not found in Vendors, check "Buyers" collection
-            const buyerQuery = query(collection(db, "Buyers"), where("uid", "==", userId));
-            const buyerSnapshot = await getDocs(buyerQuery);
-            // console.log("buyer", buyerQuery)
-
-            if (!buyerSnapshot.empty) {
-                userRole = "buyer";
-            }
-        }
-
-        if (userRole) {
-            localStorage.setItem("user", JSON.stringify({ uid: userId, role: userRole }));
+    const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        setLoading(true);
+    
+        try {
+          // Set local persistence so user remains logged in
+          await setPersistence(auth, browserLocalPersistence);
+    
+          // Sign in the user
+          const res = await signInWithEmailAndPassword(
+            auth,
+            formData.email,
+            formData.password
+          );
+          const userId = res.user.uid;
+    
+          // Check the "users" collection for this user
+          const userQuery = query(collection(db, "users"), where("id", "==", userId));
+          const userSnapshot = await getDocs(userQuery);
+    
+          // If we found a doc for this user
+          if (!userSnapshot.empty) {
+            const docData = userSnapshot.docs[0].data();
+            const userRole = docData.role; // e.g., "vendor" or "buyer"
+    
+            // Store user in localStorage (optional)
+            localStorage.setItem(
+              "user",
+              JSON.stringify({ uid: userId, role: userRole })
+            );
+    
+            // Optionally fetch user info from store
             fetchUserInfo(userId);
+    
             toast.success("Login successful!");
-
+    
+            // Redirect based on role
             if (userRole === "vendor") {
-                navigate("/vendor-dashboard");
+              navigate("/vendor-dashboard");
+            } else if (userRole === "buyer") {
+              navigate("/buyer-dashboard");
             } else {
-                navigate("/buyer-dashboard");
+              // If there's some other role not handled
+              toast.error("Unknown user role. Please contact support.");
             }
-        } else {
-            toast.error("User role not found. Please contact support.");
+          } else {
+            // If no doc found in "users"
+            toast.error("User role not found in 'users' collection.");
+          }
+        } catch (err: any) {
+          console.error("Login error:", err.message);
+          toast.error(`Login failed: ${err.message}`);
+        } finally {
+          setLoading(false);
         }
-    } catch (err: any) {
-        console.error("Login error:", err.message);
-        toast.error(`Login failed: ${err.message}`);
-    } finally {
-        setLoading(false);
-    }
-};
+      };
+    
     
     return (
         <form onSubmit={handleLogin} className="space-y-5 max-w-md " noValidate>

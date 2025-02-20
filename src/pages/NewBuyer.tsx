@@ -1,13 +1,11 @@
 import React, { useState } from "react";
-import {auth, db } from "../utils/firebase"; // Import Firestore instance
+import { auth, db } from "../utils/firebase";
 import { collection, addDoc } from "firebase/firestore";
 import { createUserWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
 import cocoaLogo from "../assets/img/cocoa-logo-white.png";
-import VerificationSuccess from "./VerificationBuyer";
 import VerificationWaitTime from "../pages/VerificationWaitTime";
 import { useLocation } from "react-router-dom";
-
-
+import upload from "../utils/upload";
 
 interface FormData {
   email: string;
@@ -19,28 +17,15 @@ interface FormData {
   industry: string;
   categories: string;
   services: string;
-  role:string
+  role: string; // "buyer" or "vendor"
 }
-
-// const initialFormData: FormData = {
-//   email: "",
-//   password: "",
-//   firstName: "",
-//   lastName: "",
-//   businessName: "",
-//   countryRegion: "",
-//   industry: "",
-//   categories: "",
-//   services: "",
-// };
 
 const NewBuyer = () => {
   const location = useLocation();
   const params = new URLSearchParams(location.search);
-  const role = params.get("role") || "Vendor";
+  const role = params.get("role") || "Buyer";
 
-  console.log("role:" , role)
-  
+  // Basic form data state
   const [formData, setFormData] = useState<FormData>({
     email: "",
     password: "",
@@ -54,8 +39,14 @@ const NewBuyer = () => {
     role,
   });
 
+  // Avatar states (optional)
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string>("");
+
+  // Submission state
   const [isSubmitted, setIsSubmitted] = useState(false);
 
+  // Handle text input changes
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -63,38 +54,71 @@ const NewBuyer = () => {
       [name]: value,
     }));
   };
-  console.log("Firestore DB:", db);
 
+  // Handle avatar file selection (with preview)
+  const handleAvatarSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setAvatarFile(file);
+      setAvatarPreview(URL.createObjectURL(file));
+    }
+  };
+
+  // Main form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Submitting form:", formData); // Debugging
-    
-    try{
-      const userCredentials =await createUserWithEmailAndPassword(
+    console.log("Submitting form:", formData);
+
+    try {
+      // 1) Create user in Firebase Auth
+      const userCredentials = await createUserWithEmailAndPassword(
         auth,
         formData.email,
         formData.password
       );
-      const user=userCredentials.user;
-      
-      //send email verification
-      await sendEmailVerification(user);
-      console.log("Verification email sent to email",user.email);
+      const user = userCredentials.user;
 
-      //store buyer data in firestore database
-      const docRef = await addDoc(collection(db,'Buyers'),{
-        ...formData,
-        emailVerfied :false,   //will be updated after the verification
-        uid:user.uid, //store firebase auth uID
+      // 2) Send email verification
+      await sendEmailVerification(user);
+      console.log("Verification email sent to:", user.email);
+
+      // 3) (Optional) Upload avatar
+      let avatarUrl = "";
+      if (avatarFile) {
+        avatarUrl = await upload(avatarFile);
+      }
+
+      // 4) Store user data in "users" collection
+      await addDoc(collection(db, "users"), {
+        id: user.uid,
+        email: formData.email,
+        role: formData.role.toLowerCase(), // "buyer"
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        avatar: avatarUrl,
+        blocked: [], // empty blocked array
+        createdAt: new Date(),
       });
+
+      // 5) Store buyer data in "Buyers" collection
+      const docRef = await addDoc(collection(db, "Buyers"), {
+        ...formData,
+        role: formData.role.toLowerCase(),
+        emailVerified: false,
+        uid: user.uid,
+        avatar: avatarUrl,
+        blocked: [],
+        createdAt: new Date(),
+      });
+
       console.log("Buyer added with ID:", docRef.id);
-     setIsSubmitted(true);
-    }catch (error) {
+      setIsSubmitted(true);
+    } catch (error) {
       console.error("Error adding buyer:", error);
     }
   };
-  
 
+  // Show verification screen after submission
   if (isSubmitted) {
     return <VerificationWaitTime />;
   }
@@ -114,7 +138,8 @@ const NewBuyer = () => {
           </h2>
           <p className="text-white/90 text-lg mb-2 leading-relaxed">
             To help you get started, we've put together a quick and easy
-            onboarding process. <br />
+            onboarding process.
+            <br />
             <br />
             Let's get you set up and ready to go!
           </p>
@@ -128,10 +153,7 @@ const NewBuyer = () => {
 
       {/* Right Panel */}
       <div className="w-3/5 p-8 flex items-center justify-center">
-        <form
-          onSubmit={handleSubmit}
-          className="w-full max-w-4xl grid grid-cols-2 gap-8"
-        >
+        <form onSubmit={handleSubmit} className="w-full max-w-4xl grid grid-cols-2 gap-8">
           {/* Account Details */}
           <div className="col-span-2">
             <h3 className="text-2xl font-semibold text-[#7C77C1] mb-4">
@@ -218,6 +240,48 @@ const NewBuyer = () => {
             </div>
           </div>
 
+          
+          <div className="col-span-2">
+            <label className="block text-sm font-medium text-[#7C77C1] mb-1">
+              Profile Picture
+            </label>
+            <div className="mb-2">
+              {avatarPreview ? (
+                <img
+                  src={avatarPreview}
+                  alt="Avatar Preview"
+                  className="w-16 h-16 object-cover rounded-full"
+                />
+              ) : (
+                <p className="text-sm text-gray-500">No image selected</p>
+              )}
+            </div>
+           
+            <label className="inline-flex items-center px-3 py-2 bg-[#7C77C1] text-white text-sm font-medium leading-4 rounded-md shadow-sm hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 cursor-pointer">
+              {/* Upload icon (simple SVG) */}
+              <svg
+                className="w-5 h-5 mr-2"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M9 8l3-3m0 0l3 3m-3-3v12"
+                />
+              </svg>
+              <span>Upload Avatar</span>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleAvatarSelect}
+                className="hidden"
+              />
+            </label>
+          </div>
+
           {/* Business & Country */}
           <div className="col-span-2">
             <div className="grid grid-cols-2 gap-4">
@@ -293,9 +357,9 @@ const NewBuyer = () => {
               required
             />
           </div>
-          <div>
+          <div className="col-span-2">
             <label
-              htmlFor="categories"
+              htmlFor="services"
               className="block text-sm font-medium text-[#7C77C1]"
             >
               Services
