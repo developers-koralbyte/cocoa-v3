@@ -22,6 +22,7 @@ const CalendarPage = React.lazy(() => import('../pages/Dashboard/CalendarPage'))
 const InboxPage = React.lazy(() => import('../pages/Dashboard/InboxPage'));
 const AccountingSoftware = React.lazy(() => import('../pages/Dashboard/AccountingSoftware'));
 const BecomingAVendor = React.lazy(() => import('../components/BecomeAVendor/BecomingAVendor'));
+const VendorPricingVerification = React.lazy(() => import('../components/VendorPricing&Verification/VendorPricing&Verification'));
 const AppRoutes: React.FC = () => {
     
     return (
@@ -30,35 +31,58 @@ const AppRoutes: React.FC = () => {
                 {/* Public Routes */}
                 <Route path="/" element={<HomePage />} />
                 <Route path="/login" element={<LoginPage />} />
-                <Route path="/create-account" element={<SignupSelectionPage />} />
+                <Route
+                    path="/create-account"
+                    element={<SignupSelectionPage />}
+                />
                 <Route path="/new-buyer" element={<NewBuyer />} />
                 <Route path="/new-vendor" element={<NewVendor />} />
-                <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                <Route
+                    path="/forgot-password"
+                    element={<ForgotPasswordPage />}
+                />
                 <Route path="/new-password" element={<NewPasswordPage />} />
                 <Route path="/verification" element={<VerificationPage />} />
 
                 {/* Protected Routes for Vendors */}
-                <Route element={<ProtectedRoute allowedRoles={["vendor"]} />}>
-                    <Route path="/vendor-dashboard" element={<VendorDashboard />} />
+                <Route element={<ProtectedRoute allowedRoles={['vendor']} />}>
+                    <Route
+                        path="/vendor-dashboard"
+                        element={<VendorDashboard />}
+                    />
                     <Route path="/invoices" element={<VendorInvoicePage />} />
                     <Route path="/calendar" element={<CalendarPage />} />
                     <Route path="/inbox" element={<InboxPage />} />
-                    <Route path="/accounting-software" element={<AccountingSoftware />} />
-                    <Route path="/create-new-invoice" element={<CreateNewInvoice />} />
+                    <Route
+                        path="/accounting-software"
+                        element={<AccountingSoftware />}
+                    />
+                    <Route
+                        path="/create-new-invoice"
+                        element={<CreateNewInvoice />}
+                    />
                 </Route>
 
                 {/* Protected Routes for Buyers */}
-                <Route element={<ProtectedRoute allowedRoles={["buyer"]} />}>
-                    <Route path="/buyer-dashboard" element={<BuyerDashboard />} />
-                    <Route path="/buyer-calendar" element={<BuyerCalendarPage />} />
+                <Route element={<ProtectedRoute allowedRoles={['buyer']} />}>
+                    <Route
+                        path="/buyer-dashboard"
+                        element={<BuyerDashboard />}
+                    />
+                    <Route
+                        path="/buyer-calendar"
+                        element={<BuyerCalendarPage />}
+                    />
                     <Route path="/invoices" element={<BuyerInvoicePage />} />
                 </Route>
 
                 {/* Becoming a Vendor*/}
                 <Route path="/become-a-vendor" element={<BecomingAVendor />} />
+                {/* Vendor Pricing & Verification*/}
+                <Route path="/vendor-pricing&verification" element={<VendorPricingVerification />} />
             </Routes>
         </Suspense>
-    );
+    )
 };
 
 
