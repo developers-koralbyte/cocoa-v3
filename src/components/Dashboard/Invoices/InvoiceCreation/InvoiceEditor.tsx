@@ -258,13 +258,8 @@ const InvoiceEditor: React.FC<Props> = ({
                                     <input
                                         type="text"
                                         value={item.description}
-                                        onChange={(e) =>
-                                            onItemChange(
-                                                item.id,
-                                                'description',
-                                                e.target.value
-                                            )
-                                        }
+                                        onChange={(e) => onItemChange(item.id, 'description', e.target.value)}
+
                                         className="w-full bg-transparent border-b border-gray-300 focus:border-purple-600 px-2 py-1 outline-none"
                                         placeholder="Item description"
                                     />
