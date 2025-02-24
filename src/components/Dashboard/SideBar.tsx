@@ -1,10 +1,20 @@
-import { Layout, Inbox, FileText, Calendar, LogOut, Grid } from 'lucide-react';
-import { useNavigate, useLocation, To } from 'react-router-dom';
+import { Inbox, FileText, Calendar, LogOut, Grid } from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import logo from '../../assets/img/Dashboard/CocoaLogo.png';
-import { ComponentType } from 'react';
+import { ComponentType, RefAttributes, ForwardRefExoticComponent } from 'react';
+import { useUserStore } from '../../utils/userStore'; // Import userStore
+
+// Define type for Lucide icons
+type LucideIcon = ForwardRefExoticComponent<
+  Omit<React.SVGProps<SVGSVGElement>, "ref"> & {
+    size?: number | string;
+    color?: string;
+    strokeWidth?: number | string;
+  } & RefAttributes<SVGSVGElement>
+>;
 
 interface MenuItem {
-    icon: ComponentType<{ size?: number }>;
+    icon: LucideIcon;
     label: string;
     vendorPath?: string;
     buyerPath?: string;
@@ -15,24 +25,47 @@ interface SideBarProps {
     toggleSidebar: () => void;
 }
 
+// Define UserStore type to fix the 'unknown' type error
+interface UserStoreState {
+    currentUser: {
+        id?: string;
+        role?: string;
+        [key: string]: any;
+    } | null;
+    isLoading: boolean;
+    fetchUserInfo: (uid: string) => Promise<void>;
+}
+
 const SideBar = ({ isOpen, toggleSidebar }: SideBarProps) => {
     const navigate = useNavigate();
     const location = useLocation();
-
+    // Cast the useUserStore hook to the correct type
+    const { currentUser, isLoading } = useUserStore() as UserStoreState;
     
-    const userData = localStorage.getItem("user");
-    const user = userData ? JSON.parse(userData) : null;
-    const userRole = user?.role;  
+    // Wait for user data to load
+    if (isLoading) {
+        return <div className="fixed top-0 left-0 z-50 h-screen w-64 bg-[#9082C6] flex items-center justify-center">
+            <div className="text-white">Loading...</div>
+        </div>;
+    }
+    
+    if (!currentUser) {
+        console.error("User not found!");
+        navigate("/login");
+        return null;
+    }
+
+    const userRole = currentUser.role;
 
     if (!userRole) {
-        console.error(" User role not found!");
+        console.error("User role not found!");
         return null; // Return early if role is missing
     }
 
     // Define menu items for both roles
     const menuItems: MenuItem[] = [
         { icon: Grid, label: 'Dashboard', vendorPath: '/vendor-dashboard', buyerPath: '/buyer-dashboard' },
-        { icon: Inbox, label: 'Inbox', vendorPath: '/inbox', buyerPath: '/buyer-inbox' }, // ✅ Fixed path
+        { icon: Inbox, label: 'Inbox', vendorPath: '/inbox', buyerPath: '/buyer-inbox' },
         { icon: FileText, label: 'Invoices', vendorPath: '/invoices', buyerPath: '/buyer-invoices' },
         { icon: Calendar, label: 'Calendar', vendorPath: '/calendar', buyerPath: '/buyer-calendar' },
     ];
@@ -77,10 +110,9 @@ const SideBar = ({ isOpen, toggleSidebar }: SideBarProps) => {
                                 ${isActive ? 'bg-white text-[#9082C6] shadow-md' : 'hover:bg-white/10'} 
                                 group`}
                         >
-                            <Icon
-                                size={24}
-                                className="transition-transform duration-200 group-hover:scale-110"
-                            />
+                            <div className="transition-transform duration-200 group-hover:scale-110">
+                                <Icon size={24} />
+                            </div>
                             <span className="transition-opacity duration-200 group-hover:opacity-80">
                                 {label}
                             </span>
@@ -94,15 +126,16 @@ const SideBar = ({ isOpen, toggleSidebar }: SideBarProps) => {
                 <div
                     onClick={() => {
                         localStorage.removeItem("user");
+                        // Reset the userStore state as well
+                        useUserStore.setState({ currentUser: null });
                         navigate("/login");
                     }}
                     className="flex items-center gap-3 px-5 py-3 text-lg font-medium cursor-pointer transition-all 
                     hover:bg-white/10 rounded-lg group"
                 >
-                    <LogOut
-                        size={24}
-                        className="transition-transform duration-200 group-hover:scale-110"
-                    />
+                    <div className="transition-transform duration-200 group-hover:scale-110">
+                        <LogOut size={24} />
+                    </div>
                     <span className="transition-opacity duration-200 group-hover:opacity-80">
                         Log out
                     </span>
