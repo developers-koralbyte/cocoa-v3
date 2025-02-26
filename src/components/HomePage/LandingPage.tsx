@@ -52,12 +52,12 @@ const LandingPage = () => {
                 <div className="flex w-full min-h-screen items-center">
                     {/* Left Section */}
                     <div className="w-1/2 pt-56 pl-28">
-                        <h1 className="font-nunito text-[75px] font-bold leading-[86px] text-left text-buttonBg">
-                            Real-Time Global <br /> Procurement <br /> Through
+                        <h1 className="font-nunito text-[60px] font-bold leading-[75px] text-left text-buttonBg">
+                            Real-Time Global <br /> B2B Procurement <br /> Through
                             Chat
                         </h1>
                         <div className="font-sourceSans">
-                            <p className="mt-4 text-[22px] text-buttonBg leading-relaxed">
+                            <p className="mt-4 text-[18px] text-buttonBg leading-relaxed">
                                 From enterprise-level corporate services and
                                 leading ERP solutions
                                 <br />
