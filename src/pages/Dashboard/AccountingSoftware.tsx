@@ -5,7 +5,7 @@ import { GiPin } from 'react-icons/gi'
 import { IoShareSocial } from 'react-icons/io5'
 import { IoNotifications } from 'react-icons/io5'
 import BaseLayout from '../../components/Dashboard/BaseLayout'
-
+import Header from "../../components/Dashboard/Invoices/HeaderProps"
 
 interface Appointment {
     name: string
