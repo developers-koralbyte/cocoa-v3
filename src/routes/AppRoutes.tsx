@@ -2,7 +2,6 @@ import React, { Suspense } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import BuyerCalendarPage from '../pages/Dashboard/BuyerCalendarPage';
 import ProtectedRoute from "../utils/ProtectedRoute";
-import { useUserStore } from '../utils/userStore'; // Import user store
 
 // Lazy load all the components
 const HomePage = React.lazy(() => import('../pages/HomePage'));
@@ -73,7 +72,8 @@ const AppRoutes: React.FC = () => {
                         path="/buyer-calendar"
                         element={<BuyerCalendarPage />}
                     />
-                    <Route path="/invoices" element={<BuyerInvoicePage />} />
+                    <Route path="/buyer-invoices" element={<BuyerInvoicePage />} />
+                    <Route path="/buyer-inbox" element={<InboxPage />} />
                 </Route>
 
                 {/* Becoming a Vendor*/}
