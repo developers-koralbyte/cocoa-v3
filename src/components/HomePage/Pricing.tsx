@@ -1,5 +1,6 @@
 import { BsCheckCircle } from 'react-icons/bs'
 import { useNavigate } from 'react-router-dom'
+import React from 'react'
 
 const PricingCard = ({
     price,

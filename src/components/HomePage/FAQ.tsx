@@ -7,27 +7,23 @@ interface FAQItem {
 }
 
 const faqData: FAQItem[] = [
-  {
-    question: "What is Cocoa?",
-    answer:
-      "COCOA is Canada's first chat-based procurement platform connecting enterprises with verified solution providers. Through real-time communication, we streamline procurement across corporate services, enterprise software, commercial equipment, and industry solutions - transforming traditional procurement into an efficient, integrated experience.",
-  },
-  {
-    question: "Is Cocoa a POS?",
-    answer:
-      "No, Cocoa is not just a POS system. It's a comprehensive solution that connects restaurants with vendors and streamlines the entire supply chain process.",
-  },
-  {
-    question: "Is COCOA Free for businesses?",
-    answer:
-      "COCOA offers freemium version for businesses but with limited features. They can always upgrade to unlock advanced features with subscriptions.",
-  },
-  {
-    question: "How can Cocoa benefit vendors and buyers?",
-    answer:
-      "COCOA revolutionizes the B2B procurement process through instant communication and streamlined processes. For enterprises, our platform enables real-time negotiation with verified providers, comprehensive solution comparison, and efficient implementation management. For solution providers, COCOA offers direct access to qualified corporate clients, streamlined deal management, and automated documentation flow - from quotes to contracts. Our chat-based platform eliminates traditional procurement delays while maintaining complete audit trails and compliance documentation.",
-  },
-];
+    {
+        question: 'What is Cocoa?',
+        answer: "COCOA is Canada's first chat-based procurement platform connecting enterprises with verified solution providers. Through real-time communication, we streamline procurement across corporate services, enterprise software, commercial equipment, and industry solutions - transforming traditional procurement into an efficient, integrated experience.",
+    },
+    {
+        question: 'Is Cocoa a POS?',
+        answer: 'No, COCOA is not just a POS. It’s a comprehensive solution that connects buyers with vendors and streamlines the entire supply chain process.',
+    },
+    {
+        question: 'Is COCOA Free for businesses?',
+        answer: 'COCOA offers freemium version for businesses but with limited features. They can always upgrade to unlock advanced features with subscriptions.',
+    },
+    {
+        question: 'How can Cocoa benefit vendors and buyers?',
+        answer: 'COCOA revolutionizes the B2B procurement process through instant communication and streamlined processes. For enterprises, our platform enables real-time negotiation with verified providers, comprehensive solution comparison, and efficient implementation management. For solution providers, COCOA offers direct access to qualified corporate clients, streamlined deal management, and automated documentation flow - from quotes to contracts. Our chat-based platform eliminates traditional procurement delays while maintaining complete audit trails and compliance documentation.',
+    },
+]
 
 const FAQ: React.FC = () => {
   const [openIndex, setOpenIndex] = useState<number | null>(null);

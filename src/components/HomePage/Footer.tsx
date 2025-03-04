@@ -6,16 +6,16 @@ import logoImg from '../../assets/img/logoImg.png'
 const Footer = () => {
     const navigation = {
         main: [
-            { name: 'HOME', href: '#' },
-            { name: 'Vendors', href: '#' },
-            { name: 'Buyers', href: '#' },
+            { name: 'HOME', href: '/' },
+            { name: 'Vendors', href: '/new-vendor' },
+            { name: 'Buyers', href: '/new-buyer' },
             { name: 'Marketplace', href: '#' },
         ],
         cocoa: [
-            { name: 'COCOA', href: '#' },
-            { name: 'Pricing', href: '#' },
+            { name: 'COCOA', href: '/' },
+            { name: 'Pricing', href: '/vendor-pricing&verification' },
             { name: 'Demo', href: '#' },
-            { name: 'Log in', href: '#' },
+            { name: 'Log in', href: '/login' },
         ],
         about: [
             { name: 'About us', href: '#' },

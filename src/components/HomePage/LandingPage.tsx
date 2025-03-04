@@ -2,6 +2,7 @@ import bgWave from '../../assets/img/MainSection/bgWave.png'
 import cocoaLogo from '../../assets/img/cocoa-logo.png'
 import { useNavigate } from 'react-router-dom'
 import laptopImage from '../../assets/img/MainSection/laptop.png'
+import React from 'react'
 
 const LandingPage = () => {
     const navigate = useNavigate() // Hook for navigation

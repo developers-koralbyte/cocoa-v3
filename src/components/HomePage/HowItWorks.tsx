@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
 import { FaPlay, FaPause, FaVolumeMute, FaVolumeUp } from 'react-icons/fa'
-import cocoavid from '../../components/HomePage/COCOAVID.mp4'
-import cocoaimg from '../../components/HomePage/cocoaImgVid.jpeg'
+//import cocoavid from '../../components/HomePage/COCOAVID.mp4'
+import cocoaimg from '../../components/HomePage/cocoaImgVideo.jpeg'
 
 const HowItWorks = () => {
     const videoRef = useRef(null)
@@ -46,7 +46,7 @@ const HowItWorks = () => {
                     {/* Video Element (Always Present) */}
                     <video
                         ref={videoRef}
-                        src={cocoavid}
+                        src={'cocoavid'}
                         className="w-full rounded-xl shadow-xl"
                         muted={isMuted}
                         onPlay={() => setIsPlaying(true)}

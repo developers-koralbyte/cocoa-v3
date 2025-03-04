@@ -4,6 +4,7 @@ import graphImage from "../../assets/img/BusinessFeaturesSection/graph.png";
 import rocketImage from "../../assets/img/BusinessFeaturesSection/rocket.png";
 import statsImage from "../../assets/img/BusinessFeaturesSection/stats.png";
 import workImage from "../../assets/img/BusinessFeaturesSection/work.png";
+import React from "react";
 
 const features = [
   {

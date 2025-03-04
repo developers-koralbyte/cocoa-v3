@@ -1,6 +1,7 @@
-import imgOne from '../../components/HomePage/userImgOne.jpeg'
-import imgTwo from '../../components/HomePage/userImgTwo.jpeg'
-import imgThree from '../../components/HomePage/userImgThree.jpeg'
+import imgOne from '../../components/HomePage/userImageOne.jpeg'
+import imgTwo from '../../components/HomePage/userImageTwo.jpeg'
+import imgThree from '../../components/HomePage/userImageThree.jpeg'
+import React from 'react'
 interface Testimonial {
     id: number
     name: string
