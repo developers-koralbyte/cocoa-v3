@@ -90,14 +90,16 @@ const PricingCard = ({
 
 const Pricing = () => {
     return (
-        <div className="min-h-screen bg-gradient-to-b from-white via-purple-50 to-purple-100 font-nunito">
+        <div className="min-h-screen bg-gradient-to-b from-white via-[#6868AC96] to-[#6868AC96] font-nunito">
             <div className="max-w-7xl mx-auto px-4 py-20">
                 <div className="text-center mb-16">
                     <h1 className="text-5xl font-bold mb-4">
                         <span className="text-purple-900">
                             Invest in Your Business,
                         </span>{' '}
-                        <span className="text-black">Without  <br /> the Overhead</span>
+                        <span className="text-black">
+                            Without <br /> the Overhead
+                        </span>
                     </h1>
                     <p className="text-black     font-medium">
                         Choose the right price for you!
@@ -140,6 +142,20 @@ const Pricing = () => {
                         ]}
                         buttonText="Sign up now"
                     />
+                </div>
+                <div className="min-h-screen flex flex-col items-center justify-center">
+                    <div className="w-full max-w-3xl">
+                        <div className="bg-[#6868AC96] rounded-[2rem] px-12 py-10 shadow-xl relative overflow-hidden">
+                            <div className="flex items-center gap-3 text-3xl">
+                                <div className="bg-white text-[#9999CC] px-8 py-3 rounded-full font-bold">
+                                    Always Free
+                                </div>
+                                <h1 className="text-white font-bold">
+                                    for Business Buyers
+                                </h1>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
