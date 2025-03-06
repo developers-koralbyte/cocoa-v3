@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { auth, db, googleProvider } from "../../utils/firebase";
+import { deleteUser } from "firebase/auth";
+
 import {
   browserLocalPersistence,
   setPersistence,
@@ -118,33 +120,32 @@ const LoginForm: React.FC = () => {
     try {
       // Persist the session locally
       await setPersistence(auth, browserLocalPersistence);
-
+  
       // Sign in with Google (popup)
       const result = await signInWithPopup(auth, googleProvider);
       const user = result.user;
       const userId = user.uid;
-
+  
       // Check if there's a doc for this user in Firestore
       const userQuery = query(
         collection(db, "users"),
         where("id", "==", userId)
       );
       const userSnapshot = await getDocs(userQuery);
-
+  
       if (!userSnapshot.empty) {
         const docData = userSnapshot.docs[0].data();
         const userRole = docData.role;
-
+  
         // Store user info in localStorage
         localStorage.setItem(
           "user",
           JSON.stringify({ uid: userId, role: userRole })
         );
-
+  
         fetchUserInfo(userId);
-
         toast.success("Login successful!");
-
+  
         // Redirect based on role
         if (userRole === "vendor") {
           navigate("/vendor-dashboard");
@@ -154,7 +155,13 @@ const LoginForm: React.FC = () => {
           toast.error("Unknown user role. Please contact support.");
         }
       } else {
-        toast.error("User role not found in 'users' collection.");
+        // New user: no Firestore doc found
+        toast.error("No existing account found. Please create an account first.");
+  
+        // Delete the newly created auth user to avoid orphaning an auth record
+        await deleteUser(user);
+  
+        navigate("/create-account");
       }
     } catch (err: any) {
       console.error("Google login error:", err);
@@ -163,6 +170,7 @@ const LoginForm: React.FC = () => {
       setLoading(false);
     }
   };
+  
 
   return (
     <form onSubmit={handleLogin} className="space-y-5 max-w-md" noValidate>

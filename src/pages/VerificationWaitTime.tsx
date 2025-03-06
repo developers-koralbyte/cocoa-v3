@@ -32,7 +32,7 @@ const VerificationWait = () => {
 
       <button
         className="px-8 py-3 bg-[#7C77C1] text-white rounded-full hover:bg-[#6661B0] transition-colors"
-        onClick={() => (window.location.href = "/dashboard")}
+        onClick={() => (window.location.href = "/")}
       >
         Explore homepage 
       </button>
