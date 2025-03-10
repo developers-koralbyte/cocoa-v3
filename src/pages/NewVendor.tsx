@@ -3,9 +3,10 @@ import cocoaLogo from "../assets/img/cocoa-logo-white.png";
 import VendorVerification from "./VerificationVendor";
 import { auth, db } from "../utils/firebase";
 import { createUserWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
-import { collection, addDoc } from "firebase/firestore";
 import { useLocation } from "react-router-dom";
 import upload from "../utils/upload"; 
+import { doc, setDoc } from "firebase/firestore";
+import { toast } from "react-toastify";
 
 type FormData = {
   email: string;
@@ -90,32 +91,39 @@ const NewVendor = () => {
       }
 
       // 4) Store user data in "users" collection
-      await addDoc(collection(db, "users"), {
+      await setDoc(doc(db, "users", user.uid), {
         id: user.uid,
         email: formData.email,
-        role: formData.role.toLowerCase(), // "vendor" or "buyer"
+        role: formData.role.toLowerCase(),
         firstName: formData.firstName,
         lastName: formData.lastName,
         avatar: avatarUrl,
-        blocked: [],           
+        blocked: [],
         createdAt: new Date(),
       });
 
-      // 5) Store vendor-specific data in "Vendors" collection
-      await addDoc(collection(db, "Vendors"), {
+      // 4) Store vendor-specific data in "Vendors" collection with doc ID = user.uid
+      await setDoc(doc(db, "Vendors", user.uid), {
         ...formData,
         role: formData.role.toLowerCase(),
         emailVerified: false,
         uid: user.uid,
-        avatar: avatarUrl,     
-        blocked: [],           
+        avatar: avatarUrl,
+        blocked: [],
         createdAt: new Date(),
       });
 
+
       console.log("Vendor added successfully in both 'users' and 'Vendors'.");
       setIsSubmitted(true);
-    } catch (error) {
+    } catch (error:any) {
       console.error("Error adding vendor:", error);
+      if (error.code === "auth/email-already-in-use") {
+        // You can show a toast or set local state
+        toast.error("A user with this email already exists. Please log in or use a different email.");
+      } else {
+        toast.error("An error occurred during sign-up. Please try again or contact support.");
+      }
     }
   };
 
