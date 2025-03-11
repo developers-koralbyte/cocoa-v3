@@ -41,8 +41,8 @@ const Userinfo = ({ currentUser }) => {
     return (
         <div className="userInfo">
             <div className="user">
-                <img src={currentUser?.avatar || avatar} alt="" />
-                <h2>{currentUser?.username}</h2>
+                <img src={currentUser?.avatar || avatar} alt="profile" />
+                <h2>{currentUser?.firstName}</h2>
             </div>
 
             {/* <div className="options-menu" ref={menuRef}>

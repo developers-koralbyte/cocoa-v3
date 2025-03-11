@@ -1,131 +1,146 @@
+// components/list/chatList/ChatList.jsx
 import { useEffect, useState } from 'react'
-import AddUser from './addUser/addUser'
-import { useUserStore } from '../../../utils/userStore'
 import { doc, getDoc, onSnapshot, updateDoc } from 'firebase/firestore'
 import { db } from '../../../utils/firebase'
+
+import { useUserStore } from '../../../utils/userStore'
 import { useChatStore } from '../../../utils/chatStore'
+import AddUser from './addUser/addUser' // if you have a "plus" button to add new contacts
 import searchIcon from '../../../assets/img/chatImages/search.png'
-import minus from '../../../assets/img/chatImages/minus.png'
-import plus from '../../../assets/img/chatImages/plus.png'
+
 const ChatList = () => {
-    const [chats, setChats] = useState([])
-    const [addMode, setAddMode] = useState(false)
-    const [input, setInput] = useState('')
+  const [chats, setChats] = useState([])
+  const [addMode, setAddMode] = useState(false)
+  const [input, setInput] = useState('')
 
-    const { currentUser } = useUserStore()
-    const { chatId, changeChat } = useChatStore()
+  // The user store, which includes docId & other fields
+  const { currentUser } = useUserStore()
+  const { changeChat } = useChatStore()
 
-    useEffect(() => {
-        const unSub = onSnapshot(
-            doc(db, 'userchats', currentUser.id),
-            async (res) => {
-                const items = res.data().chats
-
-                const promises = items.map(async (item) => {
-                    const userDocRef = doc(db, 'users', item.receiverId)
-                    const userDocSnap = await getDoc(userDocRef)
-
-                    const user = userDocSnap.data()
-
-                    return { ...item, user }
-                })
-
-                const chatData = await Promise.all(promises)
-
-                setChats(chatData.sort((a, b) => b.updatedAt - a.updatedAt))
-            }
-        )
-
-        return () => {
-            unSub()
-        }
-    }, [currentUser.id])
-
-    const handleSelect = async (chat) => {
-        const userChats = chats.map((item) => {
-            const { user, ...rest } = item
-            return rest
-        })
-
-        const chatIndex = userChats.findIndex(
-            (item) => item.chatId === chat.chatId
-        )
-
-        userChats[chatIndex].isSeen = true
-
-        const userChatsRef = doc(db, 'userchats', currentUser.id)
-
-        try {
-            await updateDoc(userChatsRef, {
-                chats: userChats,
-            })
-            changeChat(chat.chatId, chat.user)
-        } catch (error) {
-            console.log(error)
-        }
+  useEffect(() => {
+    // If we have no docId, skip
+    if (!currentUser?.docId) {
+      return
     }
 
-    const filteredChats = chats.filter((c) =>
-        c.user.username.toLowerCase().includes(input.toLowerCase())
+    // Listen for changes in userchats/{currentUser.docId}
+    const unSub = onSnapshot(doc(db, 'userchats', currentUser.docId), async (res) => {
+      if (!res.exists()) {
+        setChats([])
+        return
+      }
+
+      const items = res.data().chats || []
+      // For each chat item, we fetch the user doc by `receiverId`
+      const promises = items.map(async (item) => {
+        try {
+          const userDocRef = doc(db, 'users', item.receiverId)
+          const userDocSnap = await getDoc(userDocRef)
+
+          if (!userDocSnap.exists()) {
+            // If the user doc doesn't exist, embed the ID anyway
+            return { ...item, user: { id: item.receiverId } }
+          }
+
+          const userData = userDocSnap.data()
+          const user = {
+            docId: userDocSnap.id, // the doc ID (random)
+            ...userData,          // includes .id => the “auth ID”
+          }
+          return { ...item, user }
+        } catch (err) {
+          console.error('Error fetching user data:', err)
+          return item
+        }
+      })
+
+      const chatData = await Promise.all(promises)
+      // Sort by updatedAt descending
+      setChats(chatData.sort((a, b) => b.updatedAt - a.updatedAt))
+    })
+
+    return () => unSub()
+  }, [currentUser?.docId])
+
+  const handleSelect = async (chat) => {
+    // Mark as seen locally
+    const updatedChats = chats.map((c) =>
+      c.chatId === chat.chatId ? { ...c, isSeen: true } : c
     )
 
-    return (
-        <>
-            <div class="border-b-2 py-4 px-2 border-t-2">
-                <input
-                    type="text"
-                    placeholder="Search"
-                    onChange={(e) => setInput(e.target.value)}
-                    class="py-2 px-2 border-2 border-gray-200 rounded-2xl w-full"
-                />
+    try {
+      // Save to Firestore, removing the user object
+      await updateDoc(doc(db, 'userchats', currentUser.docId), {
+        chats: updatedChats.map(({ user, ...rest }) => rest),
+      })
+      // Switch the store to this chat
+      changeChat(chat.chatId, chat.user)
+    } catch (error) {
+      console.error(error)
+    }
+  }
+
+  // Filter by user’s username
+  const filteredChats = chats.filter((chat) =>
+    chat.user?.username?.toLowerCase().includes(input.toLowerCase())
+  )
+
+  return (
+    <>
+      <div className="border-b-2 py-4 px-2 border-t-2">
+        <input
+          type="text"
+          placeholder="Search"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          className="py-2 px-2 border-2 border-gray-200 rounded-2xl w-full"
+        />
+      </div>
+
+      {!addMode ? (
+        filteredChats.map((chat) => (
+          <div
+            key={chat.chatId}
+            className="flex flex-row py-4 px-2 items-center border-b-2"
+            onClick={() => handleSelect(chat)}
+          >
+            <div className="w-1/4">
+              <img
+                src={chat.user?.avatar || './avatar.png'}
+                className="object-cover h-12 w-12 rounded-full"
+                alt=""
+              />
             </div>
-            {!addMode ? (
-                filteredChats.map((chat) => (
-                    <div
-                        className="flex flex-row py-4 px-2 items-center border-b-2"
-                        key={chat.chatId}
-                        onClick={() => handleSelect(chat)}
-                    >
-                        <div className="w-1/4">
-                            <img
-                                src={chat.user.avatar || './avatar.png'}
-                                className="object-cover h-12 w-12 rounded-full"
-                                alt=""
-                            />
-                        </div>
-                        <div className="w-full">
-                            <div className="text-lg font-semibold">
-                                {chat.user.blocked.includes(currentUser.id)
-                                    ? 'User'
-                                    : chat.user.username}
-                            </div>
-                            <span className="text-gray-500">
-                                {chat.lastMessage}
-                            </span>
-                        </div>
-
-                        {!chat.isSeen && (
-                            <div
-                                className="seen-dot"
-                                style={{
-                                    width: '15px',
-                                    height: '15px',
-                                    backgroundColor: '#17b617',
-                                    borderRadius: '50%',
-                                    position: 'absolute',
-                                    right: '10px', // Adjust this value to match your design
-                                    top: '50%',
-                                    transform: 'translateY(-50%)',
-                                }}
-                            ></div>
-                        )}
-                    </div>
-                ))
-            ) : (
-                <AddUser setAddMode={setAddMode} searchIcon={searchIcon} />
-            )}{' '}
-        </>
-    )
+            <div className="w-full">
+              <div className="text-lg font-semibold">
+                {/* If blocked includes currentUser.id, show 'User' instead of username */}
+                {chat.user?.blocked?.includes(currentUser?.id)
+                  ? 'User'
+                  : chat.user?.username || 'Unknown'}
+              </div>
+              <span className="text-gray-500">{chat.lastMessage}</span>
+            </div>
+            {!chat.isSeen && (
+              <div
+                style={{
+                  width: '15px',
+                  height: '15px',
+                  backgroundColor: '#17b617',
+                  borderRadius: '50%',
+                  position: 'absolute',
+                  right: '10px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                }}
+              ></div>
+            )}
+          </div>
+        ))
+      ) : (
+        <AddUser setAddMode={setAddMode} searchIcon={searchIcon} />
+      )}
+    </>
+  )
 }
 
 export default ChatList

@@ -5,7 +5,7 @@ import { GiPin } from 'react-icons/gi'
 import { IoShareSocial } from 'react-icons/io5'
 import { IoNotifications } from 'react-icons/io5'
 import BaseLayout from '../../components/Dashboard/BaseLayout'
-
+import Header from "../../components/Dashboard/Invoices/HeaderProps"
 
 interface Appointment {
     name: string
@@ -258,7 +258,7 @@ const AccountingSoftware = () => {
                     <div className="flex items-center justify-center gap-x-5 gap-4 mb-8">
                         <div>
                             <h2 className="font-bold font-nunito">
-                                Peter, Accountix
+                                Harsh, Accountix
                             </h2>
                             <div className="flex items-center gap-2">
                                 <span className="text-sm text-gray-600 font-nunito">

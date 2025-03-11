@@ -69,7 +69,7 @@ const BusinessFeatures = () => {
           {features.map((feature) => (
             <div
               key={feature.id}
-              className="bg-[rgba(212,205,244,0.65)] backdrop-blur-sm rounded-3xl p-6 flex flex-col md:flex-row gap-4 group cursor-pointer hover:bg-purple-600 transition-all duration-300"
+              className="bg-[rgba(212,205,244,0.65)] backdrop-blur-sm rounded-3xl p-6 flex flex-col md:flex-row gap-4 group cursor-pointer hover:bg-[#6868AC] transition-all duration-300"
             >
               {/* Text section */}
               <div className="flex-1">

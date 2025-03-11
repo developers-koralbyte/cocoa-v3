@@ -276,7 +276,7 @@ const CalendarPage: React.FC = () => {
             <h1 className="text-4xl font-bold text-gray-800">Calendar</h1>
             <div className="flex items-center gap-x-5 gap-4">
               <div>
-                <h2 className="font-bold">Peter, Accountix</h2>
+                <h2 className="font-bold">Harsh, Accountix</h2>
                 <div className="flex items-center gap-2">
                   <span className="text-sm text-gray-600">Vendor</span>
                   <span className="text-xs bg-purple-200 px-2 py-1 rounded-full">

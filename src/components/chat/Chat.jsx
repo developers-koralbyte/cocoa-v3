@@ -143,8 +143,13 @@ const Chat = ({ onBackClick }) => {
                 }),
             })
 
-            const userIDs = [currentUser.id, user.id]
-
+            if (!currentUser?.id || !user?.id) {
+                console.error("User data is missing, cannot send message.");
+                return;
+              }
+              
+              const userIDs = [currentUser.id, user.id];
+              
             userIDs.forEach(async (id) => {
                 const userChatsRef = doc(db, 'userchats', id)
                 const userChatsSnapshot = await getDoc(userChatsRef)
@@ -329,7 +334,7 @@ const Chat = ({ onBackClick }) => {
                             className="texts "
                             onClick={() => setShowDetailPage()}
                         >
-                            <span>{user?.username}</span>
+                            <span>{user?.firstName}</span>
                         </div>
                     </div>
                     <div className="icons">
