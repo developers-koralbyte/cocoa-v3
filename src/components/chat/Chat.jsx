@@ -353,39 +353,124 @@ const Chat = ({ onBackClick }) => {
                     </div>
                 </div>
                 <div className="center">
-                    {chat?.messages?.map((message) => (
-                        <div
-                            className={
-                                message.senderId === currentUser?.id
-                                    ? 'message own'
-                                    : 'message'
-                            }
-                            key={message?.createAt}
-                        >
-                            <div className="texts">
-                                {message.img && (
-                                    <img src={message.img} alt="" />
+                    {chat?.messages?.map((message, index) => {
+                        // Determine if current user is sender
+                        const storedUser = localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')) : null;
+                        const currentUserId = currentUser?.docId || currentUser?.uid || storedUser?.uid;
+                        const isCurrentUser = message.senderId === currentUserId;
+                        
+                        return (
+                            <div
+                                key={index}
+                                className={`flex mb-3 sm:mb-4 ${
+                                    isCurrentUser
+                                        ? 'justify-end'
+                                        : 'justify-start'
+                                }`}
+                            >
+                                {!isCurrentUser && (
+                                    <img
+                                        src={
+                                            user?.avatar ||
+                                            './avatar.png'
+                                        }
+                                        alt=""
+                                        className="flex-shrink-0 w-6 h-6 sm:w-8 sm:h-8 rounded-full mr-2 sm:mr-3 self-start mt-1"
+                                    />
                                 )}
-                                {message.text && <p>{message.text}</p>}
-                                {message.audio && (
-                                    <audio controls src={message.audio} />
-                                )}
-                                {message.document && (
-                                    <a
-                                        href={message.document}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                    >
-                                        {message.documentName ||
-                                            'View Document'}
-                                    </a>
-                                )}
-                                <span>
-                                    {format(message.createdAt.toDate())}
-                                </span>
+                                <div
+                                    className={`w-auto max-w-[75%] sm:max-w-xs md:max-w-md px-3 sm:px-4 py-2 sm:py-3 ${
+                                        isCurrentUser
+                                            ? 'bg-[#5F4B8BB0] text-white rounded-[20px] rounded-br-none'
+                                            : 'bg-[#AFAFAF9C] text-gray-800 rounded-[20px] rounded-bl-none'
+                                    } overflow-hidden`}
+                                    style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}
+                                >
+                                    {message.img && (
+                                        <img
+                                            src={message.img}
+                                            alt="Attachment"
+                                            className="rounded mb-2 max-w-full h-auto object-contain"
+                                            style={{ maxHeight: '200px' }}
+                                        />
+                                    )}
+                                    
+                                    {message.document && (
+                                        <div className="mb-2 border rounded p-2 bg-white bg-opacity-10">
+                                            <a 
+                                                href={message.document} 
+                                                target="_blank" 
+                                                rel="noopener noreferrer"
+                                                className="flex items-center hover:underline"
+                                            >
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                                                    <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
+                                                </svg>
+                                                <span className="flex-1 truncate">
+                                                    {message.documentName || 'View Document'}
+                                                </span>
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1" viewBox="0 0 20 20" fill="currentColor">
+                                                    <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
+                                                </svg>
+                                            </a>
+                                            {message.documentName && message.documentName.toLowerCase().endsWith('.pdf') && (
+                                                <div className="mt-2">
+                                                    <button
+                                                        onClick={() => window.open(message.document, '_blank')}
+                                                        className="px-2 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600"
+                                                    >
+                                                        View PDF
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                    
+                                    {message.audio && (
+                                        <audio controls src={message.audio} className="w-full mb-2" />
+                                    )}
+                                    
+                                    <p className="text-sm sm:text-base overflow-hidden">
+                                        {message.text}
+                                    </p>
+                                    <div className="flex justify-between items-center mt-1">
+                                        <div
+                                            className={`text-[10px] sm:text-xs ${
+                                                isCurrentUser
+                                                    ? 'text-purple-200'
+                                                    : 'text-gray-500'
+                                            }`}
+                                        >
+                                            {message.createdAt && (() => {
+                                                try {
+                                                    // Handle different timestamp formats
+                                                    if (typeof message.createdAt.toDate === 'function') {
+                                                        // Firestore Timestamp
+                                                        return format(message.createdAt.toDate());
+                                                    } else if (message.createdAt instanceof Date) {
+                                                        // JavaScript Date object
+                                                        return format(message.createdAt);
+                                                    } else if (typeof message.createdAt === 'object' && message.createdAt.seconds) {
+                                                        // Firestore timestamp that was serialized
+                                                        return format(new Date(message.createdAt.seconds * 1000));
+                                                    } else {
+                                                        // Try as a date string or timestamp
+                                                        return format(new Date(message.createdAt));
+                                                    }
+                                                } catch (e) {
+                                                    console.error("Error formatting date:", e);
+                                                    return "Just now";
+                                                }
+                                            })()}
+                                        </div>
+                                        <div className="text-[10px] sm:text-xs ml-2">
+                                            {isCurrentUser ? '(You)' : ''}
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                    ))}
+                        );
+                    })}
                     {img.url && (
                         <div className="message own">
                             <div className="texts">
@@ -477,7 +562,7 @@ const Chat = ({ onBackClick }) => {
 
                         <input
                             // className="sendMessage"
-                            class="w-full bg-gray-300 py-5 px-3 rounded-xl"
+                            className="w-full bg-gray-300 py-5 px-3 rounded-xl"
                             type="text"
                             placeholder={
                                 isCurrentUserBlocked || isReceiverBlocked

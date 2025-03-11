@@ -1,7 +1,7 @@
 // components/list/chatList/ChatList.jsx
 import { useEffect, useState } from 'react'
 import { doc, getDoc, onSnapshot, updateDoc } from 'firebase/firestore'
-import { db } from '../../../utils/firebase'
+import { db } from '../../../'
 
 import { useUserStore } from '../../../utils/userStore'
 import { useChatStore } from '../../../utils/chatStore'

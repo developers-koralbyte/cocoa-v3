@@ -3,6 +3,7 @@ import { collection, query, where, getDocs, addDoc, serverTimestamp } from 'fire
 import { db } from '../../../../utils/firebase';
 import { useNavigate } from 'react-router-dom';
 import { Search } from 'lucide-react';
+import { sendInvoiceToChat } from '../../../chat/InvoiceChatService';
 
 interface Buyer {
     id: string;
@@ -48,12 +49,16 @@ interface InvoiceActionsProps {
     };
     onSave: (buyerId: string, isDraft: boolean) => Promise<void>;
 }
+
 const InvoiceActions: React.FC<InvoiceActionsProps> = ({ invoiceData, onSave }) => {
     const [buyers, setBuyers] = useState<Buyer[]>([]);
     const [selectedBuyer, setSelectedBuyer] = useState<Buyer | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [loading, setLoading] = useState(false);
     const [showBuyerList, setShowBuyerList] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [sendToChat, setSendToChat] = useState(true); // Default to true
+    const navigate = useNavigate();
 
     useEffect(() => {
         fetchBuyers();
@@ -61,18 +66,36 @@ const InvoiceActions: React.FC<InvoiceActionsProps> = ({ invoiceData, onSave }) 
 
     const fetchBuyers = async () => {
         try {
+            console.log('Starting to fetch buyers from Firestore...');
+            
             const buyersRef = collection(db, 'users');
+            console.log('Collection reference created for "users"');
+            
             const q = query(buyersRef, where('role', '==', 'buyer'));
+            console.log('Query created for role == "buyer"');
+            
             const querySnapshot = await getDocs(q);
+            console.log(`Query executed. Results: ${querySnapshot.docs.length} documents`);
             
-            const buyersList = querySnapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data()
-            })) as Buyer[];
-            
-            setBuyers(buyersList);
-        } catch (error) {
+            if (querySnapshot.empty) {
+                console.log('No buyers found in the database');
+                setError('No buyers found in the database. Make sure there are users with the role "buyer".');
+            } else {
+                const buyersList = querySnapshot.docs.map(doc => {
+                    const data = doc.data();
+                    console.log(`Buyer found: ${doc.id} - Name: ${data.firstName} ${data.lastName}, Role: ${data.role}`);
+                    return {
+                        id: doc.id,
+                        ...data
+                    };
+                }) as Buyer[];
+                
+                console.log(`Processed ${buyersList.length} buyers`);
+                setBuyers(buyersList);
+            }
+        } catch (error: any) {
             console.error('Error fetching buyers:', error);
+            setError(`Error fetching buyers: ${error.message}`);
         }
     };
 
@@ -81,7 +104,6 @@ const InvoiceActions: React.FC<InvoiceActionsProps> = ({ invoiceData, onSave }) 
         (`${buyer.firstName || ''} ${buyer.lastName || ''}`).toLowerCase().includes(searchTerm.toLowerCase())
     );
     
-
     const handleBuyerSelect = (buyer: Buyer) => {
         setSelectedBuyer(buyer);
         setShowBuyerList(false);
@@ -95,9 +117,9 @@ const InvoiceActions: React.FC<InvoiceActionsProps> = ({ invoiceData, onSave }) 
         setLoading(true);
         try {
             await onSave(selectedBuyer.id, true);
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error saving draft:', error);
-            alert('Failed to save draft');
+            alert(`Failed to save draft: ${error.message}`);
         } finally {
             setLoading(false);
         }
@@ -110,10 +132,43 @@ const InvoiceActions: React.FC<InvoiceActionsProps> = ({ invoiceData, onSave }) 
         }
         setLoading(true);
         try {
-            await onSave(selectedBuyer.id, false);
-        } catch (error) {
+            // First save the invoice to the database
+            await onSave(selectedBuyer.id, false).then(async () => {
+                if (sendToChat) {
+                    try {
+                        // Get the newly created invoice ID (need to modify onSave to return it)
+                        // For now, we'll need to fetch it from Firestore
+                        const vendorInvoicesRef = collection(db, 'vendorInvoices');
+                        const q = query(
+                            vendorInvoicesRef, 
+                            where('buyerId', '==', selectedBuyer.id),
+                            where('invoiceData.invoiceNumber', '==', invoiceData.invoiceData.invoiceNumber)
+                        );
+                        const querySnapshot = await getDocs(q);
+                        
+                        if (!querySnapshot.empty) {
+                            const newInvoice = {
+                                id: querySnapshot.docs[0].id,
+                                ...querySnapshot.docs[0].data()
+                            };
+                            
+                            // Send to chat
+                            const chatId = await sendInvoiceToChat(newInvoice);
+                            console.log(`Invoice sent to chat: ${chatId}`);
+                        }
+                    } catch (chatError: any) {
+                        console.error('Error sending invoice to chat:', chatError);
+                        // Don't block the main flow if chat sending fails
+                        alert(`Invoice saved, but failed to send to chat: ${chatError.message}`);
+                    }
+                }
+                
+                alert('Invoice sent successfully');
+                navigate('/invoices');
+            });
+        } catch (error: any) {
             console.error('Error sending invoice:', error);
-            alert('Failed to send invoice');
+            alert(`Failed to send invoice: ${error.message}`);
         } finally {
             setLoading(false);
         }
@@ -141,20 +196,34 @@ const InvoiceActions: React.FC<InvoiceActionsProps> = ({ invoiceData, onSave }) 
                         />
                     </div>
                     
+                    {error && (
+                        <div className="text-xs text-red-500 mt-1">
+                            Error: {error}
+                        </div>
+                    )}
+                    
                     {showBuyerList && (
                         <div className="absolute z-10 w-full mt-1 bg-white border rounded-lg shadow-lg max-h-60 overflow-auto">
-                            {filteredBuyers.map((buyer) => (
-                                <div
-                                    key={buyer.id}
-                                    className="p-2 hover:bg-gray-100 cursor-pointer"
-                                    onClick={() => handleBuyerSelect(buyer)}
-                                >
-                                    <div className="font-medium">{buyer.businessName}</div>
-                                    <div className="text-sm text-gray-600">
-                                        {buyer.firstName} {buyer.lastName} • {buyer.email}
+                            {filteredBuyers.length > 0 ? (
+                                filteredBuyers.map((buyer) => (
+                                    <div
+                                        key={buyer.id}
+                                        className="p-2 hover:bg-gray-100 cursor-pointer"
+                                        onClick={() => handleBuyerSelect(buyer)}
+                                    >
+                                        <div className="font-medium">
+                                            {buyer.businessName || `${buyer.firstName} ${buyer.lastName}`}
+                                        </div>
+                                        <div className="text-sm text-gray-600">
+                                            {buyer.firstName} {buyer.lastName} • {buyer.email}
+                                        </div>
                                     </div>
+                                ))
+                            ) : (
+                                <div className="p-2 text-gray-500">
+                                    No buyers found. {buyers.length > 0 ? 'Try a different search term.' : 'Make sure there are users with role "buyer" in the database.'}
                                 </div>
-                            ))}
+                            )}
                         </div>
                     )}
                 </div>
@@ -164,10 +233,26 @@ const InvoiceActions: React.FC<InvoiceActionsProps> = ({ invoiceData, onSave }) 
                 <div className="mb-4 p-2 bg-purple-50 rounded-lg">
                     <div className="font-medium">Selected Buyer:</div>
                     <div className="text-sm">
-                        {selectedBuyer.businessName} ({selectedBuyer.firstName} {selectedBuyer.lastName})
+                        {selectedBuyer.businessName || ''} ({selectedBuyer.firstName || ''} {selectedBuyer.lastName || ''})
                     </div>
                 </div>
             )}
+
+            {/* Option to send to chat */}
+            <div className="mb-4">
+                <div className="flex items-center">
+                    <input
+                        type="checkbox"
+                        id="sendToChat"
+                        checked={sendToChat}
+                        onChange={() => setSendToChat(!sendToChat)}
+                        className="w-4 h-4 text-purple-600"
+                    />
+                    <label htmlFor="sendToChat" className="ml-2 text-sm text-gray-700">
+                        Send invoice to buyer's chat with PDF attachment
+                    </label>
+                </div>
+            </div>
 
             <div className="flex justify-end space-x-4">
                 <button
@@ -182,7 +267,7 @@ const InvoiceActions: React.FC<InvoiceActionsProps> = ({ invoiceData, onSave }) 
                     disabled={loading || !selectedBuyer}
                     className="px-4 py-2 bg-[#7C77C1] text-white rounded-lg hover:bg-[#6661B0] disabled:opacity-50"
                 >
-                    Send Invoice
+                    {loading ? 'Sending...' : 'Send Invoice'}
                 </button>
             </div>
         </div>

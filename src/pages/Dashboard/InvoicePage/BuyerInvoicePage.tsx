@@ -7,6 +7,8 @@ import {
   getDocs,
   deleteDoc,
   doc,
+  updateDoc,
+  writeBatch
 } from 'firebase/firestore';
 import { auth, db } from '../../../utils/firebase';
 import { useUserStore } from '../../../utils/userStore';
@@ -19,6 +21,7 @@ interface BuyerInvoice {
   vendorId: string;
   buyerId: string;
   status: 'Paid' | 'Unpaid' | 'Cancelled';
+  hiddenForBuyer?: boolean; // Add this field to support hiding
   invoiceData: {
     invoiceNumber: string;
     invoiceDate: string;
@@ -47,46 +50,82 @@ const InvoicesPage = () => {
   const [selectedInvoices, setSelectedInvoices] = useState<string[]>([]);
   const [showSearch, setShowSearch] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [deleteStatus, setDeleteStatus] = useState<string | null>(null);
 
-  // Fetch invoices for this buyer
+  // Fetch invoices for this buyer (excluding hidden ones)
   const fetchBuyerInvoices = async (buyerUid: string) => {
     try {
+      console.log(`Fetching invoices for buyer: ${buyerUid}`);
+      console.log(`Using database reference:`, db);
+      
       const q = query(
         collection(db, 'buyerInvoices'),
         where('buyerId', '==', buyerUid)
       );
+      
       const querySnapshot = await getDocs(q);
-      const invoiceData = querySnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as BuyerInvoice[];
-      setInvoices(invoiceData);
+      console.log(`Found ${querySnapshot.docs.length} total invoices`);
+      
+      const invoiceData = querySnapshot.docs
+        .map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        })) as BuyerInvoice[];
+      
+      // Filter out invoices marked as hidden for buyer
+      const visibleInvoices = invoiceData.filter(invoice => !invoice.hiddenForBuyer);
+      console.log(`${visibleInvoices.length} visible invoices after filtering hidden ones`);
+      
+      setInvoices(visibleInvoices);
     } catch (error) {
       console.error('Error fetching invoices:', error);
     }
   };
 
-  // Delete selected invoices from view (not from DB, just mark as deleted for buyer)
+  // Properly hide selected invoices in the database
   const handleDeleteSelected = async () => {
     if (selectedInvoices.length === 0) {
       alert('No invoices selected');
       return;
     }
+    
     const confirmDelete = window.confirm(
       `Are you sure you want to remove ${selectedInvoices.length} invoice(s) from your view?`
     );
+    
     if (!confirmDelete) return;
+    
+    setDeleteStatus('Removing invoices...');
+    
     try {
-      // In a real implementation, you would update a "hiddenForBuyer" field in the database
-      // For now, we'll just remove them from the state
+      // Use a batch for more reliable operations
+      const batch = writeBatch(db);
+      
+      // Update each selected invoice to mark it as hidden
+      for (const invoiceId of selectedInvoices) {
+        console.log(`Marking invoice ${invoiceId} as hidden for buyer`);
+        const invoiceRef = doc(db, 'buyerInvoices', invoiceId);
+        batch.update(invoiceRef, { hiddenForBuyer: true });
+      }
+      
+      // Commit all the updates at once
+      await batch.commit();
+      console.log('Successfully marked invoices as hidden');
+      
+      // Update local state
       setInvoices((prev) =>
         prev.filter((invoice) => !selectedInvoices.includes(invoice.id))
       );
       setSelectedInvoices([]);
+      setDeleteStatus('Invoices removed successfully');
       alert('Invoice(s) removed successfully');
     } catch (error) {
       console.error('Error removing invoices:', error);
+      setDeleteStatus(`Error: ${error}`);
       alert('Error removing invoice(s)');
+    } finally {
+      // Clear status after a delay
+      setTimeout(() => setDeleteStatus(null), 3000);
     }
   };
 
@@ -124,12 +163,15 @@ const InvoicesPage = () => {
     });
   }, [invoices, searchTerm]);
 
-  // No stats section needed
-
   useEffect(() => {
+    console.log("Initializing BuyerInvoicePage");
+    console.log("auth:", auth);
+    console.log("db:", db);
+    
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
       if (user) {
         try {
+          console.log(`User authenticated: ${user.uid}`);
           await fetchUserInfo(user.uid);
           await fetchBuyerInvoices(user.uid);
         } catch (error) {
@@ -137,6 +179,7 @@ const InvoicesPage = () => {
           navigate('/login');
         }
       } else {
+        console.log('No authenticated user found');
         navigate('/login');
       }
       setIsLoading(false);
@@ -163,10 +206,15 @@ const InvoicesPage = () => {
           <h1 className="text-2xl md:text-3xl font-bold font-nunito">
             Invoices
           </h1>
-          <Header
-
-          />
+          <Header />
         </div>
+
+        {/* Status message for deletion/hiding */}
+        {deleteStatus && (
+          <div className={`p-3 mb-4 rounded ${deleteStatus.includes('Error') ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+            {deleteStatus}
+          </div>
+        )}
 
         {/* Search Input Field */}
         {showSearch && (
