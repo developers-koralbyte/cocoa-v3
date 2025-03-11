@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState,useEffect } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { auth, db, googleProvider } from "../../utils/firebase";
@@ -16,13 +16,20 @@ import { useUserStore } from "../../utils/userStore";
 
 const LoginForm: React.FC = () => {
   const navigate = useNavigate();
-  const { fetchUserInfo } = useUserStore();
+  const {currentUser} = useUserStore();
 
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({ email: "", password: "" });
   const [formError, setFormError] = useState("");
+
+
+
+  // Log currentUser from the user store for debugging
+  useEffect(() => {
+    console.log("Current user in store:", currentUser);
+  }, [currentUser]);
 
 
   const validateEmail = (email: string) => {
@@ -45,6 +52,7 @@ const LoginForm: React.FC = () => {
     setErrors((prev) => ({ ...prev, [name]: "" }));
     setFormError("");
   };
+  
 
   // 1) Normal email/password login with validation
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -91,8 +99,10 @@ const LoginForm: React.FC = () => {
         );
 
         // Optionally fetch user info from store
-        fetchUserInfo(userId);
+        // fetchUserInfo(userId);
+        useUserStore.setState({ currentUser: docData, isLoading: false });
 
+      
         toast.success("Login successful!");
 
         // Redirect based on role
@@ -143,7 +153,7 @@ const LoginForm: React.FC = () => {
           JSON.stringify({ uid: userId, role: userRole })
         );
   
-        fetchUserInfo(userId);
+        useUserStore.setState({ currentUser: docData, isLoading: false });
         toast.success("Login successful!");
   
         // Redirect based on role

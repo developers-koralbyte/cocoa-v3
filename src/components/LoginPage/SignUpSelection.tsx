@@ -9,7 +9,7 @@ import {
   signInWithPopup,
   sendEmailVerification,
 } from "firebase/auth";
-import { collection, addDoc, query, where, getDocs } from "firebase/firestore";
+import { collection ,setDoc,doc, query, where, getDocs } from "firebase/firestore";
 
 const SignupSelection = () => {
   const navigate = useNavigate();
@@ -35,24 +35,34 @@ const SignupSelection = () => {
     try {
       const result = await signInWithPopup(auth, googleProvider);
       const user = result.user;
+      const userId = user.uid;
+      // Extract first and last name from displayName if available
+      const displayName = user.displayName || "";
+      const [firstName = "", ...rest] = displayName.split(" ");
+      const lastName = rest.join(" ");
 
       // Check if user doc already exists
-      const userRef = query(collection(db, "users"), where("id", "==", user.uid));
+      const userRef = query(collection(db, "users"), where("id", "==", userId));
       const snapshot = await getDocs(userRef);
 
-      // If new user, create a minimal doc
       if (snapshot.empty) {
-        await addDoc(collection(db, "users"), {
-          id: user.uid,
+        // Create minimal user doc in "users" collection
+        await setDoc(doc(db, "users", userId), {
+          id: userId,
           email: user.email,
           role: selectedRole,
+          firstName,
+          lastName,
           createdAt: new Date(),
           emailVerified: false,
         });
-
+        
+        // Create an empty doc in the respective role collection with doc ID = userId
         if (selectedRole === "buyer") {
-          await addDoc(collection(db, "Buyers"), {
-            uid: user.uid,
+          await setDoc(doc(db, "Buyers", userId), {
+            uid: userId,
+            firstName,
+            lastName,
             businessName: "",
             countryRegion: "",
             industry: "",
@@ -61,8 +71,10 @@ const SignupSelection = () => {
             createdAt: new Date(),
           });
         } else if (selectedRole === "vendor") {
-          await addDoc(collection(db, "Vendors"), {
-            uid: user.uid,
+          await setDoc(doc(db, "Vendors", userId), {
+            uid: userId,
+            firstName,
+            lastName,
             businessName: "",
             countryRegion: "",
             industry: "",
@@ -72,12 +84,11 @@ const SignupSelection = () => {
           });
         }
 
-
-        // Optionally send manual verification for Google sign-in
+        // Optionally send email verification
         await sendEmailVerification(user);
       }
 
-      // Redirect to relevant dashboard (no “new-vendor/new-buyer” form)
+      // Redirect to the respective dashboard
       if (selectedRole === "vendor") {
         navigate("/vendor-dashboard");
       } else {
@@ -85,9 +96,10 @@ const SignupSelection = () => {
       }
     } catch (error) {
       console.error("Google sign-up error:", error);
-      // Handle or display error
+      // Handle or display error appropriately
     }
   };
+
 
   return (
     <div className="flex flex-col items-center justify-center h-[85vh] w-full">
