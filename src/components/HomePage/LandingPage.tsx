@@ -30,10 +30,16 @@ const LandingPage = () => {
                     </div>
                     {/* Navigation Links */}
                     <div className="font-nunito flex space-x-12 font-nunito font-extrabold text-[22px]">
-                        <button className="text-buttonBg  px-4 py-2 ">
+                        <button
+                            className="text-buttonBg px-4 py-2"
+                            onClick={() => navigate('/create-account')}
+                        >
                             Vendors <span className="ml-1">&#9662;</span>
                         </button>
-                        <button className="text-buttonBg  px-4 py-2">
+                        <button
+                            className="text-buttonBg px-4 py-2"
+                            onClick={() => navigate('/create-account')}
+                        >
                             Buyers <span className="ml-1">&#9662;</span>
                         </button>
                         <button className="text-buttonBg px-4 py-2">
@@ -79,7 +85,8 @@ const LandingPage = () => {
 
                         {/* CTA Buttons */}
                         <div className="mt-8 flex flex-col lg:flex-row space-y-4 lg:space-y-0 lg:space-x-6">
-                            <button className="bg-buttonBg text-white font-nunito rounded-full px-10 py-4 ">
+                            <button className="bg-buttonBg text-white font-nunito rounded-full px-10 py-4" 
+                            onClick={() => navigate('/login')}>
                                 START NOW
                             </button>
                             <a
