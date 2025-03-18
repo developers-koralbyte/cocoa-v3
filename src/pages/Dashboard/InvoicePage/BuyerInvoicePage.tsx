@@ -15,6 +15,8 @@ import { useUserStore } from '../../../utils/userStore';
 import BaseLayout from '../../../components/Dashboard/BaseLayout';
 import InvoiceTable from '../../../components/Dashboard/Invoices/BuyerInvoiceTable';
 import Header from '../../../components/Dashboard/Invoices/HeaderProps';
+// Import the download functionality
+import { downloadInvoice, downloadMultipleInvoices } from '../../../utils/InvoiceDownloadService';
 
 interface BuyerInvoice {
   id: string;
@@ -51,6 +53,7 @@ const InvoicesPage = () => {
   const [showSearch, setShowSearch] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [deleteStatus, setDeleteStatus] = useState<string | null>(null);
+  const [downloadStatus, setDownloadStatus] = useState<string | null>(null);
 
   // Fetch invoices for this buyer (excluding hidden ones)
   const fetchBuyerInvoices = async (buyerUid: string) => {
@@ -129,9 +132,42 @@ const InvoicesPage = () => {
     }
   };
 
-  const handleDownloadSelected = () => {
-    // Future functionality to download invoices as PDFs
-    console.log('Download PDF functionality here');
+  // Updated download function that actually downloads the PDFs
+  const handleDownloadSelected = async () => {
+    if (selectedInvoices.length === 0) {
+      alert('No invoices selected for download');
+      return;
+    }
+    
+    setDownloadStatus('Preparing downloads...');
+    
+    try {
+      // Get the full invoice objects for selected IDs
+      const selectedInvoiceObjects = invoices.filter(invoice => 
+        selectedInvoices.includes(invoice.id)
+      );
+      
+      if (selectedInvoiceObjects.length === 0) {
+        setDownloadStatus('Error: Could not find selected invoices');
+        setTimeout(() => setDownloadStatus(null), 3000);
+        return;
+      }
+      
+      // Download all selected invoices
+      const success = await downloadMultipleInvoices(selectedInvoiceObjects, 'buyer-invoice');
+      
+      if (success) {
+        setDownloadStatus('Invoices downloaded successfully');
+      } else {
+        setDownloadStatus('Some invoices failed to download');
+      }
+    } catch (error) {
+      console.error('Error downloading invoices:', error);
+      setDownloadStatus(`Error: ${error}`);
+    } finally {
+      // Clear status after a delay
+      setTimeout(() => setDownloadStatus(null), 3000);
+    }
   };
 
   // Toggle search input visibility
@@ -213,6 +249,13 @@ const InvoicesPage = () => {
         {deleteStatus && (
           <div className={`p-3 mb-4 rounded ${deleteStatus.includes('Error') ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
             {deleteStatus}
+          </div>
+        )}
+        
+        {/* Status message for downloads */}
+        {downloadStatus && (
+          <div className={`p-3 mb-4 rounded ${downloadStatus.includes('Error') ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'}`}>
+            {downloadStatus}
           </div>
         )}
 

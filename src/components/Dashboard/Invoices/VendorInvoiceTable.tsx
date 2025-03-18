@@ -42,12 +42,12 @@ const getStatusClasses = (status: string) => {
   switch (status) {
     case 'Sent, Paid':
     case 'Paid':
-      return 'bg-[#ECFDF3] text-[#027A48]';
+      return 'bg-[#87C66A9E] text-white';
     case 'Sent, Unpaid':
     case 'Unpaid':
-      return 'bg-[#EFF8FF] text-[#175CD3]';
+      return 'bg-[#8FDCE64F] text-[#175CD3]';
     case 'Cancelled':
-      return 'bg-[#FEE4E2] text-[#B42318]';
+      return 'bg-[#FD51517A] text-white';
     case 'Draft':
       return 'bg-gray-100 text-gray-600';
     default:
@@ -115,36 +115,39 @@ const VendorInvoiceTable = ({
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="bg-[#D9D9D9]">
-                <th className="p-1 py-6 text-left font-nunito text-black w-14">
+              <tr className="bg-[#E8E6F2]">
+                <th className="p-4 text-center font-nunito text-black w-14">
                   &nbsp;
                 </th>
-                <th className="p-2 text-left font-nunito text-black w-32">
+                <th className="p-4 text-left font-nunito text-black w-32">
                   Date
                 </th>
-                <th className="p-2 text-left font-nunito text-black w-32">
+                <th className="p-4 text-left font-nunito text-black w-32">
                   Invoice #
                 </th>
-                <th className="p-2 text-left font-nunito text-black w-[200px]">
+                <th className="p-4 pl-2 text-left font-nunito text-black w-[200px]">
                   Invoice Product Name
                 </th>
-                <th className="p-2 pl-20 text-left font-nunito text-black w-48">
+                <th className="p-4 text-left font-nunito text-black w-48">
                   Recipient
                 </th>
-                <th className="p-2 text-left font-nunito text-black w-48">
+                <th className="p-4 text-left font-nunito text-black w-48">
                   Service
                 </th>
-                <th className="p-2 text-left font-nunito text-black w-32">
+                <th className="p-4 text-left font-nunito text-black w-32">
                   Status
                 </th>
-                <th className="p-2 text-left font-nunito text-black w-32">
+                <th className="p-4 text-left font-nunito text-black w-32">
                   Amount
                 </th>
               </tr>
             </thead>
             <tbody>
               {invoices.map((invoice) => {
-                const { id, status, invoiceData } = invoice;
+                const { id, status: initialStatus, invoiceData } = invoice;
+                // Add useState to track status changes
+                const [currentStatus, setCurrentStatus] = React.useState(initialStatus || 'Unpaid');
+                
                 // Fallback values in case of missing data
                 const invoiceDate = invoiceData?.invoiceDate || 'N/A';
                 const invoiceNumber = invoiceData?.invoiceNumber || 'N/A';
@@ -158,10 +161,10 @@ const VendorInvoiceTable = ({
                     : 'N/A';
 
                 return (
-                  <tr key={id} className="border-b border-[#E5E7EB]">
+                  <tr key={id} className="border-b border-[#E5E7EB] hover:bg-gray-50">
                     {/* Checkbox cell */}
-                    <td className="p-4">
-                      <div className="w-5 h-5 border border-[#D1D5DB] rounded flex items-center justify-center relative">
+                    <td className="p-4 text-center">
+                      <div className="inline-block w-5 h-5 border border-[#7C77C1] rounded flex items-center justify-center relative">
                         <input
                           type="checkbox"
                           checked={selectedInvoices.includes(id)}
@@ -188,33 +191,52 @@ const VendorInvoiceTable = ({
                     </td>
 
                     {/* Invoice date */}
-                    <td className="p-4">{invoiceDate}</td>
+                    <td className="p-4 text-sm">{invoiceDate}</td>
 
                     {/* Invoice number */}
-                    <td className="p-4">{invoiceNumber}</td>
+                    <td className="p-4 text-sm">{invoiceNumber}</td>
 
                     {/* Product name */}
-                    <td className="p-4">{productName}</td>
+                    <td className="p-4 pl-2 text-sm">{productName}</td>
 
                     {/* Recipient */}
-                    <td className="p-4">{recipient}</td>
+                    <td className="p-4 pl-6 text-sm">{recipient}</td>
 
                     {/* Service */}
-                    <td className="p-4">{service}</td>
+                    <td className="p-4 text-sm">{service}</td>
 
-                    {/* Status */}
+                    {/* Status with dropdown */}
                     <td className="p-4">
-                      <span
-                        className={`px-4 py-1 rounded-full text-sm font-medium ${getStatusClasses(
-                          status
-                        )}`}
-                      >
-                        {status}
-                      </span>
+                      <div className="relative inline-block">
+                        <select 
+                          value={currentStatus}
+                          onChange={(e) => {
+                            console.log(`Status changed to: ${e.target.value}`);
+                            setCurrentStatus(e.target.value);
+                          }}
+                          className="appearance-none cursor-pointer pr-8 pl-4 py-1 rounded-full text-sm font-medium"
+                          style={{
+                            backgroundColor: 
+                              currentStatus === "Paid" || currentStatus === "Sent, Paid" ? "#87C66A9E" :
+                              currentStatus === "Unpaid" || currentStatus === "Sent, Unpaid" ? "#8FDCE64F" :
+                              currentStatus === "Cancelled" ? "#FD51517A" : "#f3f4f6",
+                            color: "black" // Always black text
+                          }}
+                        >
+                          <option value="Paid">Paid</option>
+                          <option value="Unpaid">Unpaid</option>
+                          <option value="Cancelled">Cancelled</option>
+                        </select>
+                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2">
+                          <svg className="h-4 w-4 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                          </svg>
+                        </div>
+                      </div>
                     </td>
 
                     {/* Amount */}
-                    <td className="p-4">{amount}</td>
+                    <td className="p-4 font-medium text-sm">{amount}</td>
                   </tr>
                 );
               })}

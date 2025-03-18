@@ -1,9 +1,16 @@
-import React from 'react'
+import React, { useState,useEffect ,ChangeEvent, FormEvent} from 'react'
+
 import { Search, RotateCcw } from 'lucide-react'
 import { Bell } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import BaseLayout from '../../components/Dashboard/BaseLayout'
 import chatImage from '../../assets/img/Dashboard/chatImage.png'
+import { useUserStore } from '../../utils/userStore'
+import { doc,getDoc,setDoc } from 'firebase/firestore';
+import { db } from '../../utils/firebase'
+
+
+
 
 interface Appointment {
     name: string
@@ -95,6 +102,120 @@ const services = [
 
 const BuyerDashboard = () => {
     const navigate = useNavigate()
+    // 1) Pull currentUser from your user store
+  const { currentUser } = useUserStore()
+
+  // 2) Log changes to currentUser for debugging
+  useEffect(() => {
+    console.log('BuyerDashboard: currentUser changed:', currentUser)
+  }, [currentUser])
+
+  // State for the popup form
+  const [showPopup, setShowPopup] = useState(false)
+  const [formData, setFormData] = useState({
+    businessName: '',
+    countryRegion: '',
+    industry: '',
+    categories: '',
+    services: '',
+  })
+  const [loadingDocCheck, setLoadingDocCheck] = useState(true)
+
+  // 3) On mount or when currentUser changes, check if Buyer doc is missing or incomplete
+  useEffect(() => {
+    const checkBuyerDoc = async () => {
+      try {
+        // If there's no user or no UID, redirect to /login
+        if (!currentUser || !currentUser.id) {
+          navigate('/login')
+          return
+        }
+        // If role is not 'buyer', also redirect
+        if (currentUser.role !== 'buyer') {
+          navigate('/login')
+          return
+        }
+
+        // Retrieve doc from "Buyers" collection, doc ID = user's UID
+        const buyerRef = doc(db, 'Buyers', currentUser.id)
+        const snap = await getDoc(buyerRef)
+
+        if (!snap.exists()) {
+          // doc doesn't exist => show popup
+          console.log('No buyer doc found, showing popup...')
+          setShowPopup(true)
+          setLoadingDocCheck(false)
+          return
+        }
+
+        // If doc exists, check if fields are missing
+        const data = snap.data()
+        const { businessName, countryRegion, industry, categories, services } = data
+        if (!businessName || !countryRegion || !industry || !categories || !services) {
+          setFormData({
+            businessName: businessName || '',
+            countryRegion: countryRegion || '',
+            industry: industry || '',
+            categories: categories || '',
+            services: services || '',
+          })
+          setShowPopup(true)
+        }
+        setLoadingDocCheck(false)
+      } catch (error) {
+        console.error('Error checking buyer doc:', error)
+        navigate('/login')
+      }
+    }
+
+    checkBuyerDoc()
+  }, [currentUser, navigate])
+
+  // Handle form changes
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target
+    setFormData((prev) => ({ ...prev, [name]: value }))
+  }
+
+  // 4) On submit => setDoc with user.uid in "Buyers"
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault()
+    try {
+      if (!currentUser || !currentUser.id) {
+        console.error('No currentUser or user ID in store. Cannot save Buyer doc.')
+        return
+      }
+
+      const buyerRef = doc(db, 'Buyers', currentUser.id)
+      await setDoc(
+        buyerRef,
+        {
+          businessName: formData.businessName,
+          countryRegion: formData.countryRegion,
+          industry: formData.industry,
+          categories: formData.categories,
+          services: formData.services,
+        },
+        { merge: true }
+      )
+
+      alert('Buyer details updated successfully!')
+      setShowPopup(false)
+    } catch (err) {
+      console.error('Error updating buyer doc:', err)
+    }
+  }
+
+  if (loadingDocCheck) {
+    return (
+      <BaseLayout>
+        <div className="flex items-center justify-center h-screen">
+          <p>Loading data...</p>
+        </div>
+      </BaseLayout>
+    )
+  }
+
 
     return (
         <>
@@ -303,6 +424,86 @@ const BuyerDashboard = () => {
                         </section>
                     </div>
                 </div>
+                 {/* Popup for completing profile */}
+      {showPopup && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
+          <div className="bg-white p-6 rounded shadow-md w-[400px]">
+            <h2 className="text-xl font-semibold mb-4">Complete Your Profile</h2>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="block font-medium mb-1">Business Name</label>
+                <input
+                  type="text"
+                  name="businessName"
+                  value={formData.businessName}
+                  onChange={handleChange}
+                  className="border border-gray-300 p-2 w-full rounded"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block font-medium mb-1">Country/Region</label>
+                <input
+                  type="text"
+                  name="countryRegion"
+                  value={formData.countryRegion}
+                  onChange={handleChange}
+                  className="border border-gray-300 p-2 w-full rounded"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block font-medium mb-1">Industry</label>
+                <input
+                  type="text"
+                  name="industry"
+                  value={formData.industry}
+                  onChange={handleChange}
+                  className="border border-gray-300 p-2 w-full rounded"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block font-medium mb-1">Categories</label>
+                <input
+                  type="text"
+                  name="categories"
+                  value={formData.categories}
+                  onChange={handleChange}
+                  className="border border-gray-300 p-2 w-full rounded"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block font-medium mb-1">Services</label>
+                <input
+                  type="text"
+                  name="services"
+                  value={formData.services}
+                  onChange={handleChange}
+                  className="border border-gray-300 p-2 w-full rounded"
+                  required
+                />
+              </div>
+              <div className="flex justify-end gap-4 mt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowPopup(false)}
+                  className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-500 transition"
+                >
+                  Save
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
             </BaseLayout>
 
             {/* Chat Image/Button - Fixed at bottom-right */}

@@ -1,23 +1,38 @@
-import React from 'react'
-import { Search, RotateCcw } from 'lucide-react'
-import { Bell } from 'lucide-react' // or use any other bell icon if needed
-import { useNavigate } from 'react-router-dom'
-import BaseLayout from '../../components/Dashboard/BaseLayout'
-import chatImage from '../../assets/img/Dashboard/chatImage.png'
+import React, { useState, useEffect, ChangeEvent, FormEvent } from 'react';
+import { Search, RotateCcw, Plus } from 'lucide-react';
+import { Bell } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import BaseLayout from '../../components/Dashboard/BaseLayout';
+import { useUserStore } from '../../utils/userStore';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { db } from '../../utils/firebase';
+import ServiceForm, { ServiceFormData } from '../../pages/Dashboard/InvoicePage/Forms/ServiceForm';
+import ProductForm, { ProductFormData } from '../../pages/Dashboard/InvoicePage/Forms/ProductForm';
 
 interface Appointment {
-    name: string
-    company: string
-    time: string
-    date: string
-    image: string
+    name: string;
+    company: string;
+    time: string;
+    date: string;
+    image: string;
 }
 
 interface Buyer {
-    name: string
-    company: string
-    match: number
-    image: string
+    name: string;
+    company: string;
+    match: number;
+    image: string;
+}
+
+interface Service {
+    title: string;
+    image: string;
+}
+
+interface Product {
+    title: string;
+    image: string;
+    price?: string;
 }
 
 const appointments: Appointment[] = [
@@ -42,7 +57,7 @@ const appointments: Appointment[] = [
         date: 'Mon 27',
         image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=150&h=150',
     },
-]
+];
 
 const buyers: Buyer[] = [
     {
@@ -69,20 +84,9 @@ const buyers: Buyer[] = [
         match: 78,
         image: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&q=80&w=150&h=150',
     },
-]
+];
 
-const popularServices = [
-    {
-        title: 'Audit Services',
-        image: 'https://images.unsplash.com/photo-1586486855514-8c633cc6fd38?auto=format&fit=crop&q=80&w=150&h=150',
-    },
-    {
-        title: 'Accounting and Bookkeeping Services',
-        image: 'https://images.unsplash.com/photo-1554224154-22dec7ec8818?auto=format&fit=crop&q=80&w=150&h=150',
-    },
-]
-
-const services = [
+const initialServices: Service[] = [
     {
         title: 'Accounting Software',
         image: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80&w=150&h=150',
@@ -99,11 +103,148 @@ const services = [
         title: 'Accounting and Bookkeeping Services',
         image: 'https://images.unsplash.com/photo-1554224154-22dec7ec8818?auto=format&fit=crop&q=80&w=150&h=150',
     },
-]
+];
+
+const initialPopularServices: Service[] = [
+    {
+        title: 'Audit Services',
+        image: 'https://images.unsplash.com/photo-1586486855514-8c633cc6fd38?auto=format&fit=crop&q=80&w=150&h=150',
+    },
+    {
+        title: 'Accounting and Bookkeeping Services',
+        image: 'https://images.unsplash.com/photo-1554224154-22dec7ec8818?auto=format&fit=crop&q=80&w=150&h=150',
+    },
+];
+
+const initialProducts: Product[] = [];
 
 const VendorDashboard = () => {
-    const navigate = useNavigate()
+    const navigate = useNavigate();
+    const [services, setServices] = useState<Service[]>(initialServices);
+    const [popularServices, setPopularServices] = useState<Service[]>(initialPopularServices);
+    const [products, setProducts] = useState<Product[]>(initialProducts);
+    const [isServiceFormOpen, setIsServiceFormOpen] = useState(false);
+    const [isProductFormOpen, setIsProductFormOpen] = useState(false);
+    
+    // 1. Pull currentUser from user store
+    const { currentUser } = useUserStore();
+  
+    // 2. Log changes for debugging
+    useEffect(() => {
+      console.log("VendorDashboard: currentUser changed:", currentUser);
+    }, [currentUser]);
+  
+    // State to control popup for completing profile
+    const [showPopup, setShowPopup] = useState(false);
+    // State for vendor profile form data
+    const [formData, setFormData] = useState({
+      businessName: '',
+      countryRegion: '',
+      industry: '',
+      categories: '',
+      services: '',
+    });
+    const [loadingDocCheck, setLoadingDocCheck] = useState(true);
 
+    const handleAddService = (serviceData: ServiceFormData) => {
+        const newService = {
+            title: serviceData.name,
+            image: serviceData.image || 'https://images.unsplash.com/photo-1554224154-22dec7ec8818?auto=format&fit=crop&q=80&w=150&h=150',
+        };
+        setServices([...services, newService]);
+    };
+
+    const handleAddProduct = (productData: ProductFormData) => {
+        const newProduct = {
+            title: productData.name,
+            image: productData.image || 'https://images.unsplash.com/photo-1554224154-22dec7ec8818?auto=format&fit=crop&q=80&w=150&h=150',
+            price: productData.price,
+        };
+        setProducts([...products, newProduct]);
+    };
+  
+    // 3. On mount (or when currentUser changes), check if vendor doc exists & has required fields
+    useEffect(() => {
+      const checkVendorDoc = async () => {
+        try {
+          if (!currentUser || !currentUser.id) {
+            navigate('/login');
+            return;
+          }
+          if (currentUser.role !== 'vendor') {
+            navigate('/login');
+            return;
+          }
+          // Retrieve the vendor doc by using currentUser.id as the doc ID
+          const vendorRef = doc(db, 'Vendors', currentUser.id);
+          const snap = await getDoc(vendorRef);
+          if (!snap.exists()) {
+            // Document doesn't exist: show popup for completing profile
+            console.log('No vendor doc found, showing popup...');
+            setShowPopup(true);
+            setLoadingDocCheck(false);
+            return;
+          }
+          const data = snap.data();
+          const { businessName, countryRegion, industry, categories, services } = data;
+          // If any required field is missing, prefill and show popup
+          if (!businessName || !countryRegion || !industry || !categories || !services) {
+            setFormData({
+              businessName: businessName || '',
+              countryRegion: countryRegion || '',
+              industry: industry || '',
+              categories: categories || '',
+              services: services || '',
+            });
+            setShowPopup(true);
+          }
+          setLoadingDocCheck(false);
+        } catch (error) {
+          console.error("Error checking vendor doc:", error);
+          navigate('/login');
+        }
+      };
+  
+      checkVendorDoc();
+    }, [currentUser, navigate]);
+  
+    const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
+      const { name, value } = e.target;
+      setFormData(prev => ({ ...prev, [name]: value }));
+    };
+  
+    const handleSubmit = async (e: FormEvent) => {
+      e.preventDefault();
+      try {
+        if (!currentUser || !currentUser.id) {
+          console.error("No currentUser or user ID in store. Cannot save Vendor doc.");
+          return;
+        }
+        const vendorRef = doc(db, 'Vendors', currentUser.id);
+        await setDoc(vendorRef, {
+          businessName: formData.businessName,
+          countryRegion: formData.countryRegion,
+          industry: formData.industry,
+          categories: formData.categories,
+          services: formData.services,
+        }, { merge: true });
+        alert('Vendor details updated successfully!');
+        setShowPopup(false);
+      } catch (err) {
+        console.error("Error updating vendor doc:", err);
+      }
+    };
+  
+    if (loadingDocCheck) {
+      return (
+        <BaseLayout>
+          <div className="flex items-center justify-center h-screen">
+            <p>Loading data...</p>
+          </div>
+        </BaseLayout>
+      );
+    }
+    
     return (
         <>
             <BaseLayout>
@@ -124,9 +265,18 @@ const VendorDashboard = () => {
                         </div>
 
                         <section className="mb-12">
-                            <h2 className="text-2xl font-bold mb-6 font-nunito">
-                                My Catalogue
-                            </h2>
+                            <div className="flex justify-between items-center mb-6">
+                                <h2 className="text-2xl font-bold font-nunito">
+                                    My Catalogue
+                                </h2>
+                                <button 
+                                    onClick={() => setIsServiceFormOpen(true)}
+                                    className="flex items-center gap-2 bg-purple-100 text-purple-600 px-4 py-2 rounded-full hover:bg-purple-200 transition-colors"
+                                >
+                                    <Plus className="w-4 h-4" />
+                                    <span>Add Service</span>
+                                </button>
+                            </div>
                             <div className="grid grid-cols-4 gap-6">
                                 {services.map((service, index) => (
                                     <div key={index} className="text-center">
@@ -143,6 +293,54 @@ const VendorDashboard = () => {
                                     </div>
                                 ))}
                             </div>
+                        </section>
+
+                        <section className="mb-12">
+                            <div className="flex justify-between items-center mb-6">
+                                <h2 className="text-2xl font-bold font-nunito">
+                                    My Products
+                                </h2>
+                                <button 
+                                    onClick={() => setIsProductFormOpen(true)}
+                                    className="flex items-center gap-2 bg-purple-100 text-purple-600 px-4 py-2 rounded-full hover:bg-purple-200 transition-colors"
+                                >
+                                    <Plus className="w-4 h-4" />
+                                    <span>Add Product</span>
+                                </button>
+                            </div>
+                            {products.length > 0 ? (
+                                <div className="grid grid-cols-4 gap-6">
+                                    {products.map((product, index) => (
+                                        <div key={index} className="text-center">
+                                            <div className="w-full aspect-square mb-4 overflow-hidden rounded-full shadow-sm hover:shadow-md transition-shadow">
+                                                <img
+                                                    src={product.image}
+                                                    alt={product.title}
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            </div>
+                                            <h3 className="text-sm font-medium">
+                                                {product.title}
+                                            </h3>
+                                            {product.price && (
+                                                <p className="text-sm text-purple-600">${product.price}</p>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="flex justify-center items-center h-40 bg-gray-50 rounded-lg">
+                                    <div className="text-center">
+                                        <div 
+                                            className="w-16 h-16 mx-auto mb-4 bg-purple-100 rounded-full flex items-center justify-center cursor-pointer"
+                                            onClick={() => setIsProductFormOpen(true)}
+                                        >
+                                            <Plus className="w-8 h-8 text-purple-600" />
+                                        </div>
+                                        <p className="text-gray-500">No products yet. Click to add your first product.</p>
+                                    </div>
+                                </div>
+                            )}
                         </section>
 
                         <section className="mb-12">
@@ -201,7 +399,7 @@ const VendorDashboard = () => {
                     </div>
 
                     {/* Right panel */}
-                    <div className="w-96 bg-purple-100 p-8 rounded-r-[3.5rem]">
+                    <div className="w-96 bg-purple-100 p-8 rounded-l-[3.5rem]">
                         {/* Profile Section */}
                         <div className="flex items-center justify-center gap-x-5 gap-4 mb-8">
                             <div>
@@ -275,8 +473,7 @@ const VendorDashboard = () => {
                                                 )
                                             }
                                         >
-                                            <Bell className="w-4 h-4 text-purple-600" />{' '}
-                                            {/* Smaller bell */}
+                                            <Bell className="w-4 h-4 text-purple-600" />
                                         </div>
                                     </div>
                                 ))}
@@ -314,20 +511,103 @@ const VendorDashboard = () => {
                     </div>
                 </div>
             </BaseLayout>
+            
+            {/* Popup for completing profile */}
+            {showPopup && (
+              <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
+                <div className="bg-white p-6 rounded shadow-md w-[400px]">
+                  <h2 className="text-xl font-semibold mb-4">Complete Your Profile</h2>
+                  <form onSubmit={handleSubmit} className="space-y-4">
+                    <div>
+                      <label className="block font-medium mb-1">Business Name</label>
+                      <input
+                        type="text"
+                        name="businessName"
+                        value={formData.businessName}
+                        onChange={handleChange}
+                        className="border border-gray-300 p-2 w-full rounded"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block font-medium mb-1">Country/Region</label>
+                      <input
+                        type="text"
+                        name="countryRegion"
+                        value={formData.countryRegion}
+                        onChange={handleChange}
+                        className="border border-gray-300 p-2 w-full rounded"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block font-medium mb-1">Industry</label>
+                      <input
+                        type="text"
+                        name="industry"
+                        value={formData.industry}
+                        onChange={handleChange}
+                        className="border border-gray-300 p-2 w-full rounded"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block font-medium mb-1">Categories</label>
+                      <input
+                        type="text"
+                        name="categories"
+                        value={formData.categories}
+                        onChange={handleChange}
+                        className="border border-gray-300 p-2 w-full rounded"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block font-medium mb-1">Services</label>
+                      <input
+                        type="text"
+                        name="services"
+                        value={formData.services}
+                        onChange={handleChange}
+                        className="border border-gray-300 p-2 w-full rounded"
+                        required
+                      />
+                    </div>
+                    <div className="flex justify-end gap-4 mt-4">
+                      <button
+                        type="button"
+                        onClick={() => setShowPopup(false)}
+                        className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 transition"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-500 transition"
+                      >
+                        Save
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            )}
 
-            {/* Chat Image/Button - Fixed at bottom-right */}
-            {/* <div
-                className="fixed bottom-3 right-10 cursor-pointer z-50"
-                onClick={() => navigate('/chat')}
-            >
-                <img
-                    src={chatImage}
-                    alt="Chat"
-                    className="hover:opacity-90 transition-opacity"
-                />
-            </div> */}
+            {/* Service Form Modal */}
+            <ServiceForm 
+                isOpen={isServiceFormOpen}
+                onClose={() => setIsServiceFormOpen(false)}
+                onSubmit={handleAddService}
+            />
+
+            {/* Product Form Modal */}
+            <ProductForm 
+                isOpen={isProductFormOpen}
+                onClose={() => setIsProductFormOpen(false)}
+                onSubmit={handleAddProduct}
+            />
         </>
-    )
-}
+    );
+};
 
-export default VendorDashboard
+export default VendorDashboard;

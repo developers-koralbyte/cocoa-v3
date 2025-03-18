@@ -1,11 +1,12 @@
 import React, { useState } from "react";
 import { auth, db } from "../utils/firebase";
-import { collection, addDoc } from "firebase/firestore";
+import { collection, addDoc, setDoc,doc } from "firebase/firestore";
 import { createUserWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
 import cocoaLogo from "../assets/img/cocoa-logo-white.png";
 import VerificationWaitTime from "../pages/VerificationWaitTime";
 import { useLocation } from "react-router-dom";
 import upload from "../utils/upload";
+import { toast } from "react-toastify";
 
 interface FormData {
   email: string;
@@ -89,19 +90,22 @@ const NewBuyer = () => {
       }
 
       // 4) Store user data in "users" collection
-      await addDoc(collection(db, "users"), {
+      await setDoc(doc(db, "users", user.uid), {
         id: user.uid,
         email: formData.email,
         role: formData.role.toLowerCase(), // "buyer"
         firstName: formData.firstName,
         lastName: formData.lastName,
         avatar: avatarUrl,
-        blocked: [], // empty blocked array
+        blocked: [],
         createdAt: new Date(),
       });
 
       // 5) Store buyer data in "Buyers" collection
-      const docRef = await addDoc(collection(db, "Buyers"), {
+      const buyerDocRef = doc(db, "Buyers", user.uid);
+
+      // 2) Pass that reference to setDoc
+      await setDoc(buyerDocRef, {
         ...formData,
         role: formData.role.toLowerCase(),
         emailVerified: false,
@@ -110,13 +114,23 @@ const NewBuyer = () => {
         blocked: [],
         createdAt: new Date(),
       });
-
-      console.log("Buyer added with ID:", docRef.id);
+      
+      // 3)  log the docRef's ID
+      console.log("Buyer added with ID:", buyerDocRef.id);
       setIsSubmitted(true);
-    } catch (error) {
+    } catch (error : any) {
       console.error("Error adding buyer:", error);
+      if (error.code === "auth/email-already-in-use") {
+        // You can show a toast or set local state
+        toast.error("A user with this email already exists. Please log in or use a different email.");
+      } else {
+        toast.error("An error occurred during sign-up. Please try again or contact support.");
+      }
+      
     }
   };
+
+  
 
   // Show verification screen after submission
   if (isSubmitted) {

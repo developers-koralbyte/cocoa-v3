@@ -38,16 +38,17 @@ interface InvoiceTableProps {
   onSearch?: () => void;
 }
 
-const getStatusClasses = (status: string) => {
+// Function to get the status background color
+const getStatusStyle = (status: string) => {
   switch (status) {
     case 'Paid':
-      return 'bg-[#C9E8D0] text-[#027A48]';
+      return { backgroundColor: '#87C66A9E' }; // Green with 62% opacity
     case 'Unpaid':
-      return 'bg-[#D9EDFC] text-[#175CD3]';
+      return { backgroundColor: '#8FDCE64F' }; // Light green with 31% opacity
     case 'Cancelled':
-      return 'bg-[#F9C6C6] text-[#B42318]';
+      return { backgroundColor: '#FD51517A' }; // Red with 48% opacity
     default:
-      return 'bg-gray-100 text-gray-600';
+      return { backgroundColor: '#f3f4f6' }; // Default gray
   }
 };
 
@@ -68,7 +69,7 @@ const InvoiceTable = ({
   return (
     <div>
       {/* Header with title and action buttons */}
-      <div className="flex items-center mb-6">
+      <div className="flex items-center mb-6 mt-4">
         <h2 className="text-[#8685C1] font-semibold text-2xl font-nunito pr-10">
           Invoices History
         </h2>
@@ -111,29 +112,29 @@ const InvoiceTable = ({
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="bg-[#D9D9D9]">
-                <th className="p-1 py-6 text-left font-nunito text-black w-14">
+              <tr className="bg-[#E8E6F2]">
+                <th className="p-4 text-center font-nunito text-black w-14">
                   &nbsp;
                 </th>
-                <th className="p-2 text-left font-nunito text-black w-32">
+                <th className="p-4 text-left font-nunito text-black w-32">
                   Date
                 </th>
-                <th className="p-2 text-left font-nunito text-black w-32">
+                <th className="p-4 text-left font-nunito text-black w-32">
                   Invoice #
                 </th>
-                <th className="p-2 text-left font-nunito text-black w-[200px]">
+                <th className="p-4 pl-2 text-left font-nunito text-black w-[200px]">
                   Invoice Product Name
                 </th>
-                <th className="p-2 text-left font-nunito text-black w-48">
+                <th className="p-4 pl-6 text-left font-nunito text-black w-48">
                   Sender
                 </th>
-                <th className="p-2 text-left font-nunito text-black w-48">
+                <th className="p-4 text-left font-nunito text-black w-48">
                   Service
                 </th>
-                <th className="p-2 text-left font-nunito text-black w-32">
+                <th className="p-4 text-left font-nunito text-black w-32">
                   Status
                 </th>
-                <th className="p-2 text-left font-nunito text-black w-32">
+                <th className="p-4 text-left font-nunito text-black w-32">
                   Amount
                 </th>
               </tr>
@@ -154,10 +155,10 @@ const InvoiceTable = ({
                     : 'N/A';
 
                 return (
-                  <tr key={id} className="border-b border-[#E5E7EB]">
+                  <tr key={id} className="border-b border-[#E5E7EB] hover:bg-gray-50">
                     {/* Checkbox cell */}
-                    <td className="p-4">
-                      <div className="w-5 h-5 border border-[#D1D5DB] rounded flex items-center justify-center relative">
+                    <td className="p-4 text-center">
+                      <div className="inline-block w-5 h-5 border border-[#7C77C1] rounded flex items-center justify-center relative">
                         <input
                           type="checkbox"
                           checked={selectedInvoices.includes(id)}
@@ -184,33 +185,35 @@ const InvoiceTable = ({
                     </td>
 
                     {/* Invoice date */}
-                    <td className="p-4">{invoiceDate}</td>
+                    <td className="p-4 text-sm">{invoiceDate}</td>
 
                     {/* Invoice number */}
-                    <td className="p-4">{invoiceNumber}</td>
+                    <td className="p-4 text-sm">{invoiceNumber}</td>
 
                     {/* Product name */}
-                    <td className="p-4">{productName}</td>
+                    <td className="p-4 pl-2 text-sm">{productName}</td>
 
                     {/* Sender */}
-                    <td className="p-4">{sender}</td>
+                    <td className="p-4 pl-6 text-sm">{sender}</td>
 
                     {/* Service */}
-                    <td className="p-4">{service}</td>
+                    <td className="p-4 text-sm">{service}</td>
 
-                    {/* Status */}
+                    {/* Status - read-only for buyers */}
                     <td className="p-4">
                       <span
-                        className={`px-4 py-1 rounded-full text-sm font-medium ${getStatusClasses(
-                          status
-                        )}`}
+                        className="inline-block px-4 py-1 rounded-full text-sm font-medium"
+                        style={{
+                          ...getStatusStyle(status),
+                          color: "black"
+                        }}
                       >
                         {status}
                       </span>
                     </td>
 
                     {/* Amount */}
-                    <td className="p-4">{amount}</td>
+                    <td className="p-4 font-medium text-sm">{amount}</td>
                   </tr>
                 );
               })}

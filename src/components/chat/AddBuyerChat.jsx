@@ -1,4 +1,4 @@
-// AddBuyerChat.jsx
+// AddBuyerChat.jsx - Simplified ID handling
 import { useState, useEffect } from 'react';
 import { 
   collection, 
@@ -6,7 +6,7 @@ import {
   where, 
   getDocs, 
   doc, 
-  getDoc, 
+  getDoc,   
   setDoc, 
   updateDoc, 
   arrayUnion, 
@@ -39,8 +39,7 @@ const AddBuyerChat = ({ onClose, onBuyerSelect, userRole, searchRole }) => {
         const querySnapshot = await getDocs(q);
         
         const usersList = querySnapshot.docs.map(doc => ({
-          id: doc.id,
-          docId: doc.id,
+          id: doc.id, // Use the document ID as the primary identifier
           ...doc.data()
         }));
         
@@ -85,28 +84,11 @@ const AddBuyerChat = ({ onClose, onBuyerSelect, userRole, searchRole }) => {
     try {
       setError(null);
       
-      // Get current user from localStorage if not available in store
-      let userToUse = currentUser;
-      if (!userToUse || !userToUse.docId) {
-        const storedUser = localStorage.getItem('user');
-        
-        if (storedUser) {
-          const parsedUser = JSON.parse(storedUser);
-          
-          // If the stored user has uid but no docId, they are the same in your system
-          userToUse = {
-            ...parsedUser,
-            docId: parsedUser.docId || parsedUser.uid,
-            id: parsedUser.id || parsedUser.uid
-          };
-        } else {
-          setError("User information not available. Please refresh the page and login again.");
-          return;
-        }
-      }
+      // Get current user ID
+      const currentUserId = getCurrentUserId();
       
-      if (!userToUse.docId) {
-        setError("User ID not available. Please refresh and try again.");
+      if (!currentUserId) {
+        setError("User information not available. Please refresh the page and login again.");
         return;
       }
       
@@ -115,24 +97,8 @@ const AddBuyerChat = ({ onClose, onBuyerSelect, userRole, searchRole }) => {
         return;
       }
       
-      // Ensure we have valid IDs for both users - store multiple ID types for better matching
-      const currentUserData = {
-        primaryId: userToUse.docId,
-        uid: userToUse.uid || userToUse.docId,
-        id: userToUse.id || userToUse.docId,
-        docId: userToUse.docId
-      };
-      
-      const selectedUserData = {
-        primaryId: selectedUser.docId || selectedUser.id,
-        uid: selectedUser.uid || selectedUser.id,
-        id: selectedUser.id || selectedUser.docId,
-        docId: selectedUser.docId || selectedUser.id
-      };
-      
-      // Use the primary IDs for the main logic
-      const currentUserId = currentUserData.primaryId;
-      const selectedUserId = selectedUserData.primaryId;
+      // Simple ID references - no more complexity with multiple ID types
+      const selectedUserId = selectedUser.id;
       
       if (currentUserId === selectedUserId) {
         setError("You cannot chat with yourself.");
@@ -140,7 +106,6 @@ const AddBuyerChat = ({ onClose, onBuyerSelect, userRole, searchRole }) => {
       }
       
       // Check if chat already exists in current user's chats
-      // We need to check against all possible IDs of the selected user
       const userChatsRef = doc(db, 'userchats', currentUserId);
       const userChatsDoc = await getDoc(userChatsRef);
       
@@ -148,18 +113,8 @@ const AddBuyerChat = ({ onClose, onBuyerSelect, userRole, searchRole }) => {
         const userChatsData = userChatsDoc.data();
         const chats = userChatsData.chats || [];
         
-        // Create an array of all possible IDs for the selected user
-        const possibleIds = [
-          selectedUserId,
-          selectedUser.uid,
-          selectedUser.id,
-          selectedUser.docId
-        ].filter(Boolean);
-        
-        // Check if any of the existing chats have a receiver ID matching any of the selected user's IDs
-        const existingChat = chats.find(chat => 
-          possibleIds.includes(chat.receiverId)
-        );
+        // Simply check for the receiverId - no need for complex ID checking
+        const existingChat = chats.find(chat => chat.receiverId === selectedUserId);
         
         if (existingChat) {
           // Chat already exists, just select it
@@ -170,121 +125,69 @@ const AddBuyerChat = ({ onClose, onBuyerSelect, userRole, searchRole }) => {
           onClose();
           return;
         }
-        
-        // Also check if there's an existing chat based on selectedUser's username or other unique identifiers
-        if (selectedUser.username) {
-          // Fetch all users to check if any match the selected user
-          const usersRef = collection(db, 'users');
-          const q = query(usersRef, where('username', '==', selectedUser.username));
-          const querySnapshot = await getDocs(q);
-          
-          if (!querySnapshot.empty) {
-            // Get all possible IDs from these matching users
-            const userIds = querySnapshot.docs.map(doc => doc.id);
-            
-            // Check if any existing chat has a receiverId matching any of these IDs
-            const chatByUsername = chats.find(chat => userIds.includes(chat.receiverId));
-            
-            if (chatByUsername) {
-              onBuyerSelect({
-                chatId: chatByUsername.chatId,
-                user: selectedUser
-              });
-              onClose();
-              return;
-            }
-          }
-        }
       }
       
       // Create a new chat document
-      const chatRef = collection(db, 'chats');
-      const newChatRef = doc(chatRef);
-      const chatId = newChatRef.id;
+      const chatRef = doc(collection(db, 'chats'));
+      const chatId = chatRef.id;
       
-      await setDoc(newChatRef, {
+      await setDoc(chatRef, {
         createdAt: serverTimestamp(),
         messages: [],
         participants: [currentUserId, selectedUserId]
       });
       
-      // Update current user's chats
-      const newChatData = {
-        chatId: chatId,
-        lastMessage: '',
+      // Create chat data objects
+      const timestamp = Date.now();
+      
+      // Create chat entry for current user
+      const currentUserChatData = {
+        chatId,
         receiverId: selectedUserId,
-        updatedAt: Date.now(),
-        isSeen: true,
+        lastMessage: '',
+        updatedAt: timestamp,
+        isSeen: true
       };
       
-      if (!userChatsDoc.exists()) {
-        // Create userchats doc for current user if it doesn't exist
-        await setDoc(userChatsRef, {
-          chats: [newChatData]
-        });
-      } else {
-        // Carefully add to existing chats array
+      // Update current user's userchats
+      if (userChatsDoc.exists()) {
         const existingChats = userChatsDoc.data().chats || [];
         await updateDoc(userChatsRef, {
-          chats: [...existingChats, newChatData]
+          chats: [...existingChats, currentUserChatData]
+        });
+      } else {
+        await setDoc(userChatsRef, {
+          chats: [currentUserChatData]
         });
       }
       
-      // Update the selected user's chats
-      // Try multiple variations of the user ID to find the right document
-      const potentialReceiverIds = [
-        selectedUserId,
-        selectedUser.uid,
-        selectedUser.id,
-        selectedUser.docId
-      ].filter(Boolean);
+      // Create chat entry for selected user
+      const receiverChatData = {
+        chatId,
+        receiverId: currentUserId,
+        lastMessage: '',
+        updatedAt: timestamp,
+        isSeen: false
+      };
       
-      let receiverUpdateSuccess = false;
+      // Update selected user's userchats
+      const receiverChatsRef = doc(db, 'userchats', selectedUserId);
+      const receiverChatsDoc = await getDoc(receiverChatsRef);
       
-      for (const receiverId of potentialReceiverIds) {
-        if (receiverUpdateSuccess) break;
-        
-        try {
-          const receiverChatsRef = doc(db, 'userchats', receiverId);
-          const receiverChatsDoc = await getDoc(receiverChatsRef);
-          
-          const receiverChatData = {
-            chatId: chatId,
-            lastMessage: '',
-            receiverId: currentUserId, // The current user is the receiver from their perspective
-            updatedAt: Date.now(),
-            isSeen: false,
-          };
-          
-          if (receiverChatsDoc.exists()) {
-            const receiverChats = receiverChatsDoc.data().chats || [];
-            // Check for duplicate before adding
-            const existingChatIndex = receiverChats.findIndex(c => c.chatId === chatId);
-            
-            if (existingChatIndex >= 0) {
-              receiverUpdateSuccess = true;
-              break;
-            }
-            
-            await updateDoc(receiverChatsRef, {
-              chats: [...receiverChats, receiverChatData]
-            });
-            receiverUpdateSuccess = true;
-          } else {
-            // Create userchats doc for receiver if it doesn't exist
-            await setDoc(receiverChatsRef, {
-              chats: [receiverChatData]
-            });
-            receiverUpdateSuccess = true;
-          }
-        } catch (error) {
-          // Try the next ID
-        }
+      if (receiverChatsDoc.exists()) {
+        const receiverChats = receiverChatsDoc.data().chats || [];
+        await updateDoc(receiverChatsRef, {
+          chats: [...receiverChats, receiverChatData]
+        });
+      } else {
+        await setDoc(receiverChatsRef, {
+          chats: [receiverChatData]
+        });
       }
       
       // Select the new chat
       onBuyerSelect({
-        chatId: chatId,
+        chatId,
         user: selectedUser
       });
       
@@ -293,6 +196,22 @@ const AddBuyerChat = ({ onClose, onBuyerSelect, userRole, searchRole }) => {
       console.error("Error creating chat:", error);
       setError(`Error creating chat: ${error.message}. Please try again.`);
     }
+  };
+
+  // Helper function to get current user ID
+  const getCurrentUserId = () => {
+    if (currentUser?.id) {
+      return currentUser.id;
+    }
+    
+    // Fallback to localStorage if needed
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      const userData = JSON.parse(storedUser);
+      return userData.id || userData.uid; // Support older format that might use uid
+    }
+    
+    return null;
   };
 
   return (
