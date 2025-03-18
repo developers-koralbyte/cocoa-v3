@@ -3,7 +3,6 @@ import { Search, RotateCcw, Plus } from 'lucide-react';
 import { Bell } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import BaseLayout from '../../components/Dashboard/BaseLayout';
-import chatImage from '../../assets/img/Dashboard/chatImage.png';
 import { useUserStore } from '../../utils/userStore';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '../../utils/firebase';
