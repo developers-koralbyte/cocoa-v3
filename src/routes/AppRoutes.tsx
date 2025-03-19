@@ -22,6 +22,10 @@ const InboxPage = React.lazy(() => import('../pages/Dashboard/InboxPage'));
 const AccountingSoftware = React.lazy(() => import('../pages/Dashboard/AccountingSoftware'));
 const BecomingAVendor = React.lazy(() => import('../components/BecomeAVendor/BecomingAVendor'));
 const VendorPricingVerification = React.lazy(() => import('../components/VendorPricing&Verification/VendorPricing&Verification'));
+const CataloguePage = React.lazy(() => import('../pages/Dashboard/Catalogue/CataloguePage'));
+const ServiceDetailPage = React.lazy(() => import('../pages/Dashboard/Catalogue/ServiceDetailPage'));
+const ProductDetailPage = React.lazy(() => import('../pages/Dashboard/Catalogue/ProductDetailPage'));
+
 const AppRoutes: React.FC = () => {
     
     return (
@@ -42,6 +46,7 @@ const AppRoutes: React.FC = () => {
                 />
                 <Route path="/new-password" element={<NewPasswordPage />} />
                 <Route path="/verification" element={<VerificationPage />} />
+                <Route path="/product/:productId" element={<ProductDetailPage />} />
 
                 {/* Protected Routes for Vendors */}
                 <Route element={<ProtectedRoute allowedRoles={['vendor']} />}>
@@ -52,6 +57,7 @@ const AppRoutes: React.FC = () => {
                     <Route path="/invoices" element={<VendorInvoicePage />} />
                     <Route path="/calendar" element={<CalendarPage />} />
                     <Route path="/inbox" element={<InboxPage />} />
+                    <Route path='/catalogue' element={<CataloguePage/>} />
                     <Route
                         path="/accounting-software"
                         element={<AccountingSoftware />}
@@ -61,7 +67,7 @@ const AppRoutes: React.FC = () => {
                         element={<CreateNewInvoice />}
                     />
                 </Route>
-
+                <Route path="/service/:serviceId" element={<ServiceDetailPage />} />
                 {/* Protected Routes for Buyers */}
                 <Route element={<ProtectedRoute allowedRoles={['buyer']} />}>
                     <Route

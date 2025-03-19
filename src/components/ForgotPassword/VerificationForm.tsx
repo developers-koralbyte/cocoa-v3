@@ -7,7 +7,7 @@ import {
 
   verifyPasswordResetCode,
 } from "firebase/auth";
-import { auth } from "../../";
+import { auth } from "../../utils/firebase";
 
 interface VerificationFormProps {
   email: string;

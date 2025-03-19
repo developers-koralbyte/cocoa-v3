@@ -1,8 +1,9 @@
-import { Inbox, FileText, Calendar, LogOut, Grid } from 'lucide-react';
+import { Inbox, FileText, Calendar, LogOut, Grid, BookOpen } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import logo from '../../assets/img/Dashboard/CocoaLogo.png';
 import { ComponentType, RefAttributes, ForwardRefExoticComponent } from 'react';
 import { useUserStore } from '../../utils/userStore'; // Import userStore
+import Catalogue from "../../assets/icons/catalogue.svg";
 
 // Define type for Lucide icons
 type LucideIcon = ForwardRefExoticComponent<
@@ -66,6 +67,7 @@ const SideBar = ({ isOpen, toggleSidebar }: SideBarProps) => {
     const menuItems: MenuItem[] = [
         { icon: Grid, label: 'Dashboard', vendorPath: '/vendor-dashboard', buyerPath: '/buyer-dashboard' },
         { icon: Inbox, label: 'Inbox', vendorPath: '/inbox', buyerPath: '/buyer-inbox' },
+        { icon: BookOpen, label: 'Catalogue', vendorPath: '/catalogue' },
         { icon: FileText, label: 'Invoices', vendorPath: '/invoices', buyerPath: '/buyer-invoices' },
         { icon: Calendar, label: 'Calendar', vendorPath: '/calendar', buyerPath: '/buyer-calendar' },
     ];

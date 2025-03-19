@@ -5,9 +5,9 @@ import {
   query,
   where,
   getDocs,
-  deleteDoc,
+
   doc,
-  updateDoc,
+
   writeBatch
 } from 'firebase/firestore';
 import { auth, db } from '../../../utils/firebase';
@@ -16,7 +16,7 @@ import BaseLayout from '../../../components/Dashboard/BaseLayout';
 import InvoiceTable from '../../../components/Dashboard/Invoices/BuyerInvoiceTable';
 import Header from '../../../components/Dashboard/Invoices/HeaderProps';
 // Import the download functionality
-import { downloadInvoice, downloadMultipleInvoices } from '../../../utils/InvoiceDownloadService';
+import { downloadMultipleInvoices } from '../../../utils/InvoiceDownloadService';
 
 interface BuyerInvoice {
   id: string;
