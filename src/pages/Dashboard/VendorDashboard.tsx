@@ -6,8 +6,8 @@ import BaseLayout from '../../components/Dashboard/BaseLayout';
 import { useUserStore } from '../../utils/userStore';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '../../utils/firebase';
-import ServiceForm, { ServiceFormData } from '../../pages/Dashboard/InvoicePage/Forms/ServiceForm';
-import ProductForm, { ProductFormData } from '../../pages/Dashboard/InvoicePage/Forms/ProductForm';
+import ServiceForm, { ServiceFormData } from '../../components/Dashboard/Catalogue/Forms/ServiceForm';
+import ProductForm, { ProductFormData } from '../../components/Dashboard/Catalogue/Forms/ProductForm';
 
 interface Appointment {
     name: string;
