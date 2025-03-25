@@ -111,6 +111,7 @@ const NewVendor = () => {
         avatar: avatarUrl,
         blocked: [],
         createdAt: new Date(),
+        categories: formData.categories.split(',').map((cat) => cat.trim().toLowerCase()),
       });
 
 
