@@ -9,6 +9,7 @@ import { useUserStore } from '../../utils/userStore'
 import { doc,getDoc,setDoc } from 'firebase/firestore';
 import { db } from '../../utils/firebase'
 
+const  defaultAvatar = "/path-to-default-avatar.jpg";
 
 
 
@@ -26,6 +27,7 @@ interface Buyer {
     match: number
     image: string
 }
+
 
 const appointments: Appointment[] = [
     {
@@ -103,37 +105,37 @@ const services = [
 const BuyerDashboard = () => {
     const navigate = useNavigate()
     // 1) Pull currentUser from your user store
-  const { currentUser } = useUserStore()
+const { currentUser } = useUserStore()
 
-  // 2) Log changes to currentUser for debugging
-  useEffect(() => {
+// 2) Log changes to currentUser for debugging
+useEffect(() => {
     console.log('BuyerDashboard: currentUser changed:', currentUser)
-  }, [currentUser])
+}, [currentUser])
 
-  // State for the popup form
-  const [showPopup, setShowPopup] = useState(false)
-  const [formData, setFormData] = useState({
+// State for the popup form
+const [showPopup, setShowPopup] = useState(false)
+const [formData, setFormData] = useState({
     businessName: '',
     countryRegion: '',
     industry: '',
     categories: '',
     services: '',
-  })
-  const [loadingDocCheck, setLoadingDocCheck] = useState(true)
+})
+const [loadingDocCheck, setLoadingDocCheck] = useState(true)
 
-  // 3) On mount or when currentUser changes, check if Buyer doc is missing or incomplete
-  useEffect(() => {
+// 3) On mount or when currentUser changes, check if Buyer doc is missing or incomplete
+useEffect(() => {
     const checkBuyerDoc = async () => {
-      try {
+    try {
         // If there's no user or no UID, redirect to /login
         if (!currentUser || !currentUser.id) {
-          navigate('/login')
-          return
+        navigate('/login')
+        return
         }
         // If role is not 'buyer', also redirect
         if (currentUser.role !== 'buyer') {
-          navigate('/login')
-          return
+        navigate('/login')
+        return
         }
 
         // Retrieve doc from "Buyers" collection, doc ID = user's UID
@@ -141,80 +143,84 @@ const BuyerDashboard = () => {
         const snap = await getDoc(buyerRef)
 
         if (!snap.exists()) {
-          // doc doesn't exist => show popup
-          console.log('No buyer doc found, showing popup...')
-          setShowPopup(true)
-          setLoadingDocCheck(false)
-          return
+        // doc doesn't exist => show popup
+        console.log('No buyer doc found, showing popup...')
+        setShowPopup(true)
+        setLoadingDocCheck(false)
+        return
         }
 
         // If doc exists, check if fields are missing
         const data = snap.data()
         const { businessName, countryRegion, industry, categories, services } = data
         if (!businessName || !countryRegion || !industry || !categories || !services) {
-          setFormData({
+        setFormData({
             businessName: businessName || '',
             countryRegion: countryRegion || '',
             industry: industry || '',
             categories: categories || '',
             services: services || '',
-          })
-          setShowPopup(true)
+        })
+        setShowPopup(true)
         }
         setLoadingDocCheck(false)
-      } catch (error) {
+    } catch (error) {
         console.error('Error checking buyer doc:', error)
         navigate('/login')
-      }
+    }
     }
 
     checkBuyerDoc()
-  }, [currentUser, navigate])
+}, [currentUser, navigate])
 
-  // Handle form changes
-  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
+const avatarSrc = currentUser?.avatar && currentUser.avatar.trim() !== ""
+? currentUser.avatar
+: defaultAvatar;
+
+// Handle form changes
+const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
-  }
+}
 
-  // 4) On submit => setDoc with user.uid in "Buyers"
-  const handleSubmit = async (e: FormEvent) => {
+// 4) On submit => setDoc with user.uid in "Buyers"
+const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
     try {
-      if (!currentUser || !currentUser.id) {
+    if (!currentUser || !currentUser.id) {
         console.error('No currentUser or user ID in store. Cannot save Buyer doc.')
         return
-      }
+    }
 
-      const buyerRef = doc(db, 'Buyers', currentUser.id)
-      await setDoc(
+    const buyerRef = doc(db, 'Buyers', currentUser.id)
+    await setDoc(
         buyerRef,
         {
-          businessName: formData.businessName,
-          countryRegion: formData.countryRegion,
-          industry: formData.industry,
-          categories: formData.categories,
-          services: formData.services,
+        businessName: formData.businessName,
+        countryRegion: formData.countryRegion,
+        industry: formData.industry,
+        categories: formData.categories,
+        services: formData.services,
         },
         { merge: true }
-      )
-
-      alert('Buyer details updated successfully!')
-      setShowPopup(false)
-    } catch (err) {
-      console.error('Error updating buyer doc:', err)
-    }
-  }
-
-  if (loadingDocCheck) {
-    return (
-      <BaseLayout>
-        <div className="flex items-center justify-center h-screen">
-          <p>Loading data...</p>
-        </div>
-      </BaseLayout>
     )
-  }
+
+    alert('Buyer details updated successfully!')
+    setShowPopup(false)
+    } catch (err) {
+    console.error('Error updating buyer doc:', err)
+    }
+}
+
+if (loadingDocCheck) {
+    return (
+    <BaseLayout>
+        <div className="flex items-center justify-center h-screen">
+        <p>Loading data...</p>
+        </div>
+    </BaseLayout>
+    )
+}
 
 
     return (
@@ -224,7 +230,7 @@ const BuyerDashboard = () => {
                     <div className="flex-1 p-8">
                         <div className="flex justify-between items-center mb-8">
                             <h1 className="text-4xl font-bold font-nunito">
-                                Welcome Diana,
+                                Welcome, {currentUser?.firstName || "buyer"}
                             </h1>
                             <div className="flex gap-4">
                                 <button className="p-2 rounded-full bg-white shadow-sm hover:shadow-md transition-shadow">
@@ -315,23 +321,26 @@ const BuyerDashboard = () => {
 
                     {/* Right panel */}
                     <div className="w-96 bg-purple-100 p-8 rounded-r-[3.5rem]">
-                        <div className="flex items-center justify-center gap-4 mb-8">
+                    <div className="flex items-center justify-center gap-x-5 gap-4 mb-8">
                             <div>
                                 <h2 className="font-bold font-nunito">
-                                    Diana, TechNest
+                                {currentUser?.firstName || "buyer"},
                                 </h2>
                                 <div className="flex items-center gap-2">
-                                    <span className="text-sm text-gray-600">
-                                        Vendor
+                                    <span className="text-sm text-gray-600 font-nunito">
+                                        Buyer
+                                    </span>
+                                    <span className="text-xs bg-purple-200 px-2 py-1 rounded-full font-nunito">
+                                        Premium Account
                                     </span>
                                 </div>
                             </div>
                             <div className="w-12 h-12 rounded-full overflow-hidden">
-                                <img
-                                    src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=150&h=150"
-                                    alt="Peter"
-                                    className="w-full h-full object-cover"
-                                />
+                            <img
+                            src={avatarSrc}
+                            alt="User Avatar"
+                            className="w-10 h-10 md:w-12 md:h-12 rounded-full object-cover"
+                            />
                             </div>
                         </div>
 
@@ -424,86 +433,86 @@ const BuyerDashboard = () => {
                         </section>
                     </div>
                 </div>
-                 {/* Popup for completing profile */}
-      {showPopup && (
+                {/* Popup for completing profile */}
+    {showPopup && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
-          <div className="bg-white p-6 rounded shadow-md w-[400px]">
+        <div className="bg-white p-6 rounded shadow-md w-[400px]">
             <h2 className="text-xl font-semibold mb-4">Complete Your Profile</h2>
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
+            <div>
                 <label className="block font-medium mb-1">Business Name</label>
                 <input
-                  type="text"
-                  name="businessName"
-                  value={formData.businessName}
-                  onChange={handleChange}
-                  className="border border-gray-300 p-2 w-full rounded"
-                  required
+                type="text"
+                name="businessName"
+                value={formData.businessName}
+                onChange={handleChange}
+                className="border border-gray-300 p-2 w-full rounded"
+                required
                 />
-              </div>
-              <div>
+            </div>
+            <div>
                 <label className="block font-medium mb-1">Country/Region</label>
                 <input
-                  type="text"
-                  name="countryRegion"
-                  value={formData.countryRegion}
-                  onChange={handleChange}
-                  className="border border-gray-300 p-2 w-full rounded"
-                  required
+                type="text"
+                name="countryRegion"
+                value={formData.countryRegion}
+                onChange={handleChange}
+                className="border border-gray-300 p-2 w-full rounded"
+                required
                 />
-              </div>
-              <div>
+            </div>
+            <div>
                 <label className="block font-medium mb-1">Industry</label>
                 <input
-                  type="text"
-                  name="industry"
-                  value={formData.industry}
-                  onChange={handleChange}
-                  className="border border-gray-300 p-2 w-full rounded"
-                  required
+                type="text"
+                name="industry"
+                value={formData.industry}
+                onChange={handleChange}
+                className="border border-gray-300 p-2 w-full rounded"
+                required
                 />
-              </div>
-              <div>
+            </div>
+            <div>
                 <label className="block font-medium mb-1">Categories</label>
                 <input
-                  type="text"
-                  name="categories"
-                  value={formData.categories}
-                  onChange={handleChange}
-                  className="border border-gray-300 p-2 w-full rounded"
-                  required
+                type="text"
+                name="categories"
+                value={formData.categories}
+                onChange={handleChange}
+                className="border border-gray-300 p-2 w-full rounded"
+                required
                 />
-              </div>
-              <div>
+            </div>
+            <div>
                 <label className="block font-medium mb-1">Services</label>
                 <input
-                  type="text"
-                  name="services"
-                  value={formData.services}
-                  onChange={handleChange}
-                  className="border border-gray-300 p-2 w-full rounded"
-                  required
+                type="text"
+                name="services"
+                value={formData.services}
+                onChange={handleChange}
+                className="border border-gray-300 p-2 w-full rounded"
+                required
                 />
-              </div>
-              <div className="flex justify-end gap-4 mt-4">
+            </div>
+            <div className="flex justify-end gap-4 mt-4">
                 <button
-                  type="button"
-                  onClick={() => setShowPopup(false)}
-                  className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 transition"
+                type="button"
+                onClick={() => setShowPopup(false)}
+                className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 transition"
                 >
-                  Cancel
+                Cancel
                 </button>
                 <button
-                  type="submit"
-                  className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-500 transition"
+                type="submit"
+                className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-500 transition"
                 >
-                  Save
+                Save
                 </button>
-              </div>
+            </div>
             </form>
-          </div>
         </div>
-      )}
+        </div>
+    )}
             </BaseLayout>
 
             {/* Chat Image/Button - Fixed at bottom-right */}

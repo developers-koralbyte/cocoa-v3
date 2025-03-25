@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, ChangeEvent, FormEvent } from 'react';
 import { Search, RotateCcw, Plus } from 'lucide-react';
 import { Bell } from 'lucide-react';
@@ -8,6 +9,8 @@ import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '../../utils/firebase';
 import ServiceForm, { ServiceFormData } from '../../components/Dashboard/Catalogue/Forms/ServiceForm';
 import ProductForm, { ProductFormData } from '../../components/Dashboard/Catalogue/Forms/ProductForm';
+import VendorServices from '../../components/Dashboard/Catalogue/VendorServices';
+import VendorProducts from '../../components/Dashboard/Catalogue/VendorProducts';
 
 interface Appointment {
     name: string;
@@ -125,6 +128,9 @@ const VendorDashboard = () => {
     const [products, setProducts] = useState<Product[]>(initialProducts);
     const [isServiceFormOpen, setIsServiceFormOpen] = useState(false);
     const [isProductFormOpen, setIsProductFormOpen] = useState(false);
+    const [potentialBuyers, setPotentialBuyers] = useState<Buyer[]>([]);
+
+   const  defaultAvatar = "/path-to-default-avatar.jpg";
     
     // 1. Pull currentUser from user store
     const { currentUser } = useUserStore();
@@ -207,11 +213,16 @@ const VendorDashboard = () => {
   
       checkVendorDoc();
     }, [currentUser, navigate]);
+
+    const avatarSrc = currentUser?.avatar && currentUser.avatar.trim() !== ""
+    ? currentUser.avatar
+    : defaultAvatar;
   
     const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
       const { name, value } = e.target;
       setFormData(prev => ({ ...prev, [name]: value }));
     };
+
   
     const handleSubmit = async (e: FormEvent) => {
       e.preventDefault();
@@ -234,6 +245,37 @@ const VendorDashboard = () => {
         console.error("Error updating vendor doc:", err);
       }
     };
+
+    useEffect(() => {
+        const fetchPotentialBuyers = async () => {
+          if (currentUser && currentUser.categories) {
+            // Assume vendor's categories are stored as a comma-separated string.
+            const vendorInterests = currentUser.categories.split(',').map((s: string) => s.trim().toLowerCase());
+            try {
+              const buyersQuery = query(
+                collection(db, 'Buyers'),
+                // Assume buyer docs store their interests as an array in "categories".
+                where('categories', 'array-contains-any', vendorInterests)
+              );
+              const snapshot = await getDocs(buyersQuery);
+              const buyersList: Buyer[] = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Buyer));
+              // Calculate a simple match percentage for each buyer.
+              const matchedBuyers = buyersList.map(buyer => {
+                const buyerInterests: string[] = Array.isArray(buyer.categories)
+                  ? buyer.categories.map((c: string) => c.toLowerCase())
+                  : [];
+                const common = vendorInterests.filter(interest => buyerInterests.includes(interest));
+                const match = vendorInterests.length ? Math.floor((common.length / vendorInterests.length) * 100) : 0;
+                return { ...buyer, match };
+              });
+              setPotentialBuyers(matchedBuyers);
+            } catch (error) {
+              console.error('Error fetching potential buyers:', error);
+            }
+          }
+        };
+        fetchPotentialBuyers();
+      }, [currentUser]);
   
     if (loadingDocCheck) {
       return (
@@ -251,9 +293,9 @@ const VendorDashboard = () => {
                 <div className="flex min-h-screen bg-transparent">
                     <div className="flex-1 p-8">
                         <div className="flex justify-between items-center mb-8">
-                            <h1 className="text-4xl font-bold font-nunito">
-                                Welcome Peter,
-                            </h1>
+                        <h1 className="text-4xl font-bold font-nunito">
+                           Welcome {currentUser?.firstName || "Vendor"},
+                         </h1>
                             <div className="flex gap-4">
                                 <button className="p-2 rounded-full bg-white shadow-sm hover:shadow-md transition-shadow">
                                     <Search className="w-5 h-5 text-gray-600" />
@@ -264,106 +306,12 @@ const VendorDashboard = () => {
                             </div>
                         </div>
 
-                        <section className="mb-12">
-                            <div className="flex justify-between items-center mb-6">
-                                <h2 className="text-2xl font-bold font-nunito">
-                                    My Catalogue
-                                </h2>
-                                <button 
-                                    onClick={() => setIsServiceFormOpen(true)}
-                                    className="flex items-center gap-2 bg-purple-100 text-purple-600 px-4 py-2 rounded-full hover:bg-purple-200 transition-colors"
-                                >
-                                    <Plus className="w-4 h-4" />
-                                    <span>Add Service</span>
-                                </button>
-                            </div>
-                            <div className="grid grid-cols-4 gap-6">
-                                {services.map((service, index) => (
-                                    <div key={index} className="text-center">
-                                        <div className="w-full aspect-square mb-4 overflow-hidden rounded-full shadow-sm hover:shadow-md transition-shadow">
-                                            <img
-                                                src={service.image}
-                                                alt={service.title}
-                                                className="w-full h-full object-cover"
-                                            />
-                                        </div>
-                                        <h3 className="text-sm font-medium">
-                                            {service.title}
-                                        </h3>
-                                    </div>
-                                ))}
-                            </div>
-                        </section>
 
-                        <section className="mb-12">
-                            <div className="flex justify-between items-center mb-6">
-                                <h2 className="text-2xl font-bold font-nunito">
-                                    My Products
-                                </h2>
-                                <button 
-                                    onClick={() => setIsProductFormOpen(true)}
-                                    className="flex items-center gap-2 bg-purple-100 text-purple-600 px-4 py-2 rounded-full hover:bg-purple-200 transition-colors"
-                                >
-                                    <Plus className="w-4 h-4" />
-                                    <span>Add Product</span>
-                                </button>
-                            </div>
-                            {products.length > 0 ? (
-                                <div className="grid grid-cols-4 gap-6">
-                                    {products.map((product, index) => (
-                                        <div key={index} className="text-center">
-                                            <div className="w-full aspect-square mb-4 overflow-hidden rounded-full shadow-sm hover:shadow-md transition-shadow">
-                                                <img
-                                                    src={product.image}
-                                                    alt={product.title}
-                                                    className="w-full h-full object-cover"
-                                                />
-                                            </div>
-                                            <h3 className="text-sm font-medium">
-                                                {product.title}
-                                            </h3>
-                                            {product.price && (
-                                                <p className="text-sm text-purple-600">${product.price}</p>
-                                            )}
-                                        </div>
-                                    ))}
-                                </div>
-                            ) : (
-                                <div className="flex justify-center items-center h-40 bg-gray-50 rounded-lg">
-                                    <div className="text-center">
-                                        <div 
-                                            className="w-16 h-16 mx-auto mb-4 bg-purple-100 rounded-full flex items-center justify-center cursor-pointer"
-                                            onClick={() => setIsProductFormOpen(true)}
-                                        >
-                                            <Plus className="w-8 h-8 text-purple-600" />
-                                        </div>
-                                        <p className="text-gray-500">No products yet. Click to add your first product.</p>
-                                    </div>
-                                </div>
-                            )}
-                        </section>
-
-                        <section className="mb-12">
-                            <h2 className="text-2xl font-bold mb-6 font-nunito">
-                                My Popular Services
-                            </h2>
-                            <div className="grid grid-cols-4 gap-6">
-                                {popularServices.map((service, index) => (
-                                    <div key={index} className="text-center">
-                                        <div className="w-full aspect-square mb-4 overflow-hidden rounded-full shadow-sm hover:shadow-md transition-shadow">
-                                            <img
-                                                src={service.image}
-                                                alt={service.title}
-                                                className="w-full h-full object-cover"
-                                            />
-                                        </div>
-                                        <h3 className="text-sm font-medium">
-                                            {service.title}
-                                        </h3>
-                                    </div>
-                                ))}
-                            </div>
-                        </section>
+                        <div className="space-y-8 md:space-y-12">
+                           <VendorServices />
+                           <VendorProducts />
+                        </div>
+                    
 
                         <section className="mb-12">
                             <h2 className="text-2xl font-bold mb-6 font-nunito text-purple-400">
@@ -404,7 +352,7 @@ const VendorDashboard = () => {
                         <div className="flex items-center justify-center gap-x-5 gap-4 mb-8">
                             <div>
                                 <h2 className="font-bold font-nunito">
-                                    Peter, Accountix
+                                {currentUser?.firstName || "Vendor"},
                                 </h2>
                                 <div className="flex items-center gap-2">
                                     <span className="text-sm text-gray-600 font-nunito">
@@ -416,11 +364,11 @@ const VendorDashboard = () => {
                                 </div>
                             </div>
                             <div className="w-12 h-12 rounded-full overflow-hidden">
-                                <img
-                                    src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=150&h=150"
-                                    alt="Peter"
-                                    className="w-full h-full object-cover"
-                                />
+                            <img
+                              src={avatarSrc}
+                              alt="User Avatar"
+                              className="w-10 h-10 md:w-12 md:h-12 rounded-full object-cover"
+                            />
                             </div>
                         </div>
 
@@ -482,32 +430,35 @@ const VendorDashboard = () => {
 
                         {/* Your Buyers Section */}
                         <section className="bg-white rounded-[2rem] p-6">
-                            <h3 className="font-bold mb-4">Your buyers</h3>
-                            <div className="space-y-4">
-                                {buyers.map((buyer, index) => (
-                                    <div
-                                        key={index}
-                                        className="flex items-center gap-4"
-                                    >
-                                        <div className="w-10 h-10 rounded-full overflow-hidden">
-                                            <img
-                                                src={buyer.image}
-                                                alt={buyer.name}
-                                                className="w-full h-full object-cover"
-                                            />
-                                        </div>
-                                        <div>
-                                            <h4 className="font-medium">
-                                                {buyer.name}
-                                            </h4>
-                                            <p className="text-md text-purple-600 font-bold">
-                                                {buyer.company}
-                                            </p>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </section>
+  <h3 className="font-bold mb-4">Your Potential Buyers</h3>
+  <div className="space-y-4">
+    {potentialBuyers.map((buyer, index) => (
+      <div key={index} className="flex items-center gap-4">
+        {/* Avatar */}
+        <div className="w-10 h-10 rounded-full overflow-hidden">
+          <img
+            src={buyer.image} // or buyer.avatar
+            alt={buyer.name}
+            className="w-full h-full object-cover"
+          />
+        </div>
+
+        {/* Buyer Info */}
+        <div>
+          <h4 className="font-medium">{buyer.name}</h4>
+          <p className="text-md text-purple-600 font-bold">
+            {buyer.businessName || buyer.company || 'N/A'}
+          </p>
+          {/* Match Percentage (optional) */}
+          <p className="text-sm text-gray-600">
+            {buyer.match}% match
+          </p>
+        </div>
+      </div>
+    ))}
+  </div>
+</section>
+
                     </div>
                 </div>
             </BaseLayout>
@@ -611,3 +562,4 @@ const VendorDashboard = () => {
 };
 
 export default VendorDashboard;
+
