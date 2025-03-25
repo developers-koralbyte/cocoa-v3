@@ -168,49 +168,11 @@ const NewBuyer = () => {
 
       {/* Right Panel */}
       <div className="w-3/5 p-8 flex items-center justify-center">
-        <form onSubmit={handleSubmit} className="w-full max-w-4xl grid grid-cols-2 gap-8">
-          {/* Account Details */}
-          <div className="col-span-2">
-            <h3 className="text-2xl font-semibold text-[#7C77C1] mb-4">
-              Account Details
-            </h3>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label
-                  htmlFor="email"
-                  className="block text-sm font-medium text-[#7C77C1]"
-                >
-                  Email
-                </label>
-                <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded"
-                  required
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="password"
-                  className="block text-sm font-medium text-[#7C77C1]"
-                >
-                  Password
-                </label>
-                <input
-                  type="password"
-                  id="password"
-                  name="password"
-                  value={formData.password}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded"
-                  required
-                />
-              </div>
-            </div>
-          </div>
+        <form
+          onSubmit={handleSubmit}
+          className="w-full max-w-4xl grid grid-cols-2 gap-8"
+        >
+          
 
           {/* Personal Details */}
           <div className="col-span-2">
@@ -223,7 +185,7 @@ const NewBuyer = () => {
                   htmlFor="firstName"
                   className="block text-sm font-medium text-[#7C77C1]"
                 >
-                  First Name
+                  First Name *
                 </label>
                 <input
                   type="text"
@@ -240,7 +202,7 @@ const NewBuyer = () => {
                   htmlFor="lastName"
                   className="block text-sm font-medium text-[#7C77C1]"
                 >
-                  Last Name
+                  Last Name * 
                 </label>
                 <input
                   type="text"
@@ -255,7 +217,50 @@ const NewBuyer = () => {
             </div>
           </div>
 
-          
+          {/* Account Details */}
+          <div className="col-span-2">
+            <h3 className="text-2xl font-semibold text-[#7C77C1] mb-4">
+              Account Details
+            </h3>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label
+                  htmlFor="email"
+                  className="block text-sm font-medium text-[#7C77C1]"
+                >
+                  Email * 
+                </label>
+                <input
+                  type="email"
+                  id="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded"
+                  required
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="password"
+                  className="block text-sm font-medium text-[#7C77C1]"
+                >
+                  Password * 
+                </label>
+                <input
+                  type="password"
+                  id="password"
+                  name="password"
+                  value={formData.password}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded"
+                  required
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Avatar (Optional) */}
           <div className="col-span-2">
             <label className="block text-sm font-medium text-[#7C77C1] mb-1">
               Profile Picture
@@ -271,9 +276,9 @@ const NewBuyer = () => {
                 <p className="text-sm text-gray-500">No image selected</p>
               )}
             </div>
-           
+        
             <label className="inline-flex items-center px-3 py-2 bg-[#7C77C1] text-white text-sm font-medium leading-4 rounded-md shadow-sm hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 cursor-pointer">
-              {/* Upload icon (simple SVG) */}
+              
               <svg
                 className="w-5 h-5 mr-2"
                 fill="none"
@@ -297,26 +302,29 @@ const NewBuyer = () => {
             </label>
           </div>
 
-          {/* Business & Country */}
+          {/* Business Name & Country/Region */}
           <div className="col-span-2">
             <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label
-                  htmlFor="businessName"
-                  className="block text-sm font-medium text-[#7C77C1] mb-1"
-                >
-                  Business Name
-                </label>
-                <input
-                  type="text"
-                  id="businessName"
-                  name="businessName"
-                  value={formData.businessName}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded"
-                  required
-                />
-              </div>
+            <div className="relative group">
+  <label
+    htmlFor="businessName"
+    className="block text-sm font-medium text-[#7C77C1] relative cursor-pointer"
+  >
+    Business Name
+    <span className="absolute left-0 bottom-full mb-1 w-56 p-2 text-xs text-white bg-gray-800 rounded-md shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 ease-in-out">
+      Enter your registered business name as per official documents.
+    </span>
+  </label>
+  <input
+    type="text"
+    id="businessName"
+    name="businessName"
+    value={formData.businessName}
+    onChange={handleInputChange}
+    className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#7C77C1] focus:outline-none transition"
+  />
+</div>
+
               <div>
                 <label
                   htmlFor="countryRegion"
@@ -331,64 +339,81 @@ const NewBuyer = () => {
                   value={formData.countryRegion}
                   onChange={handleInputChange}
                   className="w-full px-4 py-2 border border-gray-300 rounded"
-                  required
+                  
                 />
               </div>
             </div>
           </div>
 
-          {/* Industry, Categories, Services */}
-          <div>
-            <label
-              htmlFor="industry"
-              className="block text-sm font-medium text-[#7C77C1]"
-            >
-              Industry
-            </label>
-            <input
-              type="text"
-              id="industry"
-              name="industry"
-              value={formData.industry}
-              onChange={handleInputChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded"
-              required
-            />
-          </div>
-          <div>
-            <label
-              htmlFor="categories"
-              className="block text-sm font-medium text-[#7C77C1]"
-            >
-              Categories
-            </label>
-            <input
-              type="text"
-              id="categories"
-              name="categories"
-              value={formData.categories}
-              onChange={handleInputChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded"
-              required
-            />
-          </div>
           <div className="col-span-2">
-            <label
-              htmlFor="services"
-              className="block text-sm font-medium text-[#7C77C1]"
-            >
-              Services
-            </label>
-            <input
-              type="text"
-              id="services"
-              name="services"
-              value={formData.services}
-              onChange={handleInputChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded"
-              required
-            />
+          <div className="grid grid-cols-2 gap-4">
+          <div className="relative group">
+  <label
+    htmlFor="industry"
+    className="block text-sm font-medium text-[#7C77C1] relative cursor-pointer"
+  >
+    Industry
+    <span className="absolute left-0 bottom-full mb-1 w-56 p-2 text-xs text-white bg-gray-800 rounded-md shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 ease-in-out">
+      Specify the industry your business operates in (e.g., Retail, Technology, Manufacturing).
+    </span>
+  </label>
+  <input
+    type="text"
+    id="industry"
+    name="industry"
+    value={formData.industry}
+    onChange={handleInputChange}
+    className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#7C77C1] focus:outline-none transition"
+  />
+</div>
+
+          
+<div className="relative group">
+  <label
+    htmlFor="categories"
+    className="block text-sm font-medium text-[#7C77C1] relative cursor-pointer"
+  >
+    Categories
+    <span className="absolute right-0 bottom-full mb-1 w-56 p-2 text-xs text-white bg-gray-800 rounded-md shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 ease-in-out">
+      Enter product or service categories relevant to your business (e.g., Electronics, Clothing, Food).
+    </span>
+  </label>
+  <input
+    type="text"
+    id="categories"
+    name="categories"
+    value={formData.categories}
+    onChange={handleInputChange}
+    className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#7C77C1] focus:outline-none transition"
+  />
+</div>
+
           </div>
+          </div>
+
+
+       
+
+
+<div className="relative group w-full">
+  <label
+              htmlFor="services"
+              className="block text-sm font-medium text-[#7C77C1] relative cursor-pointer"
+  >
+    Services
+    <span className="absolute left-0 bottom-full mb-1 w-56 p-2 text-xs text-white bg-gray-800 rounded-md shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 ease-in-out">
+      Enter service relevant to your business (F&B, Retail, Ecommerce).
+    </span>
+  </label>
+  <input
+     type="text"
+     id="services"
+     name="services"
+     value={formData.services}
+     onChange={handleInputChange}
+    className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#7C77C1] focus:outline-none transition"
+  />
+</div>
 
           {/* Submit Button */}
           <div className="col-span-2 flex justify-end">
