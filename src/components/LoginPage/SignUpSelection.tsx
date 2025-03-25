@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import logo from "../../assets/img/cocoa-logo.png";
 import vendorImage from "../../assets/img/login/vendor.png";
 import buyerEnhanced from "../../assets/img/login/buyer_enhanced.png";
+import googleIcon from "../../assets/icons/googleicon.png"
 
 import { auth, db, googleProvider } from "../../utils/firebase";
 import {
@@ -186,7 +187,7 @@ const SignupSelection = () => {
         >
       
           <img
-          src="../../src/assets/icons/google icon.png"
+          src={googleIcon}
           alt="Google Icon"
           className="w-7 h-7"
         />

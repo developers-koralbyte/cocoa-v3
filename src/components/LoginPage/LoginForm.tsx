@@ -3,6 +3,7 @@ import { Eye, EyeOff } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { auth, db, googleProvider } from "../../utils/firebase";
 import { deleteUser } from "firebase/auth";
+import googleIcon from "../../assets/icons/googleicon.png"
 
 import {
   browserLocalPersistence,
@@ -32,6 +33,7 @@ const LoginForm: React.FC = () => {
   }, [currentUser]);
 
 
+
   const validateEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!email) return "Email is required";
@@ -51,6 +53,21 @@ const LoginForm: React.FC = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
     setErrors((prev) => ({ ...prev, [name]: "" }));
     setFormError("");
+  };
+
+  const getFriendlyErrorMessage = (error: any) => {
+    switch (error.code) {
+      case "auth/email-already-in-use":
+        return "This email is already registered. Please log in or try a different email.";
+      case "auth/invalid-email":
+        return "The email address is invalid. Please check it and try again.";
+      case "auth/wrong-password":
+        return "The password is incorrect. Please try again.";
+      case "auth/user-not-found":
+        return "No account found with this email. Please sign up first.";
+      default:
+        return "An unexpected error occurred. Please try again later.";
+    }
   };
   
 
@@ -118,7 +135,7 @@ const LoginForm: React.FC = () => {
       }
     } catch (err: any) {
       console.error("Login error:", err.message);
-      toast.error(`Login failed: ${err.message}`);
+      toast.error(getFriendlyErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -175,7 +192,7 @@ const LoginForm: React.FC = () => {
       }
     } catch (err: any) {
       console.error("Google login error:", err);
-      toast.error(`Google login failed: ${err.message}`);
+      toast.error(getFriendlyErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -270,7 +287,7 @@ const LoginForm: React.FC = () => {
         className="flex items-center justify-center w-full space-x-2 border border-gray-300 bg-white text-gray-700 font-medium py-2 px-4 rounded-md hover:bg-gray-50 transition disabled:cursor-not-allowed disabled:text-gray-400 disabled:bg-gray-100"
       >
         <img
-          src="../../src/assets/icons/google icon.png"
+          src={googleIcon}
           alt="Google Icon"
           className="w-7 h-7"
         />
