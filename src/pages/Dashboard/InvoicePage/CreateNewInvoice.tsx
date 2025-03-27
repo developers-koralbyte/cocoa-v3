@@ -229,13 +229,22 @@ const CreateNewInvoice = () => {
                                 }
                                 onItemChange={(id, field, value) =>
                                     setItems(prev =>
-                                        prev.map(item =>
-                                            item.id === id
-                                                ? { ...item, [field]: typeof value === 'string' ? parseFloat(value) || 0 : value }
-                                                : item
-                                        )
+                                      prev.map(item =>
+                                        item.id === id
+                                          ? {
+                                              ...item,
+                                              [field]:
+                                                field === 'description'
+                                                  ? value  // keep as string
+                                                  : typeof value === 'string'
+                                                  ? parseFloat(value) || 0
+                                                  : value,
+                                            }
+                                          : item
+                                      )
                                     )
-                                }
+                                  }
+                                  
                                 onAddItem={() =>
                                     setItems(prev => [
                                         ...prev,

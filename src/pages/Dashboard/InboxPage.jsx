@@ -38,7 +38,7 @@ const InboxPage = () => {
     const [showNewChatModal, setShowNewChatModal] = useState(false)
     // At the top with your other state declarations:
     const [documentFile, setDocumentFile] = useState(null)
-    const [documentPreview, setDocumentPreview] = useState(null);
+    const [documentPreview, setDocumentPreview] = useState(null)
 
     // Use store hooks
     const { currentUser, fetchUserInfo } = useUserStore()
@@ -470,20 +470,20 @@ const InboxPage = () => {
         }
     }
 
- // File change handler for PDF documents
- const handleDocumentChange = (e) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      console.log('Document selected:', file.name);
-      setDocumentFile(file);
-      // Create a preview object (e.g., file name and size)
-      setDocumentPreview({
-        name: file.name,
-        type: file.type,
-        size: (file.size / 1024).toFixed(1) + ' KB'
-      });
+    // File change handler for PDF documents
+    const handleDocumentChange = (e) => {
+        if (e.target.files && e.target.files[0]) {
+            const file = e.target.files[0]
+            console.log('Document selected:', file.name)
+            setDocumentFile(file)
+            // Create a preview object (e.g., file name and size)
+            setDocumentPreview({
+                name: file.name,
+                type: file.type,
+                size: (file.size / 1024).toFixed(1) + ' KB',
+            })
+        }
     }
-  };
 
     // Deduplicate chats based on user identity
     const uniqueChats = []
@@ -557,17 +557,13 @@ const InboxPage = () => {
                             Inbox
                         </h1>
                     </div>
-                    <div>
-                        <Header />
-                    </div>
                 </div>
 
-                <div className="flex flex-1 mx-2 sm:mx-4 md:mx-6 mb-2 sm:mb-4 md:mb-6 rounded-2xl border-2 border-[#5F4B8B] overflow-hidden shadow-lg bg-white">
-                    {/* Chat List - Left Sidebar */}
-                    {/* Ensure chat list is always visible regardless of user role */}
+                <div className={`flex flex-1 mx-2 ${isMobile ? '' : 'sm:mx-4 md:mx-6 mb-2 sm:mb-4 md:mb-6 rounded-2xl border-2 border-[#5F4B8B] overflow-hidden shadow-lg'} bg-white`}>
+                {/* Chat List - Left Sidebar */}
                     {(showChatList || !isMobile) && (
                         <div
-                            className={`${isMobile ? 'w-full' : isTablet ? 'w-2/5' : 'w-1/3'} border-r-2 border-[#5F4B8B] flex flex-col`}
+                            className={`${isMobile ? 'w-full bg-[#9082C6] rounded-tr-3xl' : isTablet ? 'w-2/5' : 'w-1/3'} border-r-2 border-[#5F4B8B] flex flex-col p-4 rounded-tl-3xl`}
                             style={{
                                 minWidth: isMobile
                                     ? '100%'
@@ -582,129 +578,133 @@ const InboxPage = () => {
                                 overflow: 'hidden',
                             }}
                         >
-                            <div className="p-3 sm:p-4 border-b border-gray-200">
-                                <div className="relative mb-2">
-                                    <input
-                                        type="text"
-                                        placeholder="Search"
-                                        className="w-full py-2 px-4 rounded-[3.75rem] border border-[#5F4B8B] focus:outline-none focus:ring-2 focus:ring-purple-300"
-                                        value={searchQuery}
-                                        onChange={(e) =>
-                                            setSearchQuery(e.target.value)
+                            <div className="bg-white rounded-2xl flex-1 overflow-hidden">
+                                <div className="p-3 sm:p-4 border-b border-gray-200">
+                                    <div className="relative mb-2">
+                                        <input
+                                            type="text"
+                                            placeholder="Search"
+                                            className="w-full py-2 px-4 rounded-[3.75rem] border border-[#5F4B8B] focus:outline-none focus:ring-2 focus:ring-purple-300"
+                                            value={searchQuery}
+                                            onChange={(e) =>
+                                                setSearchQuery(e.target.value)
+                                            }
+                                        />
+                                    </div>
+
+                                    <button
+                                        onClick={() =>
+                                            setShowNewChatModal(true)
                                         }
-                                    />
+                                        className="w-full py-2 mt-2 rounded-lg bg-[#5F4B8B] text-white flex items-center justify-center hover:bg-[#4A3B7A] transition-colors"
+                                    >
+                                        <span className="mr-2">+</span>
+                                        {currentUser?.role === 'vendor'
+                                            ? 'Chat with Buyer'
+                                            : 'Chat with Vendor'}
+                                    </button>
                                 </div>
 
-                                {/* Show appropriate button based on user role */}
-                                <button
-                                    onClick={() => setShowNewChatModal(true)}
-                                    className="w-full py-2 mt-2 rounded-lg bg-[#5F4B8B] text-white flex items-center justify-center hover:bg-[#4A3B7A] transition-colors"
+                                <div
+                                    className="border-t-2 border-[#5F4B8B] overflow-y-auto flex-1"
+                                    style={{ maxWidth: '100%' }}
                                 >
-                                    <span className="mr-2">+</span>
-                                    {currentUser?.role === 'vendor'
-                                        ? 'Chat with Buyer'
-                                        : 'Chat with Vendor'}
-                                </button>
-                            </div>
-
-                            <div
-                                className="border-t-2 border-[#5F4B8B] overflow-y-auto flex-1"
-                                style={{ maxWidth: '100%' }}
-                            >
-                                {filteredChats.length > 0 ? (
-                                    filteredChats.map((chat) => (
-                                        <div
-                                            key={chat.chatId}
-                                            className={`flex items-center p-3 sm:p-4 md:p-6 border-b-2 border-[#5F4B8B] cursor-pointer hover:bg-gray-50 ${
-                                                chatId === chat.chatId
-                                                    ? 'bg-[#F4F1FA]'
-                                                    : ''
-                                            }`}
-                                            onClick={() =>
-                                                handleSelectChat(chat)
-                                            }
-                                            style={{
-                                                width: '100%',
-                                                maxWidth: '100%',
-                                                overflow: 'hidden',
-                                            }}
-                                        >
-                                            <img
-                                                src={
-                                                    chat.user?.avatar ||
-                                                    './avatar.png'
-                                                }
-                                                alt=""
-                                                className="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover mr-2 sm:mr-3"
-                                            />
+                                    {filteredChats.length > 0 ? (
+                                        filteredChats.map((chat) => (
                                             <div
-                                                className="overflow-hidden"
+                                                key={chat.chatId}
+                                                className={`flex items-center p-3 sm:p-4 md:p-6 border-b-2 border-[#5F4B8B] cursor-pointer hover:bg-gray-50 ${
+                                                    chatId === chat.chatId
+                                                        ? 'bg-[#F4F1FA]'
+                                                        : ''
+                                                }`}
+                                                onClick={() =>
+                                                    handleSelectChat(chat)
+                                                }
                                                 style={{
-                                                    width: 'calc(100% - 55px)',
-                                                    maxWidth:
-                                                        'calc(100% - 55px)',
-                                                    flexShrink: 1,
+                                                    width: '100%',
+                                                    maxWidth: '100%',
+                                                    overflow: 'hidden',
                                                 }}
                                             >
-                                                <h4
-                                                    className="font-semibold truncate text-sm sm:text-base"
+                                                <img
+                                                    src={
+                                                        chat.user?.avatar ||
+                                                        './avatar.png'
+                                                    }
+                                                    alt=""
+                                                    className="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover mr-2 sm:mr-3"
+                                                />
+                                                <div
+                                                    className="overflow-hidden"
                                                     style={{
-                                                        overflow: 'hidden',
-                                                        textOverflow:
-                                                            'ellipsis',
-                                                        whiteSpace: 'nowrap',
-                                                        display: 'block',
-                                                        width: '100%',
+                                                        width: 'calc(100% - 55px)',
+                                                        maxWidth:
+                                                            'calc(100% - 55px)',
+                                                        flexShrink: 1,
                                                     }}
                                                 >
-                                                    {chat.user?.firstName ||
-                                                        chat.user?.name ||
-                                                        chat.user?.username ||
-                                                        chat.user
-                                                            ?.businessName ||
-                                                        `User ${chat.receiverId?.substring(0, 6) || ''}`}
-                                                </h4>
-                                                <p
-                                                    className="text-xs sm:text-sm text-gray-500 truncate"
-                                                    style={{
-                                                        whiteSpace: 'nowrap',
-                                                        overflow: 'hidden',
-                                                        textOverflow:
-                                                            'ellipsis',
-                                                        maxWidth: '100%',
-                                                    }}
-                                                >
-                                                    {chat.lastMessage
-                                                        ? chat.lastMessage
-                                                              .length > 30
-                                                            ? chat.lastMessage.substring(
-                                                                  0,
-                                                                  30
-                                                              ) + '...'
-                                                            : chat.lastMessage
-                                                        : 'No messages yet'}
-                                                </p>
+                                                    <h4
+                                                        className="font-semibold truncate text-sm sm:text-base"
+                                                        style={{
+                                                            overflow: 'hidden',
+                                                            textOverflow:
+                                                                'ellipsis',
+                                                            whiteSpace:
+                                                                'nowrap',
+                                                            display: 'block',
+                                                            width: '100%',
+                                                        }}
+                                                    >
+                                                        {chat.user?.firstName ||
+                                                            chat.user?.name ||
+                                                            chat.user
+                                                                ?.username ||
+                                                            chat.user
+                                                                ?.businessName ||
+                                                            `User ${chat.receiverId?.substring(0, 6) || ''}`}
+                                                    </h4>
+                                                    <p
+                                                        className="text-xs sm:text-sm text-gray-500 truncate"
+                                                        style={{
+                                                            whiteSpace:
+                                                                'nowrap',
+                                                            overflow: 'hidden',
+                                                            textOverflow:
+                                                                'ellipsis',
+                                                            maxWidth: '100%',
+                                                        }}
+                                                    >
+                                                        {chat.lastMessage
+                                                            ? chat.lastMessage
+                                                                  .length > 30
+                                                                ? chat.lastMessage.substring(
+                                                                      0,
+                                                                      30
+                                                                  ) + '...'
+                                                                : chat.lastMessage
+                                                            : 'No messages yet'}
+                                                    </p>
+                                                </div>
+                                                {!chat.isSeen && (
+                                                    <div className="w-2 h-2 sm:w-3 sm:h-3 bg-blue-500 rounded-full ml-1 sm:ml-2 flex-shrink-0"></div>
+                                                )}
                                             </div>
-                                            {!chat.isSeen && (
-                                                <div className="w-2 h-2 sm:w-3 sm:h-3 bg-blue-500 rounded-full ml-1 sm:ml-2 flex-shrink-0"></div>
-                                            )}
+                                        ))
+                                    ) : (
+                                        <div className="p-4 text-center text-gray-500">
+                                            No conversations found
                                         </div>
-                                    ))
-                                ) : (
-                                    <div className="p-4 text-center text-gray-500">
-                                        No conversations found
-                                    </div>
-                                )}
+                                    )}
+                                </div>
                             </div>
                         </div>
                     )}
 
-                    {/* Chat Area - Right Side */}
                     {(!showChatList || !isMobile || (isMobile && chatId)) && (
                         <div className="flex-1 flex flex-col">
                             {chatId ? (
                                 <>
-                                    {/* Chat Header */}
                                     <div className="bg-[#5F4B8B] text-white p-3 sm:p-4 md:p-5 flex items-center">
                                         {isMobile && (
                                             <button
@@ -736,208 +736,280 @@ const InboxPage = () => {
                                     </div>
 
                                     <div className="flex-1 p-3 sm:p-4 overflow-y-auto bg-gray-50">
-                    {messages.length > 0 ? (
-                      messages.map((message, index) => {
-                        const currentUserId = getCurrentUserId();
-                        const isCurrentUser = message.senderId === currentUserId;
-                        return (
-                          <div key={index} className={`flex mb-3 sm:mb-4 ${isCurrentUser ? 'justify-end' : 'justify-start'}`}>
-                            {!isCurrentUser && (
-                              <img
-                                src={user?.avatar || './avatar.png'}
-                                alt=""
-                                className="flex-shrink-0 w-6 h-6 sm:w-8 sm:h-8 rounded-full mr-2 sm:mr-3 self-start mt-1"
-                              />
+                                        {messages.length > 0 ? (
+                                            messages.map((message, index) => {
+                                                const currentUserId =
+                                                    getCurrentUserId()
+                                                const isCurrentUser =
+                                                    message.senderId ===
+                                                    currentUserId
+                                                return (
+                                                    <div
+                                                        key={index}
+                                                        className={`flex mb-3 sm:mb-4 ${isCurrentUser ? 'justify-end' : 'justify-start'}`}
+                                                    >
+                                                        {!isCurrentUser && (
+                                                            <img
+                                                                src={
+                                                                    user?.avatar ||
+                                                                    './avatar.png'
+                                                                }
+                                                                alt=""
+                                                                className="flex-shrink-0 w-6 h-6 sm:w-8 sm:h-8 rounded-full mr-2 sm:mr-3 self-start mt-1"
+                                                            />
+                                                        )}
+                                                        <div
+                                                            className={`w-auto max-w-[75%] sm:max-w-xs md:max-w-md px-3 sm:px-4 py-2 sm:py-3 ${isCurrentUser ? 'bg-[#5F4B8BB0] text-white rounded-[20px] rounded-br-none' : 'bg-[#AFAFAF9C] text-gray-800 rounded-[20px] rounded-bl-none'} overflow-hidden`}
+                                                            style={{
+                                                                wordBreak:
+                                                                    'break-word',
+                                                                overflowWrap:
+                                                                    'break-word',
+                                                            }}
+                                                        >
+                                                            {message.document && (
+                                                                <ImprovedPdfViewer
+                                                                    pdfUrl={
+                                                                        message.document
+                                                                    }
+                                                                    filename={
+                                                                        message.documentName
+                                                                    }
+                                                                    isCurrentUser={
+                                                                        isCurrentUser
+                                                                    }
+                                                                />
+                                                            )}
+
+                                                            {message.img && (
+                                                                <img
+                                                                    src={
+                                                                        message.img
+                                                                    }
+                                                                    alt="Attachment"
+                                                                    className="rounded mb-2 max-w-full h-auto object-contain"
+                                                                    style={{
+                                                                        maxHeight:
+                                                                            '200px',
+                                                                    }}
+                                                                />
+                                                            )}
+
+                                                            {message.text && (
+                                                                <p className="text-sm sm:text-base overflow-hidden">
+                                                                    {
+                                                                        message.text
+                                                                    }
+                                                                </p>
+                                                            )}
+
+                                                            <div className="flex justify-between items-center mt-1">
+                                                                <div
+                                                                    className={`text-[10px] sm:text-xs ${isCurrentUser ? 'text-purple-200' : 'text-gray-500'}`}
+                                                                >
+                                                                    {message.createdAt &&
+                                                                        (() => {
+                                                                            try {
+                                                                                if (
+                                                                                    typeof message
+                                                                                        .createdAt
+                                                                                        .toDate ===
+                                                                                    'function'
+                                                                                ) {
+                                                                                    return format(
+                                                                                        message.createdAt.toDate()
+                                                                                    )
+                                                                                } else if (
+                                                                                    message.createdAt instanceof
+                                                                                    Date
+                                                                                ) {
+                                                                                    return format(
+                                                                                        message.createdAt
+                                                                                    )
+                                                                                } else if (
+                                                                                    typeof message.createdAt ===
+                                                                                        'object' &&
+                                                                                    message
+                                                                                        .createdAt
+                                                                                        .seconds
+                                                                                ) {
+                                                                                    return format(
+                                                                                        new Date(
+                                                                                            message
+                                                                                                .createdAt
+                                                                                                .seconds *
+                                                                                                1000
+                                                                                        )
+                                                                                    )
+                                                                                } else {
+                                                                                    return format(
+                                                                                        new Date(
+                                                                                            message.createdAt
+                                                                                        )
+                                                                                    )
+                                                                                }
+                                                                            } catch (e) {
+                                                                                console.error(
+                                                                                    'Error formatting date:',
+                                                                                    e
+                                                                                )
+                                                                                return 'Just now'
+                                                                            }
+                                                                        })()}
+                                                                </div>
+                                                                <div className="text-[10px] sm:text-xs ml-2">
+                                                                    {isCurrentUser
+                                                                        ? '(You)'
+                                                                        : ''}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                )
+                                            })
+                                        ) : (
+                                            <div className="text-center py-6 sm:py-8 text-gray-500">
+                                                No messages yet. Start the
+                                                conversation!
+                                            </div>
+                                        )}
+                                        <div ref={endRef} />
+                                    </div>
+
+                                    <div className="border-t border-gray-200 p-2 sm:p-3 bg-white">
+                                        {img.url && (
+                                            <div className="mb-2 relative inline-block">
+                                                <img
+                                                    src={img.url}
+                                                    alt="Preview"
+                                                    className="max-h-16 sm:max-h-20 rounded"
+                                                />
+                                                <button
+                                                    className="absolute top-0 right-0 bg-red-500 text-white rounded-full w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center"
+                                                    onClick={() =>
+                                                        setImg({
+                                                            file: null,
+                                                            url: '',
+                                                        })
+                                                    }
+                                                >
+                                                    ×
+                                                </button>
+                                            </div>
+                                        )}
+
+                                        {documentPreview && (
+                                            <div className="mb-2 relative inline-block">
+                                                <DocumentPreview
+                                                    document={documentPreview}
+                                                    onRemove={() => {
+                                                        setDocumentFile(null)
+                                                        setDocumentPreview(null)
+                                                    }}
+                                                />
+                                            </div>
+                                        )}
+
+                                        <div className="flex items-center">
+                                            <div className="flex space-x-2 sm:space-x-3 mr-2 sm:mr-3">
+                                                <label className="cursor-pointer p-1 sm:p-2 hover:bg-gray-100 rounded-full">
+                                                    <img
+                                                        src={curriculumIcon}
+                                                        alt="Resume"
+                                                        className="w-4 h-4 sm:w-5 sm:h-5"
+                                                    />
+                                                    <input
+                                                        type="file"
+                                                        className="hidden"
+                                                        onChange={
+                                                            handleFileChange
+                                                        }
+                                                        accept="image/*"
+                                                    />
+                                                </label>
+
+                                                <label className="cursor-pointer p-1 sm:p-2 hover:bg-gray-100 rounded-full">
+                                                    <img
+                                                        src={paperClip}
+                                                        alt="Attach"
+                                                        className="w-4 h-4 sm:w-5 sm:h-5"
+                                                    />
+                                                    <input
+                                                        type="file"
+                                                        className="hidden"
+                                                        onChange={
+                                                            handleDocumentChange
+                                                        }
+                                                        accept=".pdf,.doc,.docx,.xls,.xlsx,.txt"
+                                                    />
+                                                </label>
+
+                                                <button className="p-1 sm:p-2 hover:bg-gray-100 rounded-full">
+                                                    <img
+                                                        src={calendar}
+                                                        alt="Schedule"
+                                                        className="w-4 h-4 sm:w-5 sm:h-5"
+                                                    />
+                                                </button>
+                                            </div>
+
+                                            <input
+                                                type="text"
+                                                placeholder="Type a message..."
+                                                className="flex-1 py-2 px-3 sm:px-4 text-sm sm:text-base border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-purple-300"
+                                                value={text}
+                                                onChange={(e) =>
+                                                    setText(e.target.value)
+                                                }
+                                                onKeyPress={(e) => {
+                                                    if (e.key === 'Enter') {
+                                                        handleSend()
+                                                    }
+                                                }}
+                                            />
+
+                                            <button
+                                                className={`ml-2 sm:ml-3 ${text.trim() === '' && !img.file ? 'bg-gray-400' : 'bg-[#5F4B8B]'} text-white rounded-full w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center`}
+                                                onClick={handleSend}
+                                                disabled={
+                                                    text.trim() === '' &&
+                                                    !img.file &&
+                                                    !documentFile
+                                                }
+                                            >
+                                                <img
+                                                    src={sendIcon}
+                                                    alt="Send"
+                                                    className="w-4 h-4 sm:w-5 sm:h-5"
+                                                />
+                                            </button>
+                                        </div>
+                                    </div>
+                                </>
+                            ) : (
+                                <div className="flex-1 flex items-center justify-center bg-gray-50">
+                                    <div className="text-center p-4 sm:p-6">
+                                        <div className="text-gray-400 text-base sm:text-lg mb-2">
+                                            Select a chat to start messaging
+                                        </div>
+                                        {isMobile && !showChatList && (
+                                            <button
+                                                className="px-3 py-1 sm:px-4 sm:py-2 bg-purple-500 text-white rounded-lg"
+                                                onClick={() =>
+                                                    setShowChatList(true)
+                                                }
+                                            >
+                                                See Conversations
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
                             )}
-                            <div className={`w-auto max-w-[75%] sm:max-w-xs md:max-w-md px-3 sm:px-4 py-2 sm:py-3 ${isCurrentUser ? 'bg-[#5F4B8BB0] text-white rounded-[20px] rounded-br-none' : 'bg-[#AFAFAF9C] text-gray-800 rounded-[20px] rounded-bl-none'} overflow-hidden`}
-                              style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}>
-                              
-                              {/* Render PDF if available */}
-                              {message.document && (
-                                <ImprovedPdfViewer
-                                  pdfUrl={message.document}
-                                  filename={message.documentName}
-                                  isCurrentUser={isCurrentUser}
-                                />
-                              )}
-                              
-                              {/* Render image if available */}
-                              {message.img && (
-                                <img
-                                  src={message.img}
-                                  alt="Attachment"
-                                  className="rounded mb-2 max-w-full h-auto object-contain"
-                                  style={{ maxHeight: '200px' }}
-                                />
-                              )}
-                              
-                              {/* Render text message */}
-                              {message.text && (
-                                <p className="text-sm sm:text-base overflow-hidden">
-                                  {message.text}
-                                </p>
-                              )}
-                              
-                              {/* Metadata */}
-                              <div className="flex justify-between items-center mt-1">
-                                <div className={`text-[10px] sm:text-xs ${isCurrentUser ? 'text-purple-200' : 'text-gray-500'}`}>
-                                  {message.createdAt && (() => {
-                                    try {
-                                      if (typeof message.createdAt.toDate === 'function') {
-                                        return format(message.createdAt.toDate());
-                                      } else if (message.createdAt instanceof Date) {
-                                        return format(message.createdAt);
-                                      } else if (typeof message.createdAt === 'object' && message.createdAt.seconds) {
-                                        return format(new Date(message.createdAt.seconds * 1000));
-                                      } else {
-                                        return format(new Date(message.createdAt));
-                                      }
-                                    } catch (e) {
-                                      console.error('Error formatting date:', e);
-                                      return 'Just now';
-                                    }
-                                  })()}
-                                </div>
-                                <div className="text-[10px] sm:text-xs ml-2">
-                                  {isCurrentUser ? '(You)' : ''}
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })
-                    ) : (
-                      <div className="text-center py-6 sm:py-8 text-gray-500">
-                        No messages yet. Start the conversation!
-                      </div>
+                        </div>
                     )}
-                    <div ref={endRef} />
-                  </div>
-
-                  {/* Input Area */}
-                  <div className="border-t border-gray-200 p-2 sm:p-3 bg-white">
-                    {/* Image preview */}
-                    {img.url && (
-                      <div className="mb-2 relative inline-block">
-                        <img
-                          src={img.url}
-                          alt="Preview"
-                          className="max-h-16 sm:max-h-20 rounded"
-                        />
-                        <button
-                          className="absolute top-0 right-0 bg-red-500 text-white rounded-full w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center"
-                          onClick={() => setImg({ file: null, url: '' })}
-                        >
-                          ×
-                        </button>
-                      </div>
-                    )}
-                    
-                    {/* Document preview */}
-                    {documentPreview && (
-                      <div className="mb-2 relative inline-block">
-                        <DocumentPreview
-                          document={documentPreview}
-                          onRemove={() => {
-                            setDocumentFile(null);
-                            setDocumentPreview(null);
-                          }}
-                        />
-                      </div>
-                    )}
-
-                    <div className="flex items-center">
-                      <div className="flex space-x-2 sm:space-x-3 mr-2 sm:mr-3">
-                        {/* Curriculum/Resume Icon */}
-                        <label className="cursor-pointer p-1 sm:p-2 hover:bg-gray-100 rounded-full">
-                          <img
-                            src={curriculumIcon}
-                            alt="Resume"
-                            className="w-4 h-4 sm:w-5 sm:h-5"
-                          />
-                          <input
-                            type="file"
-                            className="hidden"
-                            onChange={handleFileChange}
-                            accept="image/*"
-                          />
-                        </label>
-
-                        {/* Paper Clip Icon for Document */}
-                        <label className="cursor-pointer p-1 sm:p-2 hover:bg-gray-100 rounded-full">
-                          <img
-                            src={paperClip}
-                            alt="Attach"
-                            className="w-4 h-4 sm:w-5 sm:h-5"
-                          />
-                          <input
-                            type="file"
-                            className="hidden"
-                            onChange={handleDocumentChange}
-                            accept=".pdf,.doc,.docx,.xls,.xlsx,.txt"
-                          />
-                        </label>
-
-                        {/* Calendar Icon */}
-                        <button className="p-1 sm:p-2 hover:bg-gray-100 rounded-full">
-                          <img
-                            src={calendar}
-                            alt="Schedule"
-                            className="w-4 h-4 sm:w-5 sm:h-5"
-                          />
-                        </button>
-                      </div>
-
-                      <input
-                        type="text"
-                        placeholder="Type a message..."
-                        className="flex-1 py-2 px-3 sm:px-4 text-sm sm:text-base border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-purple-300"
-                        value={text}
-                        onChange={(e) => setText(e.target.value)}
-                        onKeyPress={(e) => {
-                          if (e.key === 'Enter') {
-                            handleSend();
-                          }
-                        }}
-                      />
-
-                      <button
-                        className={`ml-2 sm:ml-3 ${text.trim() === '' && !img.file ? 'bg-gray-400' : 'bg-[#5F4B8B]'} text-white rounded-full w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center`}
-                        onClick={handleSend}
-                        disabled={text.trim() === '' && !img.file && !documentFile}
-                      >
-                        <img
-                          src={sendIcon}
-                          alt="Send"
-                          className="w-4 h-4 sm:w-5 sm:h-5"
-                        />
-                      </button>
-                    </div>
-                  </div>
-                </>
-              ) : (
-                <div className="flex-1 flex items-center justify-center bg-gray-50">
-                  <div className="text-center p-4 sm:p-6">
-                    <div className="text-gray-400 text-base sm:text-lg mb-2">
-                      Select a chat to start messaging
-                    </div>
-                    {isMobile && !showChatList && (
-                      <button
-                        className="px-3 py-1 sm:px-4 sm:py-2 bg-purple-500 text-white rounded-lg"
-                        onClick={() => setShowChatList(true)}
-                      >
-                        See Conversations
-                      </button>
-                    )}
-                  </div>
                 </div>
-              )}
             </div>
-          )}
-        </div>
-      </div>
 
-            {/* Modal for selecting a chat partner based on user role */}
             {showNewChatModal && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
                     <AddBuyerChat

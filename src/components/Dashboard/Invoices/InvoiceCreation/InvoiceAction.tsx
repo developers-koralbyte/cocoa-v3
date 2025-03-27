@@ -207,7 +207,7 @@ const InvoiceActions: React.FC<InvoiceActionsProps> = ({ invoiceData, onSave }) 
   };
 
   return (
-    <div className="p-4 bg-white rounded-lg shadow">
+    <div className=" p-4 bg-white rounded-lg shadow">
       <div className="mb-4">
         <label className="block text-sm font-medium text-gray-700 mb-2">
           Select Buyer

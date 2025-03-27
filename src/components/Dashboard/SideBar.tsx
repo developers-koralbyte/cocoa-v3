@@ -45,9 +45,11 @@ const SideBar = ({ isOpen, toggleSidebar }: SideBarProps) => {
     
     // Wait for user data to load
     if (isLoading) {
-        return <div className="fixed top-0 left-0 z-50 h-screen w-64 bg-[#9082C6] flex items-center justify-center">
-            <div className="text-white">Loading...</div>
-        </div>;
+        return (
+            <div className="fixed top-0 left-0 z-50 h-screen w-64 bg-[#9082C6] flex items-center justify-center">
+                <div className="text-white">Loading...</div>
+            </div>
+        );
     }
     
     if (!currentUser) {
@@ -84,7 +86,7 @@ const SideBar = ({ isOpen, toggleSidebar }: SideBarProps) => {
 
     return (
         <div
-            className={`fixed top-0 left-0 z-50 h-screen w-64 bg-[#9082C6] text-white p-6 shadow-lg 
+            className={`fixed top-0 left-0 z-50 h-screen w-64 bg-[#9082C6] text-white p-6  
             transition-transform duration-300 ease-in-out 
             ${isOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}
         >
@@ -124,7 +126,7 @@ const SideBar = ({ isOpen, toggleSidebar }: SideBarProps) => {
             </nav>
 
             {/* Logout */}
-            <div className="absolute bottom-6 left-0 w-full">
+            <div className="absolute bottom-6 left-0 w-full flex justify-center">
                 <div
                     onClick={() => {
                         localStorage.removeItem("user");

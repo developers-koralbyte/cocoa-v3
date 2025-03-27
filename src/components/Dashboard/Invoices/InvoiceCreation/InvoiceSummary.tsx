@@ -20,15 +20,15 @@ const InvoiceSummary: React.FC<InvoiceSummaryProps> = ({
     totals,
 }) => {
     return (
-        <div className=" sm:p-6 md:p-1">
+        <div className="sm:p-6 md:p-1">
             {/* Title */}
-            <h2 className="text-[35px] font-nunito font-semibold text-[#8B85C1] mb-4">
+            <h2 className="text-[35px] font-nunito font-semibold text-[#8B85C1] mb-2">
                 Summary
             </h2>
-        
+
             {/* Invoice Number */}
             <div
-                className="bg-[#F8F5F5] p-3  rounded-md mb-[0.20rem] 
+                className="bg-[#F8F5F5] p-3 rounded-md mb-[0.20rem] 
                       flex flex-col sm:flex-row justify-between items-start sm:items-center"
             >
                 <span className="text-[#000000] font-nunito font-semibold mb-2 sm:mb-0">
@@ -41,7 +41,7 @@ const InvoiceSummary: React.FC<InvoiceSummaryProps> = ({
 
             {/* Invoice Date */}
             <div
-                className="bg-[#F8F5F5] p-3  rounded-md mb-[0.20rem]
+                className="bg-[#F8F5F5] p-3 rounded-md mb-[0.20rem]
                       flex flex-col sm:flex-row justify-between items-start sm:items-center"
             >
                 <span className="text-[#000000] font-nunito font-semibold mb-2 sm:mb-0">
@@ -102,68 +102,41 @@ const InvoiceSummary: React.FC<InvoiceSummaryProps> = ({
                 </span>
             </div>
 
-            {/* Card Checkout */}
-            <div
-                className="bg-[#F8F5F5] p-3 rounded-md mb-8 
-                      flex flex-col sm:flex-row justify-between items-start sm:items-center"
-            >
-                <span className="text-[#000000] font-nunito font-semibold flex items-center mb-2 sm:mb-0">
-                    Card Checkout
-                    <svg
-                        className="w-4 h-4 ml-1 text-gray-400"
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
-                    >
-                        <path
-                            fillRule="evenodd"
-                            d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM9 6a1 1 0 100-2 1 1 0 000 2zm0 3a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 000-2v-3a1 1 0 000-2H9z"
-                            clipRule="evenodd"
-                        />
-                    </svg>
-                </span>
-                <input
-                    type="checkbox"
-                    className="form-checkbox h-5 w-5 text-[#8B85C1]"
-                />
-            </div>
-
-            {/* Instant Payout */}
-            <div
-                className="bg-[#F8F5F5] p-3 rounded-md mb-[0.20rem] 
-                      flex flex-col sm:flex-row justify-between items-start sm:items-center"
-            >
-                <span className="text-[#000000] font-nunito font-semibold flex items-center mb-2 sm:mb-0">
-                    Instant Payout
-                    <svg
-                        className="w-4 h-4 ml-1 text-gray-400"
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
-                    >
-                        <path
-                            fillRule="evenodd"
-                            d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM9 6a1 1 0 100-2 1 1 0 000 2zm0 3a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 000-2v-3a1 1 0 000-2H9z"
-                            clipRule="evenodd"
-                        />
-                    </svg>
-                </span>
-                <input
-                    type="checkbox"
-                    className="form-checkbox h-5 w-5 text-[#8B85C1]"
-                />
-            </div>
-
-            {/* Contract Upload */}
-            <div
-                className="bg-[#F8F5F5] p-3 rounded-md mb-8
-                      flex flex-col sm:flex-row justify-between items-start sm:items-center"
-            >
+            {/* Card Checkout - Coming Soon */}
+            <div className="bg-[#F8F5F5] p-3 rounded-md mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center">
                 <span className="text-[#000000] font-nunito font-semibold mb-2 sm:mb-0">
-                    Contract upload
+                    Card Checkout
                 </span>
-                <input type="file" className="text-sm" />
+                <span className="text-base sm:text-lg font-semibold text-[#701919]">
+                    Coming Soon
+                </span>
             </div>
 
+            {/* Instant Payout - Coming Soon */}
+            <div className="bg-[#F8F5F5] p-3 rounded-md mb-[0.20rem] flex flex-col sm:flex-row justify-between items-start sm:items-center">
+                <span className="text-[#000000] font-nunito font-semibold mb-2 sm:mb-0">
+                    Instant Payout
+                </span>
+                <span className="text-base sm:text-lg font-semibold text-[#701919]">
+                    Coming Soon
+                </span>
+            </div>
+
+            {/* Contract Upload - Coming Soon */}
+            <div className="bg-[#F8F5F5] p-3 rounded-md mb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center">
+                <span className="text-[#000000] font-nunito font-semibold mb-2 sm:mb-0">
+                    Contract Upload
+                </span>
+                <span className="text-base sm:text-lg font-semibold text-[#701919]">
+                    Coming Soon
+                </span>
+            </div>
+
+            {/*
+            // The following sections are commented out for now as we don't need them.
+            
             {/* Our Fee */}
+            {/* 
             <div
                 className="bg-[#F8F5F5] p-3 rounded-md mb-[0.20rem] 
                       flex flex-col sm:flex-row justify-between items-start sm:items-center"
@@ -184,8 +157,8 @@ const InvoiceSummary: React.FC<InvoiceSummaryProps> = ({
                 </span>
                 <span className="text-base sm:text-lg font-semibold">2%</span>
             </div>
-
-            {/* Your Payout */}
+            
+            {/* Your Payout 
             <div
                 className="bg-[#F8F5F5] p-3 rounded-md mb-5 
                       flex flex-col sm:flex-row justify-between items-start sm:items-center"
@@ -197,16 +170,7 @@ const InvoiceSummary: React.FC<InvoiceSummaryProps> = ({
                     CAD {(totals.total * 0.98).toFixed(2)}
                 </span>
             </div>
-
-            {/* Send Invoice Button */}
-            <div className="flex justify-end">
-                <button
-                    className="bg-buttonBg text-white py-2 sm:py-3 px-4 
-               rounded-full text-base sm:text-lg font-semibold"
-                >
-                    Send Invoice
-                </button>
-            </div>
+            */}
         </div>
     )
 }

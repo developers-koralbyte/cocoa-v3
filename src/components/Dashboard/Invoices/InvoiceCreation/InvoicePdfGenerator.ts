@@ -195,62 +195,7 @@ export const generateInvoicePdf = async (invoice: Invoice): Promise<Blob> => {
   // @ts-ignore - lastAutoTable is added by the autoTable plugin
   const finalY = doc.lastAutoTable?.finalY || 200;
 
-  // -- PAYMENT INSTRUCTIONS --
-  doc.setFontSize(14);
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(95, 75, 139);
-  doc.text('Pay Instruction (Pay online Here)', margin, finalY + 15);
-
-  // Create payment details table with proper layout
-  const paymentTableY = finalY + 25;
-  // Calculate available width for the payment table
-  const availableWidthPayment = pageWidth - margin * 2;
-  // Define proportional widths for payment details (20% - 30% - 20% - 30%)
-  const colWidths = {
-    0: availableWidthPayment * 0.2,
-    1: availableWidthPayment * 0.3,
-    2: availableWidthPayment * 0.2,
-    3: availableWidthPayment * 0.3,
-  };
-
-  autoTable(doc, {
-    startY: paymentTableY,
-    body: [
-      [
-        { content: 'Bank:', styles: { font: 'helvetica', fontStyle: 'bold', halign: 'left' } },
-        { content: invoiceData.bankName || '', styles: { font: 'helvetica', halign: 'left' } },
-        { content: 'Bank Address:', styles: { font: 'helvetica', fontStyle: 'bold', halign: 'left' } },
-        { content: invoiceData.bankAddress || '', styles: { font: 'helvetica', halign: 'right' } }
-      ],
-      [
-        { content: 'Account Name:', styles: { font: 'helvetica', fontStyle: 'bold', halign: 'left' } },
-        { content: invoiceData.accountName || '', styles: { font: 'helvetica', halign: 'left' } },
-        { content: 'IBAN:', styles: { font: 'helvetica', fontStyle: 'bold', halign: 'left' } },
-        { content: invoiceData.iban || '', styles: { font: 'helvetica', halign: 'right' } }
-      ],
-      [
-        { content: 'BIC:', styles: { font: 'helvetica', fontStyle: 'bold', halign: 'left' } },
-        { content: invoiceData.bic || '', styles: { font: 'helvetica', halign: 'left' } },
-        { content: '', styles: { font: 'helvetica', fontStyle: 'bold', halign: 'left' } },
-        { content: '', styles: { font: 'helvetica', halign: 'right' } }
-      ]
-    ],
-    theme: 'plain',
-    styles: {
-      fontSize: 12,
-      cellPadding: 5,
-      overflow: 'linebreak',
-      textColor: [0, 0, 0]
-    },
-    columnStyles: {
-      0: { cellWidth: colWidths[0] },
-      1: { cellWidth: colWidths[1] },
-      2: { cellWidth: colWidths[2] },
-      3: { cellWidth: colWidths[3] }
-    },
-    tableWidth: availableWidthPayment,
-    margin: { left: margin }
-  });
+  // -- PAYMENT INSTRUCTIONS SECTION REMOVED --
 
   // Generate PDF as blob
   const pdfBlob = doc.output('blob');
