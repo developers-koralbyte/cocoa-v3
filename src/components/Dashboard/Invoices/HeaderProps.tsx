@@ -8,23 +8,19 @@ interface HeaderProps {
 const Header: React.FC<HeaderProps> = ({
   defaultAvatar = "/path-to-default-avatar.jpg",
 }) => {
-  // Get user data from the Zustand store
   const { currentUser } = useUserStore();
-  
-  // Use firstName from the store or fallback to username
-  const displayName = currentUser?.firstName || currentUser?.username || "User";
-  
-  // Format the role from the store
-  const formattedRole = currentUser?.role ? currentUser.role.toUpperCase() : "GUEST";
-  
-  // Use avatar from the store or default
-  const avatarSrc = currentUser?.avatar && currentUser.avatar.trim() !== ""
-    ? currentUser.avatar
-    : defaultAvatar;
+
+  // Don’t render header at all if there’s no user yet
+  if (!currentUser) return null;
+
+  const displayName =
+    currentUser.firstName || currentUser.username || "User";
+  const formattedRole = currentUser.role?.toUpperCase() || "GUEST";
+  const avatarSrc =
+    currentUser.avatar?.trim() !== "" ? currentUser.avatar : defaultAvatar;
 
   return (
     <div className="flex items-center space-x-3">
-      {/* User Info Text */}
       <div className="text-right leading-tight">
         <div className="font-semibold text-[20px] md:text-xl font-nunito">
           {displayName}
@@ -33,8 +29,6 @@ const Header: React.FC<HeaderProps> = ({
           {formattedRole}
         </div>
       </div>
-
-      {/* Avatar */}
       <img
         src={avatarSrc}
         alt="User Avatar"

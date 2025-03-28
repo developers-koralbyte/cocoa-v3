@@ -42,9 +42,9 @@ interface Props {
     companyLogo?: string | null
     onLogoChange?: (logo: string | null) => void
     onInvoiceDataChange: (name: string, value: string) => void
-    onItemChange: (id: number, field: string, value: string | number) => void
-    onAddItem: () => void
-    onRemoveItem: (id: number) => void
+    onItemChange?: (id: number, field: string, value: string | number) => void
+    onAddItem?: () => void
+    onRemoveItem?: (id: number) => void
 }
 
 const InvoiceEditor: React.FC<Props> = ({
@@ -58,6 +58,33 @@ const InvoiceEditor: React.FC<Props> = ({
     onAddItem,
     onRemoveItem,
 }) => {
+    // Local state for items in case the parent is not handling changes.
+    const [localItems, setLocalItems] = React.useState<InvoiceItem[]>(items)
+
+    // If items prop changes, update local state.
+    React.useEffect(() => {
+        setLocalItems(items)
+    }, [items])
+
+    // Helper to update an item.
+    const handleLocalItemChange = (id: number, field: string, value: string | number) => {
+        setLocalItems((prevItems) =>
+            prevItems.map((item) =>
+                item.id === id
+                    ? {
+                          ...item,
+                          // Only convert to a number if the field is not "description"
+                          [field]: field === 'description' ? value : Number(value),
+                      }
+                    : item
+            )
+        )
+        // Call parent's callback if provided
+        if (onItemChange) {
+            onItemChange(id, field, value)
+        }
+    }
+
     const handleInputChange = (
         e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
     ) => {
@@ -66,33 +93,31 @@ const InvoiceEditor: React.FC<Props> = ({
     }
 
     const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      console.log("File selected:", file); // Debug log
-  
-      if (file && onLogoChange) {
-          const reader = new FileReader();
-          
-          reader.onloadend = () => {
-              console.log("File loaded:", reader.result); // Debug log
-              onLogoChange(reader.result as string);
-          };
-  
-          reader.onerror = (error) => {
-              console.error("Error reading file:", error); // Error log
-          };
-  
-          reader.readAsDataURL(file);
-      }
-  };
+        const file = e.target.files?.[0]
+        console.log('File selected:', file) // Debug log
+
+        if (file && onLogoChange) {
+            const reader = new FileReader()
+
+            reader.onloadend = () => {
+                console.log('File loaded:', reader.result) // Debug log
+                onLogoChange(reader.result as string)
+            }
+
+            reader.onerror = (error) => {
+                console.error('Error reading file:', error) // Error log
+            }
+
+            reader.readAsDataURL(file)
+        }
+    }
 
     return (
         <div className="w-full p-6 border rounded-[3.5rem] shadow-2xl">
             {/* Header */}
             <div className="flex justify-between items-start mb-8">
                 <div>
-                    <h1 className="text-[35px] font-bold text-[#5F4B8B]">
-                        Invoice
-                    </h1>
+                    <h1 className="text-[35px] font-bold text-[#5F4B8B]">Invoice</h1>
                     <div className="space-y-2">
                         <input
                             type="text"
@@ -121,50 +146,47 @@ const InvoiceEditor: React.FC<Props> = ({
 
                 {/* Logo Upload Section */}
                 <div className="pr-10 pt-8">
-                <div className="relative w-24 h-24  bg-[#F3F0FA] rounded-full overflow-hidden">
-                    {companyLogo ? (
-                        <div className="relative w-full h-full group">
-                            <img
-                                src={companyLogo}
-                                alt="Company Logo"
-                                className="w-full h-full object-contain"
-                            />
+                    <div className="relative w-24 h-24 bg-[#F3F0FA] rounded-full overflow-hidden">
+                        {companyLogo ? (
+                            <div className="relative w-full h-full group">
+                                <img
+                                    src={companyLogo}
+                                    alt="Company Logo"
+                                    className="w-full h-full object-contain"
+                                />
+                                <label
+                                    htmlFor="logo-upload"
+                                    className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                                >
+                                    <img
+                                        src={addLogoIcon}
+                                        alt="Change Logo"
+                                        className="w-6 h-6 mb-1"
+                                    />
+                                </label>
+                            </div>
+                        ) : (
                             <label
                                 htmlFor="logo-upload"
-                                className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                                className="flex flex-col items-center justify-center w-full h-full cursor-pointer hover:bg-[#E9E5F5] transition-colors"
                             >
                                 <img
                                     src={addLogoIcon}
-                                    alt="Change Logo"
-                                    className="w-6 h-6 mb-1"
+                                    alt="Add Logo"
+                                    className="w-8 h-8 mb-2"
                                 />
+                                <span className="text-[#5F4B8B] text-sm">Add Logo</span>
                             </label>
-                        </div>
-                    ) : (
-                        <label
-                            htmlFor="logo-upload"
-                            className="flex flex-col items-center justify-center w-full h-full cursor-pointer hover:bg-[#E9E5F5] transition-colors"
-                        >
-                            <img
-                                src={addLogoIcon}
-                                alt="Add Logo"
-                                className="w-8 h-8 mb-2"
-                            />
-                            <span className="text-[#5F4B8B] text-sm">
-                                Add Logo
-                            </span>
-                        </label>
-                    )}
-                    <input
-                        id="logo-upload"
-                        type="file"
-                        accept="image/*"
-                        onChange={handleLogoUpload}
-                        className="hidden"
-                    />
+                        )}
+                        <input
+                            id="logo-upload"
+                            type="file"
+                            accept="image/*"
+                            onChange={handleLogoUpload}
+                            className="hidden"
+                        />
+                    </div>
                 </div>
-                </div>
-                
             </div>
 
             {/* Company and Client Information */}
@@ -249,17 +271,19 @@ const InvoiceEditor: React.FC<Props> = ({
                         </tr>
                     </thead>
                     <tbody>
-                        {items.map((item) => (
-                            <tr
-                                key={item.id}
-                                className="bg-white hover:bg-gray-50"
-                            >
+                        {localItems.map((item) => (
+                            <tr key={item.id} className="bg-white hover:bg-gray-50">
                                 <td className="p-2">
                                     <input
                                         type="text"
                                         value={item.description}
-                                        onChange={(e) => onItemChange(item.id, 'description', e.target.value)}
-
+                                        onChange={(e) =>
+                                            handleLocalItemChange(
+                                                item.id,
+                                                'description',
+                                                e.target.value
+                                            )
+                                        }
                                         className="w-full bg-transparent border-b border-gray-300 focus:border-purple-600 px-2 py-1 outline-none"
                                         placeholder="Item description"
                                     />
@@ -269,7 +293,7 @@ const InvoiceEditor: React.FC<Props> = ({
                                         type="number"
                                         value={item.quantity}
                                         onChange={(e) =>
-                                            onItemChange(
+                                            handleLocalItemChange(
                                                 item.id,
                                                 'quantity',
                                                 e.target.value
@@ -283,7 +307,7 @@ const InvoiceEditor: React.FC<Props> = ({
                                         type="number"
                                         value={item.rate}
                                         onChange={(e) =>
-                                            onItemChange(
+                                            handleLocalItemChange(
                                                 item.id,
                                                 'rate',
                                                 e.target.value
@@ -297,7 +321,7 @@ const InvoiceEditor: React.FC<Props> = ({
                                         type="number"
                                         value={item.tax}
                                         onChange={(e) =>
-                                            onItemChange(
+                                            handleLocalItemChange(
                                                 item.id,
                                                 'tax',
                                                 e.target.value
@@ -316,7 +340,9 @@ const InvoiceEditor: React.FC<Props> = ({
                                 </td>
                                 <td className="p-2 text-center">
                                     <button
-                                        onClick={() => onRemoveItem(item.id)}
+                                        onClick={() =>
+                                            onRemoveItem ? onRemoveItem(item.id) : null
+                                        }
                                         className="text-red-600 hover:text-red-800"
                                     >
                                         ✕
@@ -358,79 +384,11 @@ const InvoiceEditor: React.FC<Props> = ({
 
                 {/* Add Item Button */}
                 <button
-                    onClick={onAddItem}
+                    onClick={() => (onAddItem ? onAddItem() : null)}
                     className="mt-4 px-4 py-2 bg-[#5F4B8B] text-white rounded-full hover:bg-[#4a3a6d] transition-colors"
                 >
                     + Add Item
                 </button>
-            </div>
-
-            {/* Payment Instructions */}
-            <div className="p-4 rounded-lg">
-                <h3 className="font-bold text-[#5F4B8B] mb-4">
-                    Pay Instruction (Pay online <span className="italic text-black">Here</span>)
-                </h3>
-                <div className="grid grid-cols-2 gap-4">
-                    <div>
-                        <label className="text-sm text-gray-600">Bank:</label>
-                        <input
-                            type="text"
-                            name="bankName"
-                            value={invoiceData.bankName}
-                            onChange={handleInputChange}
-                            className="w-full bg-transparent border-b border-gray-300 focus:border-purple-600 px-2 py-1 outline-none"
-                            placeholder="Bank name"
-                        />
-                    </div>
-                    <div>
-                        <label className="text-sm text-gray-600">
-                            Bank Address:
-                        </label>
-                        <input
-                            type="text"
-                            name="bankAddress"
-                            value={invoiceData.bankAddress}
-                            onChange={handleInputChange}
-                            className="w-full bg-transparent border-b border-gray-300 focus:border-purple-600 px-2 py-1 outline-none"
-                            placeholder="Bank address"
-                        />
-                    </div>
-                    <div>
-                        <label className="text-sm text-gray-600">
-                            Account Name:
-                        </label>
-                        <input
-                            type="text"
-                            name="accountName"
-                            value={invoiceData.accountName}
-                            onChange={handleInputChange}
-                            className="w-full bg-transparent border-b border-gray-300 focus:border-purple-600 px-2 py-1 outline-none"
-                            placeholder="Account name"
-                        />
-                    </div>
-                    <div>
-                        <label className="text-sm text-gray-600">IBAN:</label>
-                        <input
-                            type="text"
-                            name="iban"
-                            value={invoiceData.iban}
-                            onChange={handleInputChange}
-                            className="w-full bg-transparent border-b border-gray-300 focus:border-purple-600 px-2 py-1 outline-none"
-                            placeholder="IBAN number"
-                        />
-                    </div>
-                    <div>
-                        <label className="text-sm text-gray-600">BIC:</label>
-                        <input
-                            type="text"
-                            name="bic"
-                            value={invoiceData.bic}
-                            onChange={handleInputChange}
-                            className="w-full bg-transparent border-b border-gray-300 focus:border-purple-600 px-2 py-1 outline-none"
-                            placeholder="BIC number"
-                        />
-                    </div>
-                </div>
             </div>
         </div>
     )

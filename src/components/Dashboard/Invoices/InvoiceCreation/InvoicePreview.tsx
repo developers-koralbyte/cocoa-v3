@@ -136,32 +136,7 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoiceData, items, tot
         </table>
       </div>
 
-      {/* Payment Instructions */}
-      <div className="mt-2">
-        <h3 className="text-[#5F4B8B] font-bold mb-4">Pay Instruction (Pay online <span className="text-[#000000] italic">Here</span> )</h3>
-        <div className="grid grid-cols-2 gap-4">
-          <div className="flex justify-between">
-            <span className="font-semibold">Bank:</span>
-            <span>{invoiceData.bankName}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="font-semibold">Bank Address:</span>
-            <span>{invoiceData.bankAddress}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="font-semibold">Account Name:</span>
-            <span>{invoiceData.accountName}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="font-semibold">IBAN:</span>
-            <span>{invoiceData.iban}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="font-semibold">BIC:</span>
-            <span>{invoiceData.bic}</span>
-          </div>
-        </div>
-      </div>
+      
     </div>
   );
 };
