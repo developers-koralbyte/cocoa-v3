@@ -1,5 +1,9 @@
 import React from 'react'
 import { BsCheckCircle } from 'react-icons/bs'
+import { useNavigate } from 'react-router-dom'
+
+import cocoaLogo from '../../assets/img/cocoa-logo.png'
+
 
 interface PricingCardProps {
     price: string
@@ -85,8 +89,49 @@ const PricingCard: React.FC<PricingCardProps> = ({
 }
 
 const PricingAndVerification: React.FC = () => {
+    const navigate = useNavigate()
+
     return (
         <section className="relative py-20 overflow-hidden">
+            {/* Navigation Bar */}
+            <nav className="flex justify-between items-center px-16 py-10 w-full absolute top-0 left-0 z-10 bg-transparent">
+                <div>
+                    <a href="/">
+                        <img
+                            src={cocoaLogo}
+                            alt="Cocoa Logo"
+                            className="h-20 w-auto"
+                        />
+                    </a>
+                </div>
+                <div className="font-nunito flex space-x-12 font-extrabold text-[22px]">
+                    <button
+                        className="text-buttonBg px-4 py-2"
+                        onClick={() => navigate('/become-a-vendor')}
+                    >
+                        Vendors <span className="ml-1">&#9662;</span>
+                    </button>
+                    <button
+                        className="text-buttonBg px-4 py-2"
+                        onClick={() => navigate('/become-a-buyer')}
+                    >
+                        Buyers <span className="ml-1">&#9662;</span>
+                    </button>
+                    <button
+                        className="text-buttonBg px-4 py-2"
+                        onClick={() => navigate('/marketplace')}
+                    >
+                        Marketplace <span className="ml-1">&#9662;</span>
+                    </button>
+                    <button
+                        className="bg-buttonBg text-white font-nunito text-[22px] px-5 py-2 rounded-full hover:text-white transition-colors duration-200"
+                        onClick={() => navigate('/login')}
+                    >
+                        Get Started
+                    </button>
+                </div>
+            </nav>
+
             {/* Background with gradient and wave */}
             <div className="absolute inset-0 bg-gradient-to-b from-[#babadf] to-white">
                 <svg
@@ -103,7 +148,7 @@ const PricingAndVerification: React.FC = () => {
                 </svg>
             </div>
 
-            <div className="container mx-auto px-4 relative">
+            <div className="container mx-auto px-4 relative mt-20">
                 <div className="text-center mb-16">
                     <h1 className="text-5xl font-bold text-[#6B5BA9] mb-4">
                         Pricing and Verification
