@@ -1,6 +1,6 @@
 import LandingPage from "./LandingPage";
 import HowItWorks from "./HowItWorks";
-import WhyChooseCocoa from "./WhyChooseCOCOA";
+import WhyChooseCocoa from "./WhyChooseCocoa";
 import Invoices from "./Invoices";
 import Industries from "./Industries";
 import ReadyToTransform from "./ReadyToTransform";
