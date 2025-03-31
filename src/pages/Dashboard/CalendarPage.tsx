@@ -300,7 +300,7 @@ const CalendarPage: React.FC = () => {
             <div className="flex-1 border-4 border-[#6868AC] rounded-l-[3.5rem] bg-white p-6">
               
               <div className="shadow rounded-lg p-4 h-full">
-                <BigCalendar
+              <BigCalendar
                   localizer={localizer}
                   events={events}
                   startAccessor="start"
@@ -312,7 +312,7 @@ const CalendarPage: React.FC = () => {
                   views={['month', 'week', 'day']}
                   view={view}
                   onView={(newView) => setView(newView)}
-                  defaultDate={new Date(2025, 0, 15)}
+                  defaultDate={new Date()} // Use current date for BigCalendar
                   style={{ height: '70vh' }}
                 />
               </div>
@@ -322,8 +322,8 @@ const CalendarPage: React.FC = () => {
             <div className="w-80 border-4 border-[#6868AC] border-l-0 rounded-r-[3.5rem] bg-white p-6 space-y-6">
              
               <div className="bg-white shadow rounded-lg p-4">
-                <ReactCalendar
-                  defaultValue={new Date(2025, 0, 15)}
+              <ReactCalendar
+                  defaultValue={new Date()} // Use current date for mini calendar
                   next2Label={null}
                   prev2Label={null}
                   minDetail="month"

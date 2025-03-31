@@ -312,7 +312,7 @@ const BuyerCalendarPage: React.FC = () => {
                   views={['month', 'week', 'day']}
                   view={view}
                   onView={(newView) => setView(newView)}
-                  defaultDate={new Date(2025, 0, 15)}
+                  defaultDate={new Date()}
                   style={{ height: '70vh' }}
                 />
               </div>
@@ -322,7 +322,7 @@ const BuyerCalendarPage: React.FC = () => {
             
                 <div className="bg-white shadow rounded-lg p-4">
                   <ReactCalendar
-                    defaultValue={new Date(2025, 0, 15)}
+                     defaultDate={new Date()}
                     next2Label={null}
                     prev2Label={null}
                     minDetail="month"
