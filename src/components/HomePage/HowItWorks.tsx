@@ -1,13 +1,15 @@
-import { useRef, useState } from 'react'
+import { useRef, useState, useEffect, useState as useResponsiveState } from 'react'
 import { FaPlay, FaPause, FaVolumeMute, FaVolumeUp } from 'react-icons/fa'
 import cocoaimg from '../../components/HomePage/cocoaImageVid.jpeg'
 // You can use any video file here 
 
 const HowItWorks = () => {
-    const videoRef = useRef(null)
+    const videoRef = useRef<HTMLVideoElement | null>(null)
     const [isPlaying, setIsPlaying] = useState(false)
     const [isMuted, setIsMuted] = useState(true)
     const [showPlaceholder, setShowPlaceholder] = useState(true)
+
+    const [isMobile, setIsMobile] = useResponsiveState(false)
 
     const togglePlay = () => {
         if (videoRef.current) {
@@ -29,9 +31,23 @@ const HowItWorks = () => {
         }
     }
 
+    // Detect screen size for mobile
+    useEffect(() => {
+        const handleResize = () => {
+            setIsMobile(window.innerWidth <= 767)
+        }
+
+        handleResize()
+        window.addEventListener('resize', handleResize)
+
+        return () => {
+            window.removeEventListener('resize', handleResize)
+        }
+    }, [])
+
     return (
-        <div className="min-h-screen bg-[#6868AC96] from-purple-50 to-purple-100 relative">
-            <div className="max-w-6xl mx-auto px-4 py-16 sm:py-24">
+        <div className="bg-[#6868AC96] from-purple-50 to-purple-100 relative">
+            <div className="max-w-6xl mx-auto px-4 py-12 sm:py-24">
                 <div className="text-left mb-12">
                     <h2 className="text-4xl sm:text-5xl font-bold mb-4 bg-gradient-to-r from-white-00 to-purple-800 bg-clip-text text-transparent text-white">
                         How Does It Work?
@@ -93,11 +109,17 @@ const HowItWorks = () => {
             </div>
 
             {/* Wave Decoration */}
-            <div className="absolute bottom-[-30px] left-0 right-0">
+            <div
+                className="absolute left-0 right-0"
+                style={{
+                    bottom: isMobile ? '-20px' : '-30px', // Adjust for mobile
+                    transform: isMobile ? 'scaleX(2.2)' : 'none', // Optional: Scale the curve on mobile
+                }}
+            >
                 <svg
-                    viewBox="0 0 1440 240"
+                    viewBox="0 0 1440 250"
                     className="w-full h-auto"
-                    preserveAspectRatio="none"
+                    preserveAspectRatio="xMidYMid slice"
                 >
                     <path
                         fill="#ffffff"

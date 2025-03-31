@@ -8,11 +8,11 @@ interface FAQItem {
 
 const faqData: FAQItem[] = [
     {
-        question: 'What is Cocoa?',
+        question: 'What is COCOA?',
         answer: "COCOA is Canada's first chat-based procurement platform connecting enterprises with verified solution providers. Through real-time communication, we streamline procurement across corporate services, enterprise software, commercial equipment, and industry solutions - transforming traditional procurement into an efficient, integrated experience.",
     },
     {
-        question: 'Is Cocoa a POS?',
+        question: 'Is COCOA a POS?',
         answer: 'No, COCOA is not just a POS. It’s a comprehensive solution that connects buyers with vendors and streamlines the entire supply chain process.',
     },
     {

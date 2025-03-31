@@ -1,6 +1,6 @@
+import React from 'react'
 import { FaInstagram, FaFacebook, FaLinkedin } from 'react-icons/fa'
 import { IoLocationSharp } from 'react-icons/io5'
-import React from 'react'
 
 import logoImg from '../../assets/img/logoImg.png'
 
@@ -25,8 +25,84 @@ const Footer = () => {
     }
 
     return (
-        <footer className="bg-[#5D4C7C] text-white">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <footer className="bg-[#5D4C7C] text-white w-full">
+            {/* Mobile View */}
+            <div className="lg:hidden w-full px-6 py-12">
+                <div className="flex flex-col items-center text-center">
+                    {/* Navigation Links */}
+                    <nav className="w-full mb-12">
+                        <h2 className="text-xl font-bold mb-6">HOME</h2>
+                        <div className="grid grid-cols-2 gap-y-4 gap-x-8">
+                            {[...navigation.main, ...navigation.about].map(
+                                (item) => (
+                                    <a
+                                        key={item.name}
+                                        href={item.href}
+                                        className="text-base hover:text-gray-200"
+                                    >
+                                        {item.name}
+                                    </a>
+                                )
+                            )}
+                        </div>
+                    </nav>
+
+                    {/* Logo and Description */}
+                    <div className="mb-12">
+                        <h1 className="text-4xl font-bold mb-3 flex items-center justify-center">
+                            COCO
+                            <img
+                                src={logoImg}
+                                alt="Cocoa Logo"
+                                className="w-10 h-auto ml-0" // Add margin-left for spacing between text and logo
+                            />
+                        </h1>
+                        <p className="text-base leading-relaxed">
+                            The all-in-one
+                            <br />
+                            procurement platform
+                        </p>
+                    </div>
+
+                    {/* Contact Information */}
+                    <div className="mb-12">
+                        <h3 className="text-xl font-bold mb-4">CONTACT US</h3>
+                        <div className="space-y-3 text-base">
+                            <p className="flex items-center justify-center gap-2">
+                                <IoLocationSharp className="w-5 h-5" />
+                                Malaysia, Canada
+                            </p>
+                            <p>+60152122714</p>
+                            <p>ctb@cocoa-app.com</p>
+                        </div>
+                    </div>
+
+                    {/* Social Links */}
+                    <div className="flex justify-center space-x-8">
+                        <a
+                            href="https://www.instagram.com"
+                            className="hover:text-gray-200"
+                        >
+                            <FaInstagram className="w-8 h-8" />
+                        </a>
+                        <a
+                            href="https://www.facebook.com/profile.php?id=61553620930491"
+                            className="hover:text-gray-200"
+                        >
+                            <FaFacebook className="w-8 h-8" />
+                        </a>
+                        <a
+                            href="https://www.linkedin.com/company/koral-byte/posts/?feedView=all"
+                            className="hover:text-gray-200"
+                        >
+                            <FaLinkedin className="w-8 h-8" />
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            {/* Desktop View */}
+            <div className="hidden lg:block max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 overflow-x-hidden">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[2fr,1fr,1fr,1fr] gap-8">
                     {/* Logo and Description */}
                     <div className="space-y-8">
