@@ -3,22 +3,25 @@ import cocoaLogo from '../../assets/img/cocoa-logo.png'
 import { useNavigate } from 'react-router-dom'
 import laptopImage from '../../assets/img/MainSection/laptop.png'
 
+// For Mobile Responsiveness
+import laptopImageMobile from '../../assets/img/MainSection/laptopImgMobile.png'
+import bgWaveMobile from '../../assets/img/MainSection/bgWaveMobile.png'
+
 const LandingPage = () => {
     const navigate = useNavigate() // Hook for navigation
 
     return (
         <>
+            {/* Laptop Layout */}
             <section
-                className="relative bg-cover bg-no-repeat min-h-[1200px] w-full"
+                className="relative bg-cover bg-no-repeat min-h-[1200px] w-full hidden lg:block"
                 style={{
                     backgroundImage: `url(${bgWave})`,
                     backgroundSize: 'cover',
                     backgroundPosition: 'bottom center',
                 }}
             >
-                {/* ✅ FIX: Navbar Full Width */}
                 <nav className="flex justify-between items-center px-16 py-10 w-full absolute top-0 left-0">
-                    {/* Logo Section */}
                     <div>
                         <a href="/">
                             <img
@@ -28,21 +31,25 @@ const LandingPage = () => {
                             />
                         </a>
                     </div>
-                    {/* Navigation Links */}
                     <div className="font-nunito flex space-x-12 font-nunito font-extrabold text-[22px]">
                         <button
                             className="text-buttonBg px-4 py-2"
-                            onClick={() => navigate('/create-account')}
+                            onClick={() => navigate('/become-a-vendor')}
                         >
                             Vendors <span className="ml-1">&#9662;</span>
                         </button>
                         <button
                             className="text-buttonBg px-4 py-2"
-                            onClick={() => navigate('/create-account')}
+                            onClick={() => navigate('/create')}
                         >
                             Buyers <span className="ml-1">&#9662;</span>
                         </button>
-                        <button className="text-buttonBg px-4 py-2">
+                        <button
+                            className="text-buttonBg px-4 py-2"
+                            onClick={() =>
+                                navigate('/vendor-pricing&verification')
+                            }
+                        >
                             Marketplace <span className="ml-1">&#9662;</span>
                         </button>
                         <button
@@ -54,9 +61,7 @@ const LandingPage = () => {
                     </div>
                 </nav>
 
-                {/* ✅ Layout Fix: Flex for Text & Image */}
                 <div className="flex w-full min-h-screen items-center">
-                    {/* Left Section */}
                     <div className="w-1/2 pt-56 pl-28">
                         <h1 className="font-nunito text-[60px] font-bold leading-[75px] text-left text-buttonBg">
                             Real-Time Global <br /> Procurement <br /> Through
@@ -83,10 +88,11 @@ const LandingPage = () => {
                             </p>
                         </div>
 
-                        {/* CTA Buttons */}
                         <div className="mt-8 flex flex-col lg:flex-row space-y-4 lg:space-y-0 lg:space-x-6">
-                            <button className="bg-buttonBg text-white font-nunito rounded-full px-10 py-4" 
-                            onClick={() => navigate('/login')}>
+                            <button
+                                className="bg-buttonBg text-white font-nunito rounded-full px-10 py-4"
+                                onClick={() => navigate('/login')}
+                            >
                                 START NOW
                             </button>
                             <a
@@ -98,13 +104,80 @@ const LandingPage = () => {
                         </div>
                     </div>
 
-                    {/* Right Section (Laptop Image) */}
                     <div className="w-1/2 flex items-center justify-end pt-56">
                         <img
                             src={laptopImage}
                             alt="Laptop Display"
                             className="h-auto w-auto"
                         />
+                    </div>
+                </div>
+            </section>
+
+            {/* Mobile Layout */}
+            <section
+                className="relative bg-cover bg-no-repeat w-full lg:hidden min-h-screen"
+                style={{
+                    backgroundImage: `url(${bgWaveMobile})`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'bottom center',
+                }}
+            >
+                {/* Mobile Navigation Menu */}
+                <nav className="absolute top-4 left-0 right-0 flex justify-center items-center px-6 py-4 z-10">
+                    <div>
+                        <a href="/">
+                            <img
+                                src={cocoaLogo}
+                                alt="Cocoa Logo"
+                                className="h-18 w-auto"
+                            />
+                        </a>
+                    </div>
+                </nav>
+
+                {/* Mobile Layout Content */}
+                <div className="flex flex-col items-center justify-center min-h-[calc(100vh-80px)] pt-28">
+                    <h1 className="font-nunito text-[40px] font-bold text-buttonBg text-left px-12">
+                        Real-Time Global Procurement Through Chat
+                    </h1>
+                    <div className="mt-0">
+                        <img
+                            src={laptopImageMobile}
+                            alt="Mobile Laptop Display"
+                            className="mx-auto h-auto w-auto"
+                        />
+                    </div>
+                    <div className="font-sourceSans mt-0 text-[16px] text-buttonBg text-left px-4">
+                        <p className="leading-relaxed">
+                            From enterprise-level corporate services and leading
+                            ERP solutions (including NetSuite, SAP S/4HANA,
+                            Oracle) to commercial equipment and food & beverage
+                            procurement, COCOA revolutionizes B2B purchasing by
+                            providing real-time communication with trusted
+                            suppliers in one integrated platform.
+                        </p>
+                    </div>
+                    <div className="font-sourceSans mt-4 text-[16px] font-bold text-buttonBg text-left px-4">
+                        <p>
+                            Welcome to COCOA, your comprehensive procurement
+                            marketplace connecting businesses with verified
+                            suppliers through instant chat communication.
+                        </p>
+                    </div>
+                    <div className="mt-8">
+                        <button
+                            className="bg-buttonBg text-white font-nunito rounded-full px-6 py-2 "
+                            onClick={() => navigate('/login')}
+                        >
+                            START NOW
+                        </button>
+                        <a
+                            href="#demo"
+                            className="pt-3 text-black underline px-5"
+                        >
+                            Want a free demo?
+                        </a>
                     </div>
                 </div>
             </section>
