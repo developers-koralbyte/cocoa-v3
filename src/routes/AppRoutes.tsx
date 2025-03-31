@@ -2,6 +2,7 @@ import React, { Suspense } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import BuyerCalendarPage from '../pages/Dashboard/BuyerCalendarPage';
 import ProtectedRoute from "../utils/ProtectedRoute";
+import BecomingABuyer from '../components/BecomingABuyer/BecomingABuyer';
 
 // Lazy load all the components
 const HomePage = React.lazy(() => import('../pages/HomePage'));
@@ -85,7 +86,8 @@ const AppRoutes: React.FC = () => {
                 {/* Becoming a Vendor*/}
                 <Route path="/become-a-vendor" element={<BecomingAVendor />} />
                 {/* Vendor Pricing & Verification*/}
-                <Route path="/vendor-pricing&verification" element={<VendorPricingVerification />} />
+                <Route path="/marketplace" element={<VendorPricingVerification />} />
+                <Route path="/become-a-buyer" element={<BecomingABuyer />} />
             </Routes>
         </Suspense>
     )
