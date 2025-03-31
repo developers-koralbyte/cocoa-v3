@@ -40,14 +40,14 @@ const LandingPage = () => {
                         </button>
                         <button
                             className="text-buttonBg px-4 py-2"
-                            onClick={() => navigate('/create')}
+                            onClick={() => navigate('/become-a-buyer')}
                         >
                             Buyers <span className="ml-1">&#9662;</span>
                         </button>
                         <button
                             className="text-buttonBg px-4 py-2"
                             onClick={() =>
-                                navigate('/vendor-pricing&verification')
+                                navigate('/marketplace')
                             }
                         >
                             Marketplace <span className="ml-1">&#9662;</span>
