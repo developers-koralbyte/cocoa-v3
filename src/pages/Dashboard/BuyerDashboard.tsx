@@ -8,6 +8,7 @@ import chatImage from '../../assets/img/Dashboard/chatImage.png'
 import { useUserStore } from '../../utils/userStore'
 import { doc,getDoc,setDoc } from 'firebase/firestore';
 import { db } from '../../utils/firebase'
+import { User } from 'lucide-react'
 
 const  defaultAvatar = "/path-to-default-avatar.jpg";
 
@@ -332,18 +333,20 @@ if (loadingDocCheck) {
                                     <span className="text-sm text-gray-600 font-nunito">
                                         Buyer
                                     </span>
-                                    <span className="text-xs bg-purple-200 px-2 py-1 rounded-full font-nunito">
-                                        Premium Account
-                                    </span>
+                                    
                                 </div>
                             </div>
-                            <div className="w-12 h-12 rounded-full overflow-hidden">
-                            <img
-                            src={avatarSrc}
-                            alt="User Avatar"
-                            className="w-10 h-10 md:w-12 md:h-12 rounded-full object-cover"
-                            />
-                            </div>
+                            <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center">
+                               {user?.avatar && user.avatar.trim() !== "" ? (
+                                 <img
+                                   src={user.avatar}
+                                   alt="User Avatar"
+                                   className="w-10 h-10 md:w-12 md:h-12 rounded-full object-cover"
+                                 />
+                               ) : (
+                                 <User className="text-gray-400 w-6 h-6" />
+                               )}
+                             </div>
                         </div>
 
                         {/* Upcoming Appointments */}

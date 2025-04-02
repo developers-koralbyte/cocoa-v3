@@ -5,6 +5,7 @@ import BaseLayout from '../../components/Dashboard/BaseLayout';
 import { db } from '../../utils/firebase';
 import { doc, getDoc, setDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { useAuth } from '../../utils/AuthContext';
+import { User } from 'lucide-react'
 
 // Example child components (you can remove them if you prefer to fetch directly here)
 import VendorServices from '../../components/Dashboard/Catalogue/VendorServices';
@@ -338,12 +339,16 @@ const VendorDashboard: React.FC = () => {
             <div className="grid grid-cols-4 gap-6">
               {staticBuyers.slice(0, 4).map((buyer, index) => (
                 <div key={index} className="text-center">
-                  <div className="w-full aspect-square mb-4 overflow-hidden rounded-full shadow-sm hover:shadow-md transition-shadow">
-                    <img
-                      src={buyer.image}
-                      alt={buyer.name}
-                      className="w-full h-full object-cover"
-                    />
+                  <div className="w-full aspect-square mb-4 overflow-hidden rounded-full shadow-sm hover:shadow-md transition-shadow bg-gray-100 flex items-center justify-center">
+                    {buyer.image ? (
+                      <img
+                        src={buyer.image}
+                        alt={buyer.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <User className="text-gray-400 w-12 h-12" />
+                    )}
                   </div>
                   <h3 className="text-sm font-medium">{buyer.name}</h3>
                   <p className="text-sm text-gray-600">{buyer.company}</p>
@@ -364,18 +369,20 @@ const VendorDashboard: React.FC = () => {
               </h2>
               <div className="flex items-center gap-2">
                 <span className="text-sm text-gray-600 font-nunito">Vendor</span>
-                <span className="text-xs bg-purple-200 px-2 py-1 rounded-full font-nunito">
-                  Premium Account
-                </span>
+                
               </div>
             </div>
-            <div className="w-12 h-12 rounded-full overflow-hidden">
-              <img
-                src={user.avatar || '/path-to-default-avatar.jpg'}
-                alt="User Avatar"
-                className="w-full h-full object-cover"
-              />
-            </div>
+            <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center">
+                {user.avatar ? (
+                  <img
+                    src={user.avatar}
+                    alt="User Avatar"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <User className="text-gray-400 w-6 h-6" />
+                )}
+              </div>
           </div>
 
           {/* Upcoming Appointments */}

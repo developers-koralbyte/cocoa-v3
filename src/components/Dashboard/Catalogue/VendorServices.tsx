@@ -5,6 +5,7 @@ import { collection, addDoc, getDocs, query, where, doc, updateDoc } from 'fireb
 import { db } from '../../../utils/firebase'
 import { useUserStore } from '../../../utils/userStore'
 import { useNavigate } from 'react-router-dom'
+import { Image as ImageIcon } from 'lucide-react'
 
 // Define the service interface with the required fields
 interface Service {
@@ -176,17 +177,17 @@ const VendorServices: React.FC = () => {
                   onClick={() => navigate(`/service/${service.id}`)}
                 >
                   {/* Circle image on the left */}
-                  <div className="w-14 h-14 mr-3 rounded-full overflow-hidden border-2 border-purple-200 flex-shrink-0">
-                    <img
-                      src={service.photo || '/path-to-default-service-image.jpg'}
-                      alt={service.name}
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement
-                        target.src = '/path-to-default-service-image.jpg'
-                      }}
-                    />
-                  </div>
+                  <div className="w-14 h-14 mr-3 rounded-full border-2 border-purple-200 flex items-center justify-center bg-gray-100 overflow-hidden">
+                     {service.photo ? (
+                       <img
+                         src={service.photo}
+                         alt={service.name}
+                         className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <ImageIcon className="text-purple-400 w-6 h-6" />
+                          )}
+                    </div>
 
                   {/* Mobile view: Only title */}
                   <div className="md:hidden">
