@@ -11,6 +11,7 @@ import {
   sendEmailVerification,
 } from "firebase/auth";
 import { collection ,setDoc,doc, query, where, getDocs } from "firebase/firestore";
+import { toast } from "react-toastify";
 
 const SignupSelection = () => {
   const navigate = useNavigate();
@@ -90,14 +91,22 @@ const SignupSelection = () => {
       }
 
       // Redirect to the respective dashboard
-      if (selectedRole === "vendor") {
-        navigate("/vendor-dashboard");
-      } else {
-        navigate("/buyer-dashboard");
-      }
-    } catch (error) {
+      setTimeout(() => {
+        if (selectedRole.toLowerCase() === "vendor") {
+          navigate("/vendor-dashboard", { replace: true });
+          console.log("Redirecting to vendor dashboard");
+        } else {
+          navigate("/buyer-dashboard", { replace: true });
+          console.log("Redirecting to buyer dashboard");
+        }
+      }, 2000);
+    } catch (error: any) {
       console.error("Google sign-up error:", error);
-      // Handle or display error appropriately
+      if (error.code === "auth/email-already-in-use") {
+        toast.error("A user with this email already exists. Please log in or use a different email.");
+      } else {
+        toast.error("An error occurred during sign-up. Please try again or contact support.");
+      }
     }
   };
 

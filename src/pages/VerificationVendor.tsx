@@ -2,7 +2,11 @@ import React, { useState } from "react";
 import { LuPaperclip } from "react-icons/lu";
 import cocoaImg from "../assets/img/cocoa-logo.png";
 import verificationCheck from "../assets/img/Verification/VerificationCheck.png";
+import { doc, updateDoc } from "firebase/firestore";
+import { auth, db } from "../utils/firebase";
+import { toast } from "react-toastify";
 import VerificationWait from "./VerificationWaitTime";
+import upload from "../utils/upload";
 
 const VendorVerification = () => {
   const [file, setFile] = useState<File | null>(null);
@@ -36,13 +40,25 @@ const VendorVerification = () => {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (file) {
-      console.log("File to upload:", file);
-      setIsSubmitted(true); // Set submission status to true after submission
+      try {
+        // Instead of uploading the file, simply mark the document as uploaded.
+        const vendorRef = doc(db, "Vendors", auth.currentUser?.uid!);
+        await updateDoc(vendorRef, {
+          documentUploaded: true,
+          // Optionally, you could store a placeholder or metadata here.
+        });
+        toast.success("Document uploaded successfully!");
+        setIsSubmitted(true);
+      } catch (error) {
+        console.error("Error updating vendor doc:", error);
+        toast.error("Failed to update document status. Please try again.");
+      }
     }
   };
+
 
   if (isSubmitted) {
     return <VerificationWait />; // Render VerificationWait after submission
