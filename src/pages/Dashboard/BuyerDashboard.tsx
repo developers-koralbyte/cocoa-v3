@@ -1,5 +1,5 @@
 import React, { useState,useEffect ,ChangeEvent, FormEvent} from 'react'
-
+import { useAuth } from '../../utils/AuthContext';
 import { Search, RotateCcw } from 'lucide-react'
 import { Bell } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
@@ -104,13 +104,15 @@ const services = [
 
 const BuyerDashboard = () => {
     const navigate = useNavigate()
-    // 1) Pull currentUser from your user store
-const { currentUser } = useUserStore()
+    // 1) Pull user from your user store
+// const { user } = useUserStore()
+const { user, isLoading } = useAuth();
 
-// 2) Log changes to currentUser for debugging
+
+// 2) Log changes to user for debugging
 useEffect(() => {
-    console.log('BuyerDashboard: currentUser changed:', currentUser)
-}, [currentUser])
+    console.log('BuyerDashboard: user changed:', user)
+}, [user])
 
 // State for the popup form
 const [showPopup, setShowPopup] = useState(false)
@@ -123,23 +125,23 @@ const [formData, setFormData] = useState({
 })
 const [loadingDocCheck, setLoadingDocCheck] = useState(true)
 
-// 3) On mount or when currentUser changes, check if Buyer doc is missing or incomplete
+// 3) On mount or when user changes, check if Buyer doc is missing or incomplete
 useEffect(() => {
     const checkBuyerDoc = async () => {
     try {
         // If there's no user or no UID, redirect to /login
-        if (!currentUser || !currentUser.id) {
+        if (!user || !user.id) {
         navigate('/login')
         return
         }
         // If role is not 'buyer', also redirect
-        if (currentUser.role !== 'buyer') {
+        if (user.role !== 'buyer') {
         navigate('/login')
         return
         }
 
         // Retrieve doc from "Buyers" collection, doc ID = user's UID
-        const buyerRef = doc(db, 'Buyers', currentUser.id)
+        const buyerRef = doc(db, 'Buyers', user.id)
         const snap = await getDoc(buyerRef)
 
         if (!snap.exists()) {
@@ -171,10 +173,10 @@ useEffect(() => {
     }
 
     checkBuyerDoc()
-}, [currentUser, navigate])
+}, [user, navigate])
 
-const avatarSrc = currentUser?.avatar && currentUser.avatar.trim() !== ""
-? currentUser.avatar
+const avatarSrc = user?.avatar && user.avatar.trim() !== ""
+? user.avatar
 : defaultAvatar;
 
 // Handle form changes
@@ -187,12 +189,12 @@ const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
 const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
     try {
-    if (!currentUser || !currentUser.id) {
-        console.error('No currentUser or user ID in store. Cannot save Buyer doc.')
+    if (!user || !user.id) {
+        console.error('No user or user ID in store. Cannot save Buyer doc.')
         return
     }
 
-    const buyerRef = doc(db, 'Buyers', currentUser.id)
+    const buyerRef = doc(db, 'Buyers', user.id)
     await setDoc(
         buyerRef,
         {
@@ -230,7 +232,7 @@ if (loadingDocCheck) {
                     <div className="flex-1 p-8">
                         <div className="flex justify-between items-center mb-8">
                             <h1 className="text-4xl font-bold font-nunito">
-                                Welcome, {currentUser?.firstName || "buyer"}
+                                Welcome, {user?.firstName || "buyer"}
                             </h1>
                             <div className="flex gap-4">
                                 <button className="p-2 rounded-full bg-white shadow-sm hover:shadow-md transition-shadow">
@@ -324,7 +326,7 @@ if (loadingDocCheck) {
                     <div className="flex items-center justify-center gap-x-5 gap-4 mb-8">
                             <div>
                                 <h2 className="font-bold font-nunito">
-                                {currentUser?.firstName || "buyer"},
+                                {user?.firstName || "buyer"},
                                 </h2>
                                 <div className="flex items-center gap-2">
                                     <span className="text-sm text-gray-600 font-nunito">

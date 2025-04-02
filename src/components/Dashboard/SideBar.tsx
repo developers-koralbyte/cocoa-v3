@@ -4,6 +4,7 @@ import logo from '../../assets/img/Dashboard/CocoaLogo.png';
 import { ComponentType, RefAttributes, ForwardRefExoticComponent } from 'react';
 import { useUserStore } from '../../utils/userStore'; // Import userStore
 import Catalogue from "../../assets/icons/catalogue.svg";
+import { useAuth } from "../../utils/AuthContext";
 
 // Define type for Lucide icons
 type LucideIcon = ForwardRefExoticComponent<
@@ -41,7 +42,8 @@ const SideBar = ({ isOpen, toggleSidebar }: SideBarProps) => {
     const navigate = useNavigate();
     const location = useLocation();
     // Cast the useUserStore hook to the correct type
-    const { currentUser, isLoading } = useUserStore() as UserStoreState;
+    // const { currentUser, isLoading } = useUserStore() as UserStoreState;
+    const { user, isLoading } = useAuth();
     
     // Wait for user data to load
     if (isLoading) {
@@ -52,19 +54,17 @@ const SideBar = ({ isOpen, toggleSidebar }: SideBarProps) => {
         );
     }
     
-    if (!currentUser) {
+    if (!user) {
         console.error("User not found!");
         navigate("/login");
         return null;
-    }
-
-    const userRole = currentUser.role;
-
-    if (!userRole) {
+      }
+    
+      const userRole = user.role;
+      if (!userRole) {
         console.error("User role not found!");
-        return null; // Return early if role is missing
-    }
-
+        return null;
+      }
     // Define menu items for both roles
     const menuItems: MenuItem[] = [
         { icon: Grid, label: 'Dashboard', vendorPath: '/vendor-dashboard', buyerPath: '/buyer-dashboard' },

@@ -1,15 +1,13 @@
-import React, { useState } from 'react'
-import cocoaLogo from '../assets/img/cocoa-logo-white.png'
-import VendorVerification from './VerificationVendor'
-import { auth, db } from '../utils/firebase'
-import {
-    createUserWithEmailAndPassword,
-    sendEmailVerification,
-} from 'firebase/auth'
-import { useLocation } from 'react-router-dom'
-import upload from '../utils/upload'
-import { doc, setDoc } from 'firebase/firestore'
-import { toast } from 'react-toastify'
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import cocoaLogo from "../assets/img/cocoa-logo-white.png";
+import VendorVerification from "./VerificationVendor";
+import { auth, db } from "../utils/firebase";
+import { createUserWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
+import { useLocation } from "react-router-dom";
+import upload from "../utils/upload"; 
+import { doc, setDoc } from "firebase/firestore";
+import { toast } from "react-toastify";
 
 type FormData = {
     email: string
@@ -25,9 +23,10 @@ type FormData = {
 }
 
 const NewVendor = () => {
-    const location = useLocation()
-    const params = new URLSearchParams(location.search)
-    const role = params.get('role') || 'Vendor'
+  const navigate = useNavigate();
+  const location = useLocation();
+  const params = new URLSearchParams(location.search);
+  const role = params.get("role") || "Vendor";
 
     // Form data state
     const [formData, setFormData] = useState<FormData>({
@@ -43,17 +42,26 @@ const NewVendor = () => {
         role,
     })
 
-    const [avatarFile, setAvatarFile] = useState<File | null>(null)
-    const [avatarPreview, setAvatarPreview] = useState<string>('')
+  
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string>("");
+  const [isSubmitted, setIsSubmitted] = useState(false);
 
-    const [isSubmitted, setIsSubmitted] = useState(false)
+  
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
 
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, value } = e.target
-        setFormData((prev) => ({
-            ...prev,
-            [name]: value,
-        }))
+  
+  const handleAvatarSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setAvatarFile(file);
+      setAvatarPreview(URL.createObjectURL(file));
     }
 
     const handleAvatarSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -86,17 +94,18 @@ const NewVendor = () => {
                 avatarUrl = await upload(avatarFile)
             }
 
-            // 4) Store user data in "users" collection
-            await setDoc(doc(db, 'users', user.uid), {
-                id: user.uid,
-                email: formData.email,
-                role: formData.role.toLowerCase(),
-                firstName: formData.firstName,
-                lastName: formData.lastName,
-                avatar: avatarUrl,
-                blocked: [],
-                createdAt: new Date(),
-            })
+      // 4) Store vendor-specific data in "Vendors" collection with doc ID = user.uid
+      await setDoc(doc(db, "Vendors", user.uid), {
+        ...formData,
+        role: formData.role.toLowerCase(),
+        emailVerified: false,
+        uid: user.uid,
+        avatar: avatarUrl,
+        blocked: [],
+        createdAt: new Date(),
+        categories: formData.categories.split(',').map((cat) => cat.trim().toLowerCase()),
+        documentUploaded: false,
+      });
 
             // 4) Store vendor-specific data in "Vendors" collection with doc ID = user.uid
             await setDoc(doc(db, 'Vendors', user.uid), {
