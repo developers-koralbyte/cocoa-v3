@@ -436,5 +436,6 @@ const NewVendor = () => {
         </div>
     )
 }
+}
 
 export default NewVendor
