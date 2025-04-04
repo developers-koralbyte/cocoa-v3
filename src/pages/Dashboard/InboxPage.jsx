@@ -9,7 +9,7 @@ import {
     arrayUnion,
     collection,
     query,
-    where,
+    where
 } from 'firebase/firestore'
 import { db } from '../../utils/firebase'
 import { useUserStore } from '../../utils/userStore'
@@ -27,6 +27,9 @@ import paperClip from '../../assets/chat/paperclip.png'
 import calendar from '../../assets/chat/calendar.png'
 import ImprovedPdfViewer from '../../components/chat/ImprovedPdfViewer'
 import DocumentPreview from '../../components/chat/DocumentPreview'
+import AppointmentModal from '../../components/chat/AppointmentModal';
+import moment from 'moment'
+
 const InboxPage = () => {
     // States
     const [chats, setChats] = useState([])
@@ -39,6 +42,9 @@ const InboxPage = () => {
     // At the top with your other state declarations:
     const [documentFile, setDocumentFile] = useState(null)
     const [documentPreview, setDocumentPreview] = useState(null)
+      
+    // Appointment states 
+    const [showAppointmentModal, setShowAppointmentModal] = useState(false)
 
     // Use store hooks
     const { currentUser, fetchUserInfo } = useUserStore()
@@ -50,6 +56,16 @@ const InboxPage = () => {
         window.innerWidth > 768 && window.innerWidth <= 1024
     )
     const [showChatList, setShowChatList] = useState(true)
+
+    const vendorAvailabilityData = [
+        { day: 'Monday', start: '08:00', end: '17:00' },
+        { day: 'Tuesday', start: '08:00', end: '17:00' },
+        { day: 'Wednesday', start: '08:00', end: '17:00' },
+        { day: 'Thursday', start: '08:00', end: '17:00' },
+        { day: 'Friday', start: '08:00', end: '17:00' },
+        { day: 'Saturday', start: '10:00', end: '14:00' },
+        { day: 'Sunday', start: '00:00', end: '00:00' }, // No availability on Sunday
+      ]
 
     // Handle window resize for responsive design
     useEffect(() => {
@@ -548,6 +564,70 @@ const InboxPage = () => {
         }
     }
 
+       // New: Save appointment data to Firestore
+       const saveAppointment = async (appointmentData) => {
+        try {
+          const buyerId = user?.id;
+          const vendorId = getCurrentUserId();
+          if (!buyerId || !vendorId) {
+            alert("Missing buyer or vendor information.");
+            return;
+          }
+      
+          // Generate a unique ID for the appointment
+          const appointmentId = new Date().getTime().toString();
+      
+          // Convert the moment object to a JavaScript Date
+          const dateObjAsDate = appointmentData.selectedDay.dateObj.toDate();
+      
+          // Build a safe object for Firestore with a plain Date for the selected day
+          const safeData = {
+            ...appointmentData,
+            buyerId,
+            vendorId,
+            createdAt: new Date(),
+            selectedDay: {
+              ...appointmentData.selectedDay,
+              dateObj: dateObjAsDate,
+            },
+          };
+      
+          await setDoc(doc(db, "appointments", appointmentId), safeData);
+      
+          // Add an appointment notification message to the chat as a system message
+          if (chatId) {
+            const notificationMessage = {
+              senderId: "system",
+              text: `Appointment scheduled for ${moment(dateObjAsDate).format(
+                "ddd, MMM Do, h:mm A"
+              )}`,
+              createdAt: new Date(),
+              isNotification: true, // Flag to identify this as a notification message
+            };
+      
+            await updateDoc(doc(db, "chats", chatId), {
+              messages: arrayUnion(notificationMessage),
+            });
+          }
+      
+          toast.success("Appointment scheduled successfully!");
+        } catch (error) {
+          console.error("Error scheduling appointment:", error);
+          toast.error("Failed to schedule appointment.");
+        }
+      };
+      
+  // Handler to open appointment modal
+  const handleOpenAppointmentModal = () => {
+    setShowAppointmentModal(true)
+  }
+
+  // Handler for appointment modal save
+  const handleSaveAppointment = (appointmentData) => {
+    saveAppointment(appointmentData)
+    setShowAppointmentModal(false)
+  }
+
     return (
         <BaseLayout>
             <div className="flex flex-col h-screen">
@@ -944,10 +1024,11 @@ const InboxPage = () => {
                                                     />
                                                 </label>
 
-                                                <button className="p-1 sm:p-2 hover:bg-gray-100 rounded-full">
+                                                <button onClick={handleOpenAppointmentModal} className="p-1 sm:p-2 hover:bg-gray-100 rounded-full">
                                                     <img
                                                         src={calendar}
                                                         alt="Schedule"
+
                                                         className="w-4 h-4 sm:w-5 sm:h-5"
                                                     />
                                                 </button>
@@ -1009,6 +1090,14 @@ const InboxPage = () => {
                     )}
                 </div>
             </div>
+
+            {showAppointmentModal && (
+        <AppointmentModal
+          onClose={() => setShowAppointmentModal(false)}
+          onSchedule={handleSaveAppointment}
+          availability={vendorAvailabilityData}
+        />
+      )}
 
             {showNewChatModal && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
