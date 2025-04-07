@@ -25,7 +25,7 @@ interface InvoicePreviewProps {
     id: number;
     description: string;
     quantity: number;
-    rate: number;
+    price: number;
     tax: number;
   }>;
   totals: {
@@ -101,7 +101,7 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoiceData, items, tot
             <tr>
               <th className="py-3 px-4 text-left">Description</th>
               <th className="py-3 px-4 text-center">Qty</th>
-              <th className="py-3 px-4 text-center">Rate</th>
+              <th className="py-3 px-4 text-center">Price</th>
               <th className="py-3 px-4 text-center">Tax</th>
               <th className="py-3 px-4 text-right">Amount</th>
             </tr>
@@ -111,10 +111,10 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoiceData, items, tot
               <tr key={item.id} className="border-b border-gray-200">
                 <td className="py-3 px-4">{item.description}</td>
                 <td className="py-3 px-4 text-center">{item.quantity}</td>
-                <td className="py-3 px-4 text-center">CAD {item.rate.toFixed(2)}</td>
+                <td className="py-3 px-4 text-center">CAD {item.price.toFixed(2)}</td>
                 <td className="py-3 px-4 text-center">{item.tax}%</td>
                 <td className="py-3 px-4 text-right">
-                  CAD {(item.quantity * item.rate).toFixed(2)}
+                  CAD {(item.quantity * item.price).toFixed(2)}
                 </td>
               </tr>
             ))}
@@ -154,7 +154,7 @@ const InvoiceContainer: React.FC<InvoicePreviewProps & { isPreview: boolean; onT
       {/* Toggle Button */}
       <button
   onClick={onTogglePreview}
-  className="absolute left-1/2 transform -translate-x-1/2 top-8 z-10 flex items-center gap-2 bg-[#5F4B8B] text-white px-6 py-2 rounded-full hover:bg-[#4a3a6d] transition-colors"
+  className="absolute left-1/2 transform -translate-x-1/2 top-8 z-10 flex items-center gap-2 bg-buttonBg text-white px-6 py-2 rounded-full hover:bg-[#4a3a6d] transition-colors"
 >
   {isPreview ? (
     <>

@@ -17,6 +17,7 @@ type FormData = {
     firstName: string
     lastName: string
     businessName: string
+    companyAddress: string   // <-- New field added
     countryRegion: string
     industry: string
     categories: string
@@ -29,13 +30,14 @@ const NewVendor = () => {
     const params = new URLSearchParams(location.search)
     const role = params.get('role') || 'Vendor'
 
-    // Form data state
+    // Form data state with companyAddress included
     const [formData, setFormData] = useState<FormData>({
         email: '',
         password: '',
         firstName: '',
         lastName: '',
         businessName: '',
+        companyAddress: '',  // <-- Initial empty string
         countryRegion: '',
         industry: '',
         categories: '',
@@ -83,10 +85,10 @@ const NewVendor = () => {
 
             let avatarUrl = ''
             if (avatarFile) {
-                avatarUrl = await upload(avatarFile)
+                avatarUrl = await upload(avatarFile) as string
             }
 
-            // 4) Store user data in "users" collection
+            // 3) Store user data in "users" collection
             await setDoc(doc(db, 'users', user.uid), {
                 id: user.uid,
                 email: formData.email,
@@ -119,7 +121,6 @@ const NewVendor = () => {
         } catch (error: any) {
             console.error('Error adding vendor:', error)
             if (error.code === 'auth/email-already-in-use') {
-                // You can show a toast or set local state
                 toast.error(
                     'A user with this email already exists. Please log in or use a different email.'
                 )
@@ -150,8 +151,7 @@ const NewVendor = () => {
                         Welcome to COCOA!
                     </h2>
                     <p className="text-white/90 text-lg mb-2 leading-relaxed">
-                        To help you get started, we've put together a quick and
-                        easy onboarding process.
+                        To help you get started, we've put together a quick and easy onboarding process.
                         <br />
                         <br />
                         Let's get you set up and ready to go!
@@ -299,9 +299,9 @@ const NewVendor = () => {
                         </label>
                     </div>
 
-                    {/* Business Name & Country/Region */}
+                    {/* Business Name, Company Address & Country/Region */}
                     <div className="col-span-2">
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-3 gap-4">
                             <div className="relative group">
                                 <label
                                     htmlFor="businessName"
@@ -309,8 +309,7 @@ const NewVendor = () => {
                                 >
                                     Business Name
                                     <span className="absolute left-0 bottom-full mb-1 w-56 p-2 text-xs text-white bg-gray-800 rounded-md shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 ease-in-out">
-                                        Enter your registered business name as
-                                        per official documents.
+                                        Enter your registered business name as per official documents.
                                     </span>
                                 </label>
                                 <input
@@ -318,6 +317,26 @@ const NewVendor = () => {
                                     id="businessName"
                                     name="businessName"
                                     value={formData.businessName}
+                                    onChange={handleInputChange}
+                                    className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#7C77C1] focus:outline-none transition"
+                                />
+                            </div>
+
+                            <div className="relative group">
+                                <label
+                                    htmlFor="companyAddress"
+                                    className="block text-sm font-medium text-[#7C77C1] relative cursor-pointer"
+                                >
+                                    Company Address
+                                    <span className="absolute left-0 bottom-full mb-1 w-56 p-2 text-xs text-white bg-gray-800 rounded-md shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 ease-in-out">
+                                        Enter the physical address of your company.
+                                    </span>
+                                </label>
+                                <input
+                                    type="text"
+                                    id="companyAddress"
+                                    name="companyAddress"
+                                    value={formData.companyAddress}
                                     onChange={handleInputChange}
                                     className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#7C77C1] focus:outline-none transition"
                                 />
@@ -351,9 +370,7 @@ const NewVendor = () => {
                                 >
                                     Industry
                                     <span className="absolute left-0 bottom-full mb-1 w-56 p-2 text-xs text-white bg-gray-800 rounded-md shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 ease-in-out">
-                                        Specify the industry your business
-                                        operates in (e.g., Retail, Technology,
-                                        Manufacturing).
+                                        Specify the industry your business operates in (e.g., Retail, Technology, Manufacturing).
                                     </span>
                                 </label>
                                 <input
@@ -373,9 +390,7 @@ const NewVendor = () => {
                                 >
                                     Categories
                                     <span className="absolute right-0 bottom-full mb-1 w-56 p-2 text-xs text-white bg-gray-800 rounded-md shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 ease-in-out">
-                                        Enter product or service categories
-                                        relevant to your business (e.g.,
-                                        Electronics, Clothing, Food).
+                                        Enter product or service categories relevant to your business (e.g., Electronics, Clothing, Food).
                                     </span>
                                 </label>
                                 <input
@@ -399,8 +414,7 @@ const NewVendor = () => {
                                 >
                                     Services
                                     <span className="absolute left-0 bottom-full mb-1 w-56 p-2 text-xs text-white bg-gray-800 rounded-md shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 ease-in-out">
-                                        Enter service relevant to your business
-                                        (F&B, Retail, Ecommerce).
+                                        Enter service relevant to your business (F&B, Retail, Ecommerce).
                                     </span>
                                 </label>
                                 <input

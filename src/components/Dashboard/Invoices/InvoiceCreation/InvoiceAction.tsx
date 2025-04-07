@@ -34,7 +34,7 @@ interface Invoice {
     id: number;
     description: string;
     quantity: number;
-    rate: number;
+    price: number;
     tax: number;
   }>;
   totals?: {
@@ -79,7 +79,7 @@ interface InvoiceActionsProps {
       id: number;
       description: string;
       quantity: number;
-      rate: number;
+      price: number;
       tax: number;
     }>;
     totals: {
@@ -290,14 +290,14 @@ const InvoiceActions: React.FC<InvoiceActionsProps> = ({ invoiceData, onSave }) 
         <button
           onClick={handleSaveAsDraft}
           disabled={loading || !selectedBuyer}
-          className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 disabled:opacity-50"
+          className="px-4 py-2 bg-gray-200 text-gray-700 rounded-[1.5rem] hover:bg-gray-300 disabled:opacity-50"
         >
           Save as Draft
         </button>
         <button
           onClick={handleSendInvoice}
           disabled={loading || !selectedBuyer}
-          className="px-4 py-2 bg-[#7C77C1] text-white rounded-lg hover:bg-[#6661B0] disabled:opacity-50"
+          className="px-4 py-2 bg-[#7C77C1] text-white rounded-[1.5rem] hover:bg-[#6661B0] disabled:opacity-50"
         >
           {loading ? 'Sending...' : 'Send Invoice'}
         </button>

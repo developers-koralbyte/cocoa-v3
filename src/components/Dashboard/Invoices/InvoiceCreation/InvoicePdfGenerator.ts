@@ -6,7 +6,7 @@ interface InvoiceItem {
   id: number;
   description: string;
   quantity: number;
-  rate: number;
+  price: number;
   tax: number;
 }
 
@@ -148,13 +148,13 @@ export const generateInvoicePdf = async (invoice: Invoice): Promise<Blob> => {
 
   autoTable(doc, {
     startY: currentY,
-    head: [['Description', 'Qty', 'Rate', 'Tax', 'Amount']],
+    head: [['Item Description', 'Qty', 'Price', 'Tax', 'Amount']],
     body: invoiceData.items.map(item => [
       item.description,
       item.quantity.toString(),
-      `CAD ${item.rate.toFixed(2)}`,
+      `CAD ${item.price.toFixed(2)}`,
       `${item.tax}%`,
-      `CAD ${(item.quantity * item.rate).toFixed(2)}`
+      `CAD ${(item.quantity * item.price).toFixed(2)}`
     ]),
     foot: [
       ['Total ex. Tax', '', '', '', `CAD ${invoiceData.totals.subtotal.toFixed(2)}`],
