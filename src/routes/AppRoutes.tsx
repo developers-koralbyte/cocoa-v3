@@ -2,6 +2,7 @@ import React, { Suspense } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import BuyerCalendarPage from '../pages/Dashboard/BuyerCalendarPage';
 import ProtectedRoute from "../utils/ProtectedRoute";
+import BecomingABuyer from '../components/BecomingABuyer/BecomingABuyer';
 
 // Lazy load all the components
 const HomePage = React.lazy(() => import('../pages/HomePage'));
@@ -26,6 +27,11 @@ const CataloguePage = React.lazy(() => import('../pages/Dashboard/Catalogue/Cata
 const ServiceDetailPage = React.lazy(() => import('../pages/Dashboard/Catalogue/ServiceDetailPage'));
 const ProductDetailPage = React.lazy(() => import('../pages/Dashboard/Catalogue/ProductDetailPage'));
 const EditInvoicePage = React.lazy(() => import('../pages/Dashboard/InvoicePage/EditInvoicePage'));
+const CorporateSolutions = React.lazy(() => import('../components/CorporateSolutions/CorporateSolutions'));
+const SaaSandERP = React.lazy(() => import('../components/SasSAndERP/SaaSAndERP'));
+const CommercialEquipment = React.lazy(() => import('../components/CommericalEquipment/CommericalEquipment'));
+const FandBSuppliers = React.lazy(() => import('../components/FandBSupplier/FandBSupplier'));
+
 const AppRoutes: React.FC = () => {
     
     return (
@@ -86,7 +92,19 @@ const AppRoutes: React.FC = () => {
                 {/* Becoming a Vendor*/}
                 <Route path="/become-a-vendor" element={<BecomingAVendor />} />
                 {/* Vendor Pricing & Verification*/}
-                <Route path="/vendor-pricing&verification" element={<VendorPricingVerification />} />
+                <Route path="/vendor-prices" element={<VendorPricingVerification />} />
+                {/* Becoming a Buyer*/}
+                <Route path="/become-a-buyer" element={<BecomingABuyer />} />
+
+                {/* Corporate Solutions*/}
+                <Route path='/corporate-solutions' element={<CorporateSolutions />} />
+                {/* SaaS and ERP*/}
+                <Route path='/saas-erp' element={<SaaSandERP />} />
+                {/* Commercial Equipment*/}
+                <Route path='/commerical-equipment' element={<CommercialEquipment />} />
+                 {/* F and B Suppliers*/}
+                <Route path='/f-b-suppliers' element={<FandBSuppliers />} />
+                
             </Routes>
         </Suspense>
     )

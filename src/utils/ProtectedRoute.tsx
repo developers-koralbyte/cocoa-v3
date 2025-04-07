@@ -1,38 +1,45 @@
+// ProtectedRoute.tsx
 import React from "react";
 import { Navigate, Outlet } from "react-router-dom";
+import { useAuth } from "../utils/AuthContext";
 
 interface ProtectedRouteProps {
   allowedRoles: string[];
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ allowedRoles }) => {
-  // Retrieve user from localStorage
-  const userData = localStorage.getItem("user");
-  const user = userData ? JSON.parse(userData) : null;
+  const { user, isLoading } = useAuth();
 
-  
-  console.log("[ProtectedRoute] Checking user and role...", {
-    user,
-    allowedRoles,
-  });
+  console.log("[ProtectedRoute] Checking user and role...", { user, allowedRoles });
 
-  // If there's no user at all, we redirect to /login
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-purple-500"></div>
+      </div>
+    );
+  }
+
   if (!user) {
-    console.warn("[ProtectedRoute] No user found in localStorage => Redirecting to /login");
+    console.warn("[ProtectedRoute] No user found => Redirecting to /login");
     return <Navigate to="/login" replace />;
   }
 
-  // If the user's role isn't in allowedRoles, we redirect them to their default dashboard
-  if (!allowedRoles.includes(user.role)) {
+  const userRole = user.role; // Now this should be defined if your Firestore doc has it
+  if (!allowedRoles.includes(userRole)) {
     console.warn(
-      `[ProtectedRoute] Role mismatch: user.role = ${user.role}, allowedRoles = [${allowedRoles.join(
+      `[ProtectedRoute] Role mismatch: user.role = ${userRole}, allowedRoles = [${allowedRoles.join(
         ", "
-      )}]. Redirecting to ${user.role === "vendor" ? "/vendor-dashboard" : "/buyer-dashboard"}`
+      )}]. Redirecting...`
     );
-    return <Navigate to={user.role === "vendor" ? "/vendor-dashboard" : "/buyer-dashboard"} replace />;
+    return (
+      <Navigate
+        to={userRole === "vendor" ? "/vendor-dashboard" : "/buyer-dashboard"}
+        replace
+      />
+    );
   }
 
-  // Otherwise, they're allowed in
   console.log("[ProtectedRoute] Access granted => Rendering child route");
   return <Outlet />;
 };

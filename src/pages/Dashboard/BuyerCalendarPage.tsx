@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import moment from 'moment'
 import {
@@ -9,15 +9,25 @@ import {
 } from 'react-big-calendar'
 import ReactCalendar from 'react-calendar'
 import { Bell } from 'lucide-react'
+import {
+  doc,
+  getDoc,
+  collection,
+  query,
+  where,
+  getDocs,
+  Timestamp
+} from 'firebase/firestore'
 
-// Layout & Assets
 import BaseLayout from '../../components/Dashboard/BaseLayout'
 import chatImage from '../../assets/img/Dashboard/chatImage.png'
+import { db } from '../../utils/firebase'
+import { useAuth } from '../../utils/AuthContext'
 
-// 1) Setup for react-big-calendar
+// Setup for react-big-calendar
 const localizer = momentLocalizer(moment)
 
-// 2) Inline CSS for RBC & ReactCalendar
+// Inline CSS for RBC & ReactCalendar
 const calendarOverrides = `
 /* BigCalendar event styling */
 .rbc-event,
@@ -27,18 +37,13 @@ const calendarOverrides = `
   border: none !important;
   border-radius: 0.375rem;
 }
-
 .rbc-event.rbc-selected,
 .rbc-day-slot .rbc-selected.rbc-background-event {
   background-color: #6868AC !important;
 }
-
-/* RBC "today" highlight (slightly tinted) */
 .rbc-today {
   background-color: #e9d8fd22 !important;
 }
-
-/* RBC custom toolbar font, etc. */
 .rbc-toolbar {
   margin-bottom: 1rem;
   font-family: 'Nunito Sans', sans-serif;
@@ -46,8 +51,6 @@ const calendarOverrides = `
 .rbc-toolbar-button {
   border: none !important;
 }
-
-/* ReactCalendar (mini) */
 .react-calendar {
   border: none;
   background: transparent;
@@ -96,7 +99,7 @@ const calendarOverrides = `
 }
 `
 
-
+// Custom Toolbar for BigCalendar
 function CustomToolbar(props: any) {
   const goToBack = () => props.onNavigate('PREV')
   const goToNext = () => props.onNavigate('NEXT')
@@ -105,7 +108,6 @@ function CustomToolbar(props: any) {
 
   return (
     <div className="rbc-toolbar flex items-center justify-between mb-4">
- 
       <div className="flex items-center space-x-2">
         <button
           className="bg-gray-200 text-gray-700 px-2 py-1 rounded hover:bg-gray-300"
@@ -120,26 +122,15 @@ function CustomToolbar(props: any) {
           Favourites
         </button>
       </div>
-
       <div className="flex items-center space-x-4">
-        <button
-          className="text-purple-600 text-2xl font-bold"
-          onClick={goToBack}
-        >
+        <button className="text-purple-600 text-2xl font-bold" onClick={goToBack}>
           &lt;
         </button>
-        <span className="font-semibold text-gray-800 text-lg">
-          {props.label}
-        </span>
-        <button
-          className="text-purple-600 text-2xl font-bold"
-          onClick={goToNext}
-        >
+        <span className="font-semibold text-gray-800 text-lg">{props.label}</span>
+        <button className="text-purple-600 text-2xl font-bold" onClick={goToNext}>
           &gt;
         </button>
       </div>
-
-      
       <div className="flex space-x-2">
         <button
           className={`px-2 py-1 rounded hover:bg-gray-300 ${
@@ -176,76 +167,212 @@ function CustomToolbar(props: any) {
   )
 }
 
-
-interface BuyerCalendarEvent {
-  id: number
-  title: string
-  start: Date
-  end: Date
-  desc?: string
+// Helper: convert a Firestore timestamp to a JS Date
+export function parseTimestampToDate(
+  timestamp: Timestamp | { seconds: number; nanoseconds: number } | string
+): Date | null {
+  if (!timestamp) return null
+  if (typeof timestamp === 'string') {
+    return new Date(timestamp)
+  }
+  if ((timestamp as Timestamp).toDate) {
+    return (timestamp as Timestamp).toDate()
+  }
+  if (
+    typeof (timestamp as { seconds: number; nanoseconds: number }).seconds === 'number' &&
+    typeof (timestamp as { seconds: number; nanoseconds: number }).nanoseconds === 'number'
+  ) {
+    const ts = timestamp as { seconds: number; nanoseconds: number }
+    return new Date(ts.seconds * 1000 + ts.nanoseconds / 1e6)
+  }
+  return null
 }
 
+interface AppointmentDoc {
+  vendorId: string
+  buyerId: string
+  createdAt?: any
+  description?: string
+  selectedDay?: {
+    dateObj: Timestamp | { seconds: number; nanoseconds: number } | string
+    label?: string
+    date?: number
+  }
+  selectedTime?: string
+  title?: string
+}
 
-interface AppointmentItem {
-  name: string
-  dateTime: string 
-  image: string
+interface BuyerCalendarEvent {
+  id: string
+  title: string
+  start: Date
+  // we remove 'end' because we use only one common date (set it same as start)
+  desc?: string
+  vendorId?: string
+}
+
+interface UserInfo {
+  avatar?: string
+  firstName?: string
+  lastName?: string
+  role?: string
+  id?: string
+  businessName?: string
 }
 
 const BuyerCalendarPage: React.FC = () => {
   const navigate = useNavigate()
-
-  const [events, setEvents] = useState<BuyerCalendarEvent[]>([
-    {
-      id: 1,
-      title: 'Ali, Koralbyte Tech',
-      start: new Date(2025, 0, 9, 10, 0),
-      end: new Date(2025, 0, 9, 11, 0),
-      desc: '40% match with your products'
-    },
-    {
-      id: 2,
-      title: 'Peter, Accountix',
-      start: new Date(2025, 0, 15, 14, 0),
-      end: new Date(2025, 0, 15, 15, 0),
-      desc: 'Catchup meeting about new products'
-    }
-  ])
-
- 
+  const { user: authUser } = useAuth()
+  const [events, setEvents] = useState<BuyerCalendarEvent[]>([])
   const [view, setView] = useState<View>('month')
- 
-  const [showModal, setShowModal] = useState(false)
-  const [modalData, setModalData] = useState<BuyerCalendarEvent | null>(null)
-  const [isEditing, setIsEditing] = useState(false)
+  const [oppositeUsers, setOppositeUsers] = useState<Record<string, UserInfo>>({})
 
-  const allAppointments: AppointmentItem[] = [
+  // For demonstration, we also keep a static list for all appointments view
+  const [allAppointments, setAllAppointments] = useState([
     {
-      name: 'Ali, Koralbyte Tech',
+      name: 'Vendor: Koralbyte Tech',
       dateTime: 'Wed, Jan 9, 10:00 AM',
       image:
         'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&h=150&q=80'
     },
     {
-      name: 'Peter, Accountix',
+      name: 'Vendor: Accountix',
       dateTime: 'Wed, Jan 15, 2:00 PM',
       image:
         'https://images.unsplash.com/photo-1586486855514-8c633cc6fd38?auto=format&fit=crop&w=150&h=150&q=80'
     }
-  ]
+  ])
 
-  
+  // Fetch buyer appointments from Firebase
+  useEffect(() => {
+    const fetchAppointments = async (
+      authUser: { uid: string },
+      setEvents: (events: BuyerCalendarEvent[]) => void,
+      setOppositeUsers: (users: Record<string, UserInfo>) => void
+    ) => {
+      if (!authUser) return
+
+      try {
+        // For buyers, we query appointments where buyerId equals the current user uid
+        const q = query(
+          collection(db, 'appointments'),
+          where('buyerId', '==', authUser.uid)
+        )
+        const querySnapshot = await getDocs(q)
+        const fetchedEvents: BuyerCalendarEvent[] = []
+        const vendorIdsToFetch = new Set<string>()
+
+        querySnapshot.forEach((docSnap) => {
+          const data = docSnap.data() as AppointmentDoc
+          const docId = docSnap.id
+
+          
+          if (data.vendorId) {
+            vendorIdsToFetch.add(data.vendorId)
+          }
+
+          let eventDate = new Date()
+          const titleStr = data.title || ''
+          const descStr = data.description || ''
+
+          if (data.selectedDay?.dateObj) {
+            const parsedDate = parseTimestampToDate(data.selectedDay.dateObj)
+            eventDate = parsedDate ? parsedDate : new Date()
+          } else {
+            eventDate = new Date()
+          }
+
+          fetchedEvents.push({
+            id: docId,
+            title: titleStr,
+            start: eventDate,
+            desc: descStr,
+            vendorId: data.vendorId
+          })
+        })
+
+        // Fetch vendor details from "users" collection for each vendorId
+        const userMap: Record<string, UserInfo> = {}
+        for (const vendorId of vendorIdsToFetch) {
+          const userRef = doc(db, 'users', vendorId)
+          const userSnap = await getDoc(userRef)
+          if (userSnap.exists()) {
+            const uData = userSnap.data()
+            userMap[vendorId] = {
+              avatar: uData.avatar || '',
+              firstName: uData.firstName || 'Unknown',
+              lastName: uData.lastName || '',
+              role: uData.role || '',
+              id: vendorId,
+              businessName: uData.businessName || 'Vendor'
+            }
+          } else {
+            userMap[vendorId] = {
+              avatar: '',
+              firstName: 'Unknown',
+              lastName: '',
+              role: '',
+              id: vendorId,
+              businessName: 'Vendor'
+            }
+          }
+        }
+
+        // If event title is empty, use the vendor's businessName as fallback
+        const updatedEvents = fetchedEvents.map((event) => {
+          if (!event.title || event.title.trim() === '') {
+            if (event.vendorId && userMap[event.vendorId]?.businessName) {
+              return { ...event, title: userMap[event.vendorId].businessName }
+            } else {
+              return { ...event, title: 'Vendor' }
+            }
+          }
+          return event
+        })
+
+        updatedEvents.sort((a, b) => a.start.getTime() - b.start.getTime())
+        setEvents(updatedEvents)
+        setOppositeUsers(userMap)
+      } catch (error) {
+        console.error('Error fetching appointments:', error)
+      }
+    }
+
+    if (!authUser) return
+    fetchAppointments({ uid: authUser.uid }, setEvents, setOppositeUsers)
+  }, [authUser])
+
+  // Get the earliest appointment from all events
+  const earliest =
+    events.length > 0
+      ? events.sort((a, b) => a.start.getTime() - b.start.getTime())[0]
+      : null
+
+  let earliestAppointmentUser: UserInfo | undefined
+  if (earliest?.vendorId && oppositeUsers[earliest.vendorId]) {
+    earliestAppointmentUser = oppositeUsers[earliest.vendorId]
+  }
+
+  // Slot & event selection handlers remain similar
   const handleSelectSlot = (slotInfo: SlotInfo) => {
-    setModalData({
-      id: Date.now(),
+    // For new appointment creation – use current slot as default
+    const newEvent: BuyerCalendarEvent = {
+      id: Date.now().toString(),
       title: '',
       start: slotInfo.start,
-      end: slotInfo.end
-    })
+      // Using the same time as end (or add a default duration if needed)
+      desc: '',
+      vendorId: ''
+    }
+    setModalData(newEvent)
     setIsEditing(false)
     setShowModal(true)
   }
-  // RBC: handle event click -> edit
+
+  const [showModal, setShowModal] = useState(false)
+  const [modalData, setModalData] = useState<BuyerCalendarEvent | null>(null)
+  const [isEditing, setIsEditing] = useState(false)
+
   const handleSelectEvent = (event: BuyerCalendarEvent) => {
     setModalData(event)
     setIsEditing(true)
@@ -258,7 +385,6 @@ const BuyerCalendarPage: React.FC = () => {
     setIsEditing(false)
   }
 
-  
   const handleSaveEvent = () => {
     if (!modalData) return
     if (isEditing) {
@@ -271,38 +397,34 @@ const BuyerCalendarPage: React.FC = () => {
     closeModal()
   }
 
-  // Next appointment (earliest future event)
-  const upcoming = events
-    .sort((a, b) => a.start.getTime() - b.start.getTime())[0]
-
   return (
     <>
       <BaseLayout>
-        
         <style dangerouslySetInnerHTML={{ __html: calendarOverrides }} />
 
         <div className="p-6 font-nunito">
-       
           <div className="flex items-center justify-between mb-6">
             <h1 className="text-4xl font-bold text-gray-800">
               Buyer Calendar
             </h1>
             <div className="text-right">
               <h2 className="text-lg font-semibold text-gray-700">
-                Diana, TechNest (Buyer)
+                {authUser?.firstName || 'Buyer'}, TechNest (Buyer)
               </h2>
               <p className="text-sm text-purple-600">★ Premium Account</p>
             </div>
           </div>
 
-         
-          <div className=" rounded-[3rem] bg-white p-6">
-            <div className="flex ">
-             
+          <div className="rounded-[3rem] bg-white p-6">
+            <div className="flex">
               <div className="flex-1 border-4 border-[#6868AC] rounded-l-[3.5rem] bg-white p-6">
                 <BigCalendar
                   localizer={localizer}
-                  events={events}
+                  events={events.map((evt) => ({
+                    ...evt,
+                    // BigCalendar requires an end date; using start as a fallback
+                    end: evt.start
+                  }))}
                   startAccessor="start"
                   endAccessor="end"
                   selectable
@@ -317,12 +439,10 @@ const BuyerCalendarPage: React.FC = () => {
                 />
               </div>
 
-      
               <div className="w-80 border-4 border-[#6868AC] border-l-0 rounded-r-[3.5rem] bg-white p-6 space-y-6">
-            
                 <div className="bg-white shadow rounded-lg p-4">
                   <ReactCalendar
-                     defaultDate={new Date()}
+                    defaultDate={new Date()}
                     next2Label={null}
                     prev2Label={null}
                     minDetail="month"
@@ -333,44 +453,46 @@ const BuyerCalendarPage: React.FC = () => {
                   />
                 </div>
 
-           
+               
                 <div className="bg-white rounded-[2rem] p-6 shadow">
                   <div className="flex justify-between items-center mb-4">
-                    <h3 className="font-bold">Next Appointment</h3>
-                 
+                    <h3 className="font-bold">Upcoming Appointment</h3>
                     <div className="flex gap-2">
                       <button className="text-purple-600">&lt;</button>
                       <button className="text-purple-600">&gt;</button>
                     </div>
                   </div>
                   <div className="space-y-4">
-                    {upcoming ? (
+                    {earliest ? (
                       <div className="flex items-center gap-4">
                         <div className="w-10 h-10 rounded-full overflow-hidden">
-                          <img
-                            src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&h=150&q=80"
-                            alt={upcoming.title}
-                            className="w-full h-full object-cover"
-                          />
+                          {earliestAppointmentUser?.avatar ? (
+                            <img
+                              src={earliestAppointmentUser.avatar}
+                              alt="Vendor avatar"
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-6 h-6 bg-gray-300 rounded-full" />
+                          )}
                         </div>
                         <div className="flex-1">
                           <div className="flex justify-between">
                             <h4 className="font-medium">
-                              {upcoming.title},{' '}
+                              {earliest.title || earliestAppointmentUser?.firstName},{' '}
                               <span className="text-purple-600">
-                                {upcoming.desc || 'No company info'}
+                                {earliest.desc || 'No company info'}
                               </span>
                             </h4>
                           </div>
                           <div className="text-sm text-gray-500">
-                            {moment(upcoming.start).format('ddd, MMM Do, h:mm A')}{' '}
-                            – {moment(upcoming.end).format('h:mm A')}
+                            {moment(earliest.start).format('ddd, MMM Do, h:mm A')}
                           </div>
                         </div>
                         <div
                           className="cursor-pointer"
                           onClick={() =>
-                            alert(`Reminder set for ${upcoming.title}`)
+                            alert(`Reminder set for ${earliest.title || 'Appointment'}`)
                           }
                         >
                           <Bell className="w-4 h-4 text-purple-600" />
@@ -378,7 +500,7 @@ const BuyerCalendarPage: React.FC = () => {
                       </div>
                     ) : (
                       <p className="text-sm text-gray-500">
-                        No upcoming appointments.
+                        No appointments available.
                       </p>
                     )}
                   </div>
@@ -422,7 +544,7 @@ const BuyerCalendarPage: React.FC = () => {
         />
       </div>
 
-      {/* Modal for create/edit RBC event */}
+      {/* Modal for creating/editing an appointment */}
       {showModal && modalData && (
         <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
           <div className="bg-white rounded shadow-lg p-6 w-96">
@@ -430,9 +552,7 @@ const BuyerCalendarPage: React.FC = () => {
               {isEditing ? 'Edit Appointment' : 'New Appointment'}
             </h2>
             <div className="mb-4">
-              <label className="block text-sm font-semibold mb-1">
-                Title
-              </label>
+              <label className="block text-sm font-semibold mb-1">Title</label>
               <input
                 type="text"
                 className="border p-2 w-full rounded"

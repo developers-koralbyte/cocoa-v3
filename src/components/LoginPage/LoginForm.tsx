@@ -65,6 +65,8 @@ const LoginForm: React.FC = () => {
         return "The password is incorrect. Please try again.";
       case "auth/user-not-found":
         return "No account found with this email. Please sign up first.";
+      case "auth/invalid-credential":
+        return "No account found with this email. Please sign up first.";
       default:
         return "An unexpected error occurred. Please try again later.";
     }

@@ -1,5 +1,5 @@
 import React, { useState,useEffect ,ChangeEvent, FormEvent} from 'react'
-
+import { useAuth } from '../../utils/AuthContext';
 import { Search, RotateCcw } from 'lucide-react'
 import { Bell } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
@@ -8,6 +8,7 @@ import chatImage from '../../assets/img/Dashboard/chatImage.png'
 import { useUserStore } from '../../utils/userStore'
 import { doc,getDoc,setDoc } from 'firebase/firestore';
 import { db } from '../../utils/firebase'
+import { User } from 'lucide-react'
 
 const  defaultAvatar = "/path-to-default-avatar.jpg";
 
@@ -104,13 +105,15 @@ const services = [
 
 const BuyerDashboard = () => {
     const navigate = useNavigate()
-    // 1) Pull currentUser from your user store
-const { currentUser } = useUserStore()
+    // 1) Pull user from your user store
+// const { user } = useUserStore()
+const { user, isLoading } = useAuth();
 
-// 2) Log changes to currentUser for debugging
+
+// 2) Log changes to user for debugging
 useEffect(() => {
-    console.log('BuyerDashboard: currentUser changed:', currentUser)
-}, [currentUser])
+    console.log('BuyerDashboard: user changed:', user)
+}, [user])
 
 // State for the popup form
 const [showPopup, setShowPopup] = useState(false)
@@ -123,23 +126,23 @@ const [formData, setFormData] = useState({
 })
 const [loadingDocCheck, setLoadingDocCheck] = useState(true)
 
-// 3) On mount or when currentUser changes, check if Buyer doc is missing or incomplete
+// 3) On mount or when user changes, check if Buyer doc is missing or incomplete
 useEffect(() => {
     const checkBuyerDoc = async () => {
     try {
         // If there's no user or no UID, redirect to /login
-        if (!currentUser || !currentUser.id) {
+        if (!user || !user.id) {
         navigate('/login')
         return
         }
         // If role is not 'buyer', also redirect
-        if (currentUser.role !== 'buyer') {
+        if (user.role !== 'buyer') {
         navigate('/login')
         return
         }
 
         // Retrieve doc from "Buyers" collection, doc ID = user's UID
-        const buyerRef = doc(db, 'Buyers', currentUser.id)
+        const buyerRef = doc(db, 'Buyers', user.id)
         const snap = await getDoc(buyerRef)
 
         if (!snap.exists()) {
@@ -171,10 +174,10 @@ useEffect(() => {
     }
 
     checkBuyerDoc()
-}, [currentUser, navigate])
+}, [user, navigate])
 
-const avatarSrc = currentUser?.avatar && currentUser.avatar.trim() !== ""
-? currentUser.avatar
+const avatarSrc = user?.avatar && user.avatar.trim() !== ""
+? user.avatar
 : defaultAvatar;
 
 // Handle form changes
@@ -187,12 +190,12 @@ const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
 const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
     try {
-    if (!currentUser || !currentUser.id) {
-        console.error('No currentUser or user ID in store. Cannot save Buyer doc.')
+    if (!user || !user.id) {
+        console.error('No user or user ID in store. Cannot save Buyer doc.')
         return
     }
 
-    const buyerRef = doc(db, 'Buyers', currentUser.id)
+    const buyerRef = doc(db, 'Buyers', user.id)
     await setDoc(
         buyerRef,
         {
@@ -231,6 +234,7 @@ if (loadingDocCheck) {
                         <div className="flex justify-between items-center mb-8">
                             <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-[60px] font-bold font-nunito">
                                 Welcome, {currentUser?.firstName || "buyer"}
+
                             </h1>
                             <div className="flex gap-4">
                                 <button className="p-2 rounded-full bg-white shadow-sm hover:shadow-md transition-shadow">
@@ -324,24 +328,26 @@ if (loadingDocCheck) {
                     <div className="flex items-center justify-center gap-x-5 gap-4 mb-8">
                             <div>
                                 <h2 className="font-bold font-nunito">
-                                {currentUser?.firstName || "buyer"},
+                                {user?.firstName || "buyer"},
                                 </h2>
                                 <div className="flex items-center gap-2">
                                     <span className="text-sm text-gray-600 font-nunito">
                                         Buyer
                                     </span>
-                                    <span className="text-xs bg-purple-200 px-2 py-1 rounded-full font-nunito">
-                                        Premium Account
-                                    </span>
+                                    
                                 </div>
                             </div>
-                            <div className="w-12 h-12 rounded-full overflow-hidden">
-                            <img
-                            src={avatarSrc}
-                            alt="User Avatar"
-                            className="w-10 h-10 md:w-12 md:h-12 rounded-full object-cover"
-                            />
-                            </div>
+                            <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center">
+                               {user?.avatar && user.avatar.trim() !== "" ? (
+                                 <img
+                                   src={user.avatar}
+                                   alt="User Avatar"
+                                   className="w-10 h-10 md:w-12 md:h-12 rounded-full object-cover"
+                                 />
+                               ) : (
+                                 <User className="text-gray-400 w-6 h-6" />
+                               )}
+                             </div>
                         </div>
 
                         {/* Upcoming Appointments */}

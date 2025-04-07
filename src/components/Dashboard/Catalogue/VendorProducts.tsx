@@ -5,6 +5,7 @@ import { collection, addDoc, getDocs, query, where, doc, updateDoc } from 'fireb
 import { db } from '../../../utils/firebase'
 import { useUserStore } from '../../../utils/userStore'
 import { useNavigate } from 'react-router-dom'
+import { Image } from 'lucide-react'
 
 // Define the interface for a product
 interface Product {
@@ -182,17 +183,17 @@ const VendorProducts: React.FC = () => {
                   onClick={() => navigate(`/product/${product.id}`)}
                 >
                   {/* Circle image on the left */}
-                  <div className="w-14 h-14 mr-3 rounded-full overflow-hidden border-2 border-purple-200 flex-shrink-0">
-                    <img
-                      src={product.photo || '/path-to-default-product-image.jpg'}
-                      alt={product.name}
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement
-                        target.src = '/path-to-default-product-image.jpg'
-                      }}
-                    />
-                  </div>
+                  <div className="w-14 h-14 mr-3 rounded-full overflow-hidden border-2 border-purple-200 flex-shrink-0 bg-gray-100 flex items-center justify-center">
+                     {product.photo && product.photo.trim() !== "" ? (
+                       <img
+                         src={product.photo}
+                         alt={product.name}
+                       className="w-full h-full object-cover"
+                       />
+                     ) : (
+                       <Image className="text-purple-400 w-6 h-6" />
+                     )}
+                   </div>
 
                   {/* Mobile view: Only title */}
                   <div className="md:hidden flex-grow">

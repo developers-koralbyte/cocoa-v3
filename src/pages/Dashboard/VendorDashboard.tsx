@@ -1,565 +1,543 @@
-
 import React, { useState, useEffect, ChangeEvent, FormEvent } from 'react';
-import { Search, RotateCcw, Plus } from 'lucide-react';
-import { Bell } from 'lucide-react';
+import { Search, RotateCcw, Plus, Bell, User } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import BaseLayout from '../../components/Dashboard/BaseLayout';
-import { useUserStore } from '../../utils/userStore';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '../../utils/firebase';
-import ServiceForm, { ServiceFormData } from '../../components/Dashboard/Catalogue/Forms/ServiceForm';
-import ProductForm, { ProductFormData } from '../../components/Dashboard/Catalogue/Forms/ProductForm';
+import { doc, getDoc, setDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { useAuth } from '../../utils/AuthContext';
+
+// Example child components (you can remove them if you prefer to fetch directly here)
 import VendorServices from '../../components/Dashboard/Catalogue/VendorServices';
 import VendorProducts from '../../components/Dashboard/Catalogue/VendorProducts';
 
-interface Appointment {
-    name: string;
-    company: string;
-    time: string;
-    date: string;
-    image: string;
-}
-
+// Example interfaces
 interface Buyer {
-    name: string;
-    company: string;
-    match: number;
-    image: string;
+  name: string;
+  company: string;
+  match: number;
+  image: string;
 }
 
-interface Service {
-    title: string;
-    image: string;
-}
-
-interface Product {
-    title: string;
-    image: string;
-    price?: string;
+interface Appointment {
+  name: string;
+  company: string;
+  time: string;
+  date: string;
+  image: string;
 }
 
 const appointments: Appointment[] = [
-    {
-        name: 'Gustavo',
-        company: 'Creative Hive',
-        time: '9:00am - 9:30am',
-        date: 'Wed 22',
-        image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=150&h=150',
-    },
-    {
-        name: 'Diana',
-        company: 'TechNest',
-        time: '1:00pm - 1:30pm',
-        date: 'Fri 24',
-        image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=150&h=150',
-    },
-    {
-        name: 'Amrit',
-        company: 'Startup Hub',
-        time: '10:00am - 10:30am',
-        date: 'Mon 27',
-        image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=150&h=150',
-    },
+  {
+    name: 'Gustavo',
+    company: 'Creative Hive',
+    time: '9:00am - 9:30am',
+    date: 'Wed 22',
+    image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=150&h=150',
+  },
+  {
+    name: 'Diana',
+    company: 'TechNest',
+    time: '1:00pm - 1:30pm',
+    date: 'Fri 24',
+    image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=150&h=150',
+  },
+  {
+    name: 'Amrit',
+    company: 'Startup Hub',
+    time: '10:00am - 10:30am',
+    date: 'Mon 27',
+    image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=150&h=150',
+  },
 ];
 
-const buyers: Buyer[] = [
-    {
-        name: 'Diana',
-        company: 'TechNest',
-        match: 93,
-        image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=150&h=150',
-    },
-    {
-        name: 'Kevin',
-        company: 'FlexSpace Studios',
-        match: 87,
-        image: 'https://images.unsplash.com/photo-1519345182560-3f2917c472ef?auto=format&fit=crop&q=80&w=150&h=150',
-    },
-    {
-        name: 'Margaret',
-        company: 'OfficeOne Hub',
-        match: 82,
-        image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&q=80&w=150&h=150',
-    },
-    {
-        name: 'Yihao',
-        company: 'Collaborative HQ',
-        match: 78,
-        image: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&q=80&w=150&h=150',
-    },
+const staticBuyers: Buyer[] = [
+  {
+    name: 'Diana',
+    company: 'TechNest',
+    match: 93,
+    image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=150&h=150',
+  },
+  {
+    name: 'Kevin',
+    company: 'FlexSpace Studios',
+    match: 87,
+    image: 'https://images.unsplash.com/photo-1519345182560-3f2917c472ef?auto=format&fit=crop&q=80&w=150&h=150',
+  },
+  {
+    name: 'Margaret',
+    company: 'OfficeOne Hub',
+    match: 82,
+    image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&q=80&w=150&h=150',
+  },
+  {
+    name: 'Yihao',
+    company: 'Collaborative HQ',
+    match: 78,
+    image: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&q=80&w=150&h=150',
+  },
 ];
 
-const initialServices: Service[] = [
-    {
-        title: 'Accounting Software',
-        image: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80&w=150&h=150',
-    },
-    {
-        title: 'CFO Services',
-        image: 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&q=80&w=150&h=150',
-    },
-    {
-        title: 'Audit Services',
-        image: 'https://images.unsplash.com/photo-1586486855514-8c633cc6fd38?auto=format&fit=crop&q=80&w=150&h=150',
-    },
-    {
-        title: 'Accounting and Bookkeeping Services',
-        image: 'https://images.unsplash.com/photo-1554224154-22dec7ec8818?auto=format&fit=crop&q=80&w=150&h=150',
-    },
-];
+const VendorDashboard: React.FC = () => {
+  const navigate = useNavigate();
 
-const initialPopularServices: Service[] = [
-    {
-        title: 'Audit Services',
-        image: 'https://images.unsplash.com/photo-1586486855514-8c633cc6fd38?auto=format&fit=crop&q=80&w=150&h=150',
-    },
-    {
-        title: 'Accounting and Bookkeeping Services',
-        image: 'https://images.unsplash.com/photo-1554224154-22dec7ec8818?auto=format&fit=crop&q=80&w=150&h=150',
-    },
-];
+  // 1) Pull user from AuthContext
+  const { user, isLoading } = useAuth();
 
-const initialProducts: Product[] = [];
+  // For checking if the user has completed their vendor doc
+  const [showPopup, setShowPopup] = useState(false);
+  const [loadingDocCheck, setLoadingDocCheck] = useState(true);
 
-const VendorDashboard = () => {
-    const navigate = useNavigate();
-    const [services, setServices] = useState<Service[]>(initialServices);
-    const [popularServices, setPopularServices] = useState<Service[]>(initialPopularServices);
-    const [products, setProducts] = useState<Product[]>(initialProducts);
-    const [isServiceFormOpen, setIsServiceFormOpen] = useState(false);
-    const [isProductFormOpen, setIsProductFormOpen] = useState(false);
-    const [potentialBuyers, setPotentialBuyers] = useState<Buyer[]>([]);
+  // Basic vendor form data for the popup
+  const [formData, setFormData] = useState({
+    businessName: '',
+    countryRegion: '',
+    industry: '',
+    categories: '',
+    services: '',
+  });
 
-   const  defaultAvatar = "/path-to-default-avatar.jpg";
-    
-    // 1. Pull currentUser from user store
-    const { currentUser } = useUserStore();
-  
-    // 2. Log changes for debugging
-    useEffect(() => {
-      console.log("VendorDashboard: currentUser changed:", currentUser);
-    }, [currentUser]);
-  
-    // State to control popup for completing profile
-    const [showPopup, setShowPopup] = useState(false);
-    // State for vendor profile form data
-    const [formData, setFormData] = useState({
-      businessName: '',
-      countryRegion: '',
-      industry: '',
-      categories: '',
-      services: '',
-    });
-    const [loadingDocCheck, setLoadingDocCheck] = useState(true);
+  // Suppose you fetch services & products here OR use child components that do it
+  const [services, setServices] = useState<any[]>([]);
+  const [products, setProducts] = useState<any[]>([]);
 
-    const handleAddService = (serviceData: ServiceFormData) => {
-        const newService = {
-            title: serviceData.name,
-            image: serviceData.image || 'https://images.unsplash.com/photo-1554224154-22dec7ec8818?auto=format&fit=crop&q=80&w=150&h=150',
-        };
-        setServices([...services, newService]);
-    };
+  // Potential buyers from Firestore (if you implement a real matching system)
+  const [potentialBuyers, setPotentialBuyers] = useState<Buyer[]>([]);
 
-    const handleAddProduct = (productData: ProductFormData) => {
-        const newProduct = {
-            title: productData.name,
-            image: productData.image || 'https://images.unsplash.com/photo-1554224154-22dec7ec8818?auto=format&fit=crop&q=80&w=150&h=150',
-            price: productData.price,
-        };
-        setProducts([...products, newProduct]);
-    };
-  
-    // 3. On mount (or when currentUser changes), check if vendor doc exists & has required fields
-    useEffect(() => {
-      const checkVendorDoc = async () => {
-        try {
-          if (!currentUser || !currentUser.id) {
-            navigate('/login');
-            return;
-          }
-          if (currentUser.role !== 'vendor') {
-            navigate('/login');
-            return;
-          }
-          // Retrieve the vendor doc by using currentUser.id as the doc ID
-          const vendorRef = doc(db, 'Vendors', currentUser.id);
-          const snap = await getDoc(vendorRef);
-          if (!snap.exists()) {
-            // Document doesn't exist: show popup for completing profile
-            console.log('No vendor doc found, showing popup...');
-            setShowPopup(true);
-            setLoadingDocCheck(false);
-            return;
-          }
-          const data = snap.data();
-          const { businessName, countryRegion, industry, categories, services } = data;
-          // If any required field is missing, prefill and show popup
-          if (!businessName || !countryRegion || !industry || !categories || !services) {
-            setFormData({
-              businessName: businessName || '',
-              countryRegion: countryRegion || '',
-              industry: industry || '',
-              categories: categories || '',
-              services: services || '',
-            });
-            setShowPopup(true);
-          }
-          setLoadingDocCheck(false);
-        } catch (error) {
-          console.error("Error checking vendor doc:", error);
-          navigate('/login');
-        }
-      };
-  
-      checkVendorDoc();
-    }, [currentUser, navigate]);
+  useEffect(() => {
+    console.log('VendorDashboard => user changed:', user);
+  }, [user]);
 
-    const avatarSrc = currentUser?.avatar && currentUser.avatar.trim() !== ""
-    ? currentUser.avatar
-    : defaultAvatar;
-  
-    const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-      const { name, value } = e.target;
-      setFormData(prev => ({ ...prev, [name]: value }));
-    };
+  // 2) If AuthContext is still loading, show spinner
+  if (isLoading) {
+    return (
+      <BaseLayout>
+        <div className="flex items-center justify-center h-screen">
+          <p>Loading user...</p>
+        </div>
+      </BaseLayout>
+    );
+  }
 
-  
-    const handleSubmit = async (e: FormEvent) => {
-      e.preventDefault();
+  // 3) If there's no user or user.role !== 'vendor', redirect
+  if (!user || user.role !== 'vendor') {
+    console.warn('VendorDashboard => user not vendor or no user => redirecting');
+    navigate('/login');
+    return null;
+  }
+
+  // 4) Check if vendor doc is missing or incomplete
+  useEffect(() => {
+    const checkVendorDoc = async () => {
       try {
-        if (!currentUser || !currentUser.id) {
-          console.error("No currentUser or user ID in store. Cannot save Vendor doc.");
+        if (!user.id) {
+          navigate('/login');
           return;
         }
-        const vendorRef = doc(db, 'Vendors', currentUser.id);
-        await setDoc(vendorRef, {
+        // Retrieve vendor doc
+        const vendorRef = doc(db, 'Vendors', user.id);
+        const snap = await getDoc(vendorRef);
+
+        if (!snap.exists()) {
+          console.log('No vendor doc found => show popup');
+          setShowPopup(true);
+          setLoadingDocCheck(false);
+          return;
+        }
+
+        const data = snap.data() || {};
+        const { businessName, countryRegion, industry, categories, services } = data;
+        if (!businessName || !countryRegion || !industry || !categories || !services) {
+          setFormData({
+            businessName: businessName || '',
+            countryRegion: countryRegion || '',
+            industry: industry || '',
+            categories: categories || '',
+            services: services || '',
+          });
+          setShowPopup(true);
+        }
+      } catch (error) {
+        console.error('Error checking vendor doc:', error);
+        navigate('/login');
+      } finally {
+        setLoadingDocCheck(false);
+      }
+    };
+    checkVendorDoc();
+  }, [user.id, navigate]);
+
+  // 5) Example: fetch services & products (or do it inside child components)
+  useEffect(() => {
+    const fetchVendorData = async () => {
+      try {
+        if (!user.id) return;
+
+        // Fetch services
+        const servicesRef = collection(db, 'services');
+        const servicesQ = query(servicesRef, where('vendorId', '==', user.id));
+        const servicesSnap = await getDocs(servicesQ);
+        const servicesData: any[] = [];
+        servicesSnap.forEach((doc) => {
+          servicesData.push({ id: doc.id, ...doc.data() });
+        });
+        setServices(servicesData);
+
+        // Fetch products
+        const productsRef = collection(db, 'products');
+        const productsQ = query(productsRef, where('vendorId', '==', user.id));
+        const productsSnap = await getDocs(productsQ);
+        const productsData: any[] = [];
+        productsSnap.forEach((doc) => {
+          productsData.push({ id: doc.id, ...doc.data() });
+        });
+        setProducts(productsData);
+      } catch (err) {
+        console.error('Error fetching vendor data:', err);
+      }
+    };
+    fetchVendorData();
+  }, [user.id]);
+
+  // 6) If categories exist, we can fetch potential buyers from Firestore (example)
+  useEffect(() => {
+    const fetchPotentialBuyers = async () => {
+      if (user.categories) {
+        const vendorInterests = user.categories
+          .split(',')
+          .map((s: string) => s.trim().toLowerCase());
+
+        try {
+          const buyersQ = query(
+            collection(db, 'Buyers'),
+            where('categories', 'array-contains-any', vendorInterests)
+          );
+          const snapshot = await getDocs(buyersQ);
+          const fetchedBuyers: Buyer[] = snapshot.docs.map((doc) => ({
+            // Adjust to your actual data structure
+            name: doc.data().firstName || 'Unknown',
+            company: doc.data().businessName || 'Unknown',
+            match: 0, // placeholder
+            image: doc.data().avatar || '',
+          }));
+
+          // Calculate match
+          const matched = fetchedBuyers.map((b) => {
+            // Suppose 'categories' is an array on each buyer
+            // This is just a quick example:
+            const buyerCats = (doc.data().categories || []).map((c: string) => c.toLowerCase());
+            const common = vendorInterests.filter((v) => buyerCats.includes(v));
+            const match = vendorInterests.length
+              ? Math.floor((common.length / vendorInterests.length) * 100)
+              : 0;
+            return { ...b, match };
+          });
+
+          setPotentialBuyers(matched);
+        } catch (error) {
+          console.error('Error fetching potential buyers:', error);
+        }
+      }
+    };
+    fetchPotentialBuyers();
+  }, [user.categories]);
+
+  // 7) Handle the "Complete Profile" popup changes
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  // Save vendor doc (merging any new fields)
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    try {
+      if (!user.id) {
+        console.error('No user ID => cannot save vendor doc');
+        return;
+      }
+      const vendorRef = doc(db, 'Vendors', user.id);
+      await setDoc(
+        vendorRef,
+        {
           businessName: formData.businessName,
           countryRegion: formData.countryRegion,
           industry: formData.industry,
           categories: formData.categories,
           services: formData.services,
-        }, { merge: true });
-        alert('Vendor details updated successfully!');
-        setShowPopup(false);
-      } catch (err) {
-        console.error("Error updating vendor doc:", err);
-      }
-    };
-
-    useEffect(() => {
-        const fetchPotentialBuyers = async () => {
-          if (currentUser && currentUser.categories) {
-            // Assume vendor's categories are stored as a comma-separated string.
-            const vendorInterests = currentUser.categories.split(',').map((s: string) => s.trim().toLowerCase());
-            try {
-              const buyersQuery = query(
-                collection(db, 'Buyers'),
-                // Assume buyer docs store their interests as an array in "categories".
-                where('categories', 'array-contains-any', vendorInterests)
-              );
-              const snapshot = await getDocs(buyersQuery);
-              const buyersList: Buyer[] = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Buyer));
-              // Calculate a simple match percentage for each buyer.
-              const matchedBuyers = buyersList.map(buyer => {
-                const buyerInterests: string[] = Array.isArray(buyer.categories)
-                  ? buyer.categories.map((c: string) => c.toLowerCase())
-                  : [];
-                const common = vendorInterests.filter(interest => buyerInterests.includes(interest));
-                const match = vendorInterests.length ? Math.floor((common.length / vendorInterests.length) * 100) : 0;
-                return { ...buyer, match };
-              });
-              setPotentialBuyers(matchedBuyers);
-            } catch (error) {
-              console.error('Error fetching potential buyers:', error);
-            }
-          }
-        };
-        fetchPotentialBuyers();
-      }, [currentUser]);
-  
-    if (loadingDocCheck) {
-      return (
-        <BaseLayout>
-          <div className="flex items-center justify-center h-screen">
-            <p>Loading data...</p>
-          </div>
-        </BaseLayout>
+        },
+        { merge: true }
       );
+      alert('Vendor details updated!');
+      setShowPopup(false);
+    } catch (err) {
+      console.error('Error updating vendor doc:', err);
     }
-    
+  };
+
+  // 8) Check if still loading vendor doc check
+  if (loadingDocCheck) {
     return (
-        <>
-            <BaseLayout>
-                <div className="flex min-h-screen bg-transparent">
-                    <div className="flex-1 p-8">
-                        <div className="flex justify-between items-center mb-8">
-                        <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-[60px] font-bold font-nunito">
-                           Welcome {currentUser?.firstName || "Vendor"}
-                         </h1>
-                            <div className="flex gap-4">
-                                <button className="p-2 rounded-full bg-white shadow-sm hover:shadow-md transition-shadow">
-                                    <Search className="w-5 h-5 text-gray-600" />
-                                </button>
-                                <button className="p-2 rounded-full bg-white shadow-sm hover:shadow-md transition-shadow">
-                                    <RotateCcw className="w-5 h-5 text-gray-600" />
-                                </button>
-                            </div>
-                        </div>
+      <BaseLayout>
+        <div className="flex items-center justify-center h-screen">
+          <p>Loading vendor data...</p>
+        </div>
+      </BaseLayout>
+    );
+  }
 
+  // 9) Decide if we show a single "plus" if no services and no products
+  const noServicesOrProducts = services.length === 0 && products.length === 0;
 
-                        <div className="space-y-8 md:space-y-12">
-                           <VendorServices />
-                           <VendorProducts />
-                        </div>
-                    
+  return (
+    <BaseLayout>
+      <div className="flex min-h-screen bg-transparent">
+        {/* Main Content */}
+        <div className="flex-1 p-8">
+          <div className="flex justify-between items-center mb-8">
+            <h1 className="text-4xl font-bold font-nunito">
+              Welcome {user.firstName || 'Vendor'},
+            </h1>
+            <div className="flex gap-4">
+              <button className="p-2 rounded-full bg-white shadow-sm hover:shadow-md transition-shadow">
+                <Search className="w-5 h-5 text-gray-600" />
+              </button>
+              <button className="p-2 rounded-full bg-white shadow-sm hover:shadow-md transition-shadow">
+                <RotateCcw className="w-5 h-5 text-gray-600" />
+              </button>
+            </div>
+          </div>
 
-                        <section className="mb-12">
-                            <h2 className="text-2xl font-bold mb-6 font-nunito text-purple-400">
-                                Your Potential Buyers
-                            </h2>
-                            <p className="text-gray-600 mb-6 font-nunito">
-                                These buyer's interests match your services, you
-                                can reach them with a one-time message.
-                            </p>
-                            <div className="grid grid-cols-4 gap-6">
-                                {buyers.slice(0, 4).map((buyer, index) => (
-                                    <div key={index} className="text-center">
-                                        <div className="w-full aspect-square mb-4 overflow-hidden rounded-full shadow-sm hover:shadow-md transition-shadow">
-                                            <img
-                                                src={buyer.image}
-                                                alt={buyer.name}
-                                                className="w-full h-full object-cover"
-                                            />
-                                        </div>
-                                        <h3 className="text-sm font-medium">
-                                            {buyer.name}
-                                        </h3>
-                                        <p className="text-sm text-gray-600">
-                                            {buyer.company}
-                                        </p>
-                                        <p className="text-sm text-purple-600 mt-1">
-                                            {buyer.match}% match
-                                        </p>
-                                    </div>
-                                ))}
-                            </div>
-                        </section>
-                    </div>
+          {/* If no services/products => show a single "plus" to go to /catalogue */}
+          {noServicesOrProducts ? (
+            <div className="flex flex-col items-center justify-center border border-gray-200 rounded-md p-6 bg-gray-50">
+              <div className="w-16 h-16 mb-2 rounded-full bg-gray-200 flex items-center justify-center">
+                <Plus size={24} className="text-gray-500" />
+              </div>
+              <p className="text-gray-500 mb-2">No services or products added yet.</p>
+              <button
+                className="flex items-center gap-2 bg-purple-600 text-white py-2 px-4 rounded-md hover:bg-purple-700 transition-colors"
+                onClick={() => navigate('/catalogue')}
+              >
+                <Plus size={16} />
+                Add your first service or product
+              </button>
+            </div>
+          ) : (
+            <>
+              {/* If we do have some services or products, show them normally */}
+              <div className="space-y-8 md:space-y-12">
+                <VendorServices />
+                <VendorProducts />
+              </div>
+            </>
+          )}
 
-                    {/* Right panel */}
-                    <div className="w-96 bg-purple-100 p-8 rounded-l-[3.5rem]">
-                        {/* Profile Section */}
-                        <div className="flex items-center justify-center gap-x-5 gap-4 mb-8">
-                            <div>
-                                <h2 className="font-bold font-nunito">
-                                {currentUser?.firstName || "Vendor"},
-                                </h2>
-                                <div className="flex items-center gap-2">
-                                    <span className="text-sm text-gray-600 font-nunito">
-                                        Vendor
-                                    </span>
-                                    <span className="text-xs bg-purple-200 px-2 py-1 rounded-full font-nunito">
-                                        Premium Account
-                                    </span>
-                                </div>
-                            </div>
-                            <div className="w-12 h-12 rounded-full overflow-hidden">
-                            <img
-                              src={avatarSrc}
-                              alt="User Avatar"
-                              className="w-10 h-10 md:w-12 md:h-12 rounded-full object-cover"
-                            />
-                            </div>
-                        </div>
-
-                        {/* Upcoming Appointments */}
-                        <section className="bg-white rounded-[2rem] p-6 mb-8">
-                            <div className="flex justify-between items-center mb-4">
-                                <h3 className="font-bold font-nunito">
-                                    Upcoming Appointments
-                                </h3>
-                                <div className="flex gap-2">
-                                    <button className="text-purple-600">
-                                        &lt;
-                                    </button>
-                                    <button className="text-purple-600">
-                                        &gt;
-                                    </button>
-                                </div>
-                            </div>
-                            <div className="space-y-4">
-                                {appointments.map((apt, index) => (
-                                    <div
-                                        key={index}
-                                        className="flex items-center gap-4"
-                                    >
-                                        <div className="w-10 h-10 rounded-full overflow-hidden">
-                                            <img
-                                                src={apt.image}
-                                                alt={apt.name}
-                                                className="w-full h-full object-cover"
-                                            />
-                                        </div>
-                                        <div className="flex-1">
-                                            <div className="flex justify-between">
-                                                <h4 className="font-medium">
-                                                    {apt.name},{' '}
-                                                    <span className="text-purple-600">
-                                                        {apt.company}
-                                                    </span>
-                                                </h4>
-                                            </div>
-                                            <div className="text-sm text-gray-500">
-                                                {apt.date}, {apt.time}
-                                            </div>
-                                        </div>
-                                        <div
-                                            className="cursor-pointer"
-                                            onClick={() =>
-                                                alert(
-                                                    `Reminder set for ${apt.name}`
-                                                )
-                                            }
-                                        >
-                                            <Bell className="w-4 h-4 text-purple-600" />
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </section>
-
-                        {/* Your Buyers Section */}
-                        <section className="bg-white rounded-[2rem] p-6">
-  <h3 className="font-bold mb-4">Your Potential Buyers</h3>
-  <div className="space-y-4">
-    {potentialBuyers.map((buyer, index) => (
-      <div key={index} className="flex items-center gap-4">
-        {/* Avatar */}
-        <div className="w-10 h-10 rounded-full overflow-hidden">
-          <img
-            src={buyer.image} // or buyer.avatar
-            alt={buyer.name}
-            className="w-full h-full object-cover"
-          />
+          {/* Potential Buyers (static example) */}
+          <section className="mb-12">
+            <h2 className="text-2xl font-bold mb-6 font-nunito text-purple-400">
+              Your Potential Buyers
+            </h2>
+            <p className="text-gray-600 mb-6 font-nunito">
+              These buyer's interests match your services; you can reach them with a one-time message.
+            </p>
+            <div className="grid grid-cols-4 gap-6">
+              {staticBuyers.slice(0, 4).map((buyer, index) => (
+                <div key={index} className="text-center">
+                  <div className="w-full aspect-square mb-4 overflow-hidden rounded-full shadow-sm hover:shadow-md transition-shadow bg-gray-100 flex items-center justify-center">
+                    {buyer.image ? (
+                      <img
+                        src={buyer.image}
+                        alt={buyer.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <User className="text-gray-400 w-12 h-12" />
+                    )}
+                  </div>
+                  <h3 className="text-sm font-medium">{buyer.name}</h3>
+                  <p className="text-sm text-gray-600">{buyer.company}</p>
+                  <p className="text-sm text-purple-600 mt-1">{buyer.match}% match</p>
+                </div>
+              ))}
+            </div>
+          </section>
         </div>
 
-        {/* Buyer Info */}
-        <div>
-          <h4 className="font-medium">{buyer.name}</h4>
-          <p className="text-md text-purple-600 font-bold">
-            {buyer.businessName || buyer.company || 'N/A'}
-          </p>
-          {/* Match Percentage (optional) */}
-          <p className="text-sm text-gray-600">
-            {buyer.match}% match
-          </p>
+        {/* Right panel */}
+        <div className="w-96 bg-purple-100 p-8 rounded-l-[3.5rem]">
+          {/* Profile Section */}
+          <div className="flex items-center justify-center gap-x-5 gap-4 mb-8">
+            <div>
+              <h2 className="font-bold font-nunito">
+                {user.firstName || 'Vendor'},
+              </h2>
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-600 font-nunito">Vendor</span>
+              </div>
+            </div>
+            <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center">
+              {user.avatar ? (
+                <img
+                  src={user.avatar}
+                  alt="User Avatar"
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <User className="text-gray-400 w-6 h-6" />
+              )}
+            </div>
+          </div>
+
+          {/* Upcoming Appointments */}
+          <section className="bg-white rounded-[2rem] p-6 mb-8">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="font-bold font-nunito">Upcoming Appointments</h3>
+              <div className="flex gap-2">
+                <button className="text-purple-600">&lt;</button>
+                <button className="text-purple-600">&gt;</button>
+              </div>
+            </div>
+            <div className="space-y-4">
+              {appointments.map((apt, index) => (
+                <div key={index} className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-full overflow-hidden">
+                    <img
+                      src={apt.image}
+                      alt={apt.name}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex justify-between">
+                      <h4 className="font-medium">
+                        {apt.name},{' '}
+                        <span className="text-purple-600">{apt.company}</span>
+                      </h4>
+                    </div>
+                    <div className="text-sm text-gray-500">
+                      {apt.date}, {apt.time}
+                    </div>
+                  </div>
+                  <div
+                    className="cursor-pointer"
+                    onClick={() => alert(`Reminder set for ${apt.name}`)}
+                  >
+                    <Bell className="w-4 h-4 text-purple-600" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* Potential Buyers from Firestore match (optional) */}
+          <section className="bg-white rounded-[2rem] p-6">
+            <h3 className="font-bold mb-4">Your Potential Buyers</h3>
+            <div className="space-y-4">
+              {potentialBuyers.map((b, idx) => (
+                <div key={idx} className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-full overflow-hidden">
+                    <img
+                      src={b.image || '/path-to-default-avatar.jpg'}
+                      alt={b.name}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div>
+                    <h4 className="font-medium">{b.name}</h4>
+                    <p className="text-md text-purple-600 font-bold">
+                      {b.company || 'N/A'}
+                    </p>
+                    <p className="text-sm text-gray-600">{b.match}% match</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
         </div>
       </div>
-    ))}
-  </div>
-</section>
 
-                    </div>
-                </div>
-            </BaseLayout>
-            
-            {/* Popup for completing profile */}
-            {showPopup && (
-              <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
-                <div className="bg-white p-6 rounded shadow-md w-[400px]">
-                  <h2 className="text-xl font-semibold mb-4">Complete Your Profile</h2>
-                  <form onSubmit={handleSubmit} className="space-y-4">
-                    <div>
-                      <label className="block font-medium mb-1">Business Name</label>
-                      <input
-                        type="text"
-                        name="businessName"
-                        value={formData.businessName}
-                        onChange={handleChange}
-                        className="border border-gray-300 p-2 w-full rounded"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block font-medium mb-1">Country/Region</label>
-                      <input
-                        type="text"
-                        name="countryRegion"
-                        value={formData.countryRegion}
-                        onChange={handleChange}
-                        className="border border-gray-300 p-2 w-full rounded"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block font-medium mb-1">Industry</label>
-                      <input
-                        type="text"
-                        name="industry"
-                        value={formData.industry}
-                        onChange={handleChange}
-                        className="border border-gray-300 p-2 w-full rounded"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block font-medium mb-1">Categories</label>
-                      <input
-                        type="text"
-                        name="categories"
-                        value={formData.categories}
-                        onChange={handleChange}
-                        className="border border-gray-300 p-2 w-full rounded"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block font-medium mb-1">Services</label>
-                      <input
-                        type="text"
-                        name="services"
-                        value={formData.services}
-                        onChange={handleChange}
-                        className="border border-gray-300 p-2 w-full rounded"
-                        required
-                      />
-                    </div>
-                    <div className="flex justify-end gap-4 mt-4">
-                      <button
-                        type="button"
-                        onClick={() => setShowPopup(false)}
-                        className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 transition"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        type="submit"
-                        className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-500 transition"
-                      >
-                        Save
-                      </button>
-                    </div>
-                  </form>
-                </div>
+      {/* Popup for completing profile */}
+      {showPopup && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
+          <div className="bg-white p-6 rounded shadow-md w-[400px]">
+            <h2 className="text-xl font-semibold mb-4">Complete Your Profile</h2>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="block font-medium mb-1">Business Name</label>
+                <input
+                  type="text"
+                  name="businessName"
+                  value={formData.businessName}
+                  onChange={handleChange}
+                  className="border border-gray-300 p-2 w-full rounded"
+                  required
+                />
               </div>
-            )}
-
-            {/* Service Form Modal */}
-            <ServiceForm 
-                isOpen={isServiceFormOpen}
-                onClose={() => setIsServiceFormOpen(false)}
-                onSubmit={handleAddService}
-            />
-
-            {/* Product Form Modal */}
-            <ProductForm 
-                isOpen={isProductFormOpen}
-                onClose={() => setIsProductFormOpen(false)}
-                onSubmit={handleAddProduct}
-            />
-        </>
-    );
+              <div>
+                <label className="block font-medium mb-1">Country/Region</label>
+                <input
+                  type="text"
+                  name="countryRegion"
+                  value={formData.countryRegion}
+                  onChange={handleChange}
+                  className="border border-gray-300 p-2 w-full rounded"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block font-medium mb-1">Industry</label>
+                <input
+                  type="text"
+                  name="industry"
+                  value={formData.industry}
+                  onChange={handleChange}
+                  className="border border-gray-300 p-2 w-full rounded"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block font-medium mb-1">Categories</label>
+                <input
+                  type="text"
+                  name="categories"
+                  value={formData.categories}
+                  onChange={handleChange}
+                  className="border border-gray-300 p-2 w-full rounded"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block font-medium mb-1">Services</label>
+                <input
+                  type="text"
+                  name="services"
+                  value={formData.services}
+                  onChange={handleChange}
+                  className="border border-gray-300 p-2 w-full rounded"
+                  required
+                />
+              </div>
+              <div className="flex justify-end gap-4 mt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowPopup(false)}
+                  className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-500 transition"
+                >
+                  Save
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </BaseLayout>
+  );
 };
 
 export default VendorDashboard;
-
