@@ -136,19 +136,18 @@ const LandingPage = () => {
                 <div className="flex w-full min-h-screen items-center">
                     <div className="w-1/2 pt-48 pl-28">
                         <h1 className="font-nunito text-[60px] font-bold leading-[75px] text-left text-buttonBg">
-                            Becoming a Buyer <br />
+                            Become a Buyer <br />
                         </h1>
                         <div className="font-sourceSans">
                             <h3 className="mt-4 text-[18px] text-buttonBg leading-relaxed font-bold">
-                                Streamline Your RFQ Process <br /> with
+                                Streamline Your RFQ Process with
                                 Real-Time Chat
                             </h3>
                             <p className="mt-4 text-[18px] text-buttonBg leading-relaxed ">
-                                Connect instantly with verified suppliers,{' '}
-                                <br />
-                                negotiate in real-time, and generate purchase{' '}
-                                <br />
-                                orders-all through one chat platform. <br />
+                                Connect instantly with verified suppliers,
+                                compare offerings, negotiate in real- time, and
+                                generate purchase orders—all through one unified
+                                chat platform.
                             </p>
                         </div>
 
