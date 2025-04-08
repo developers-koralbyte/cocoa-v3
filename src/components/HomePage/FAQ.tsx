@@ -37,7 +37,7 @@ const FAQ: React.FC = () => {
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-1 md:grid-cols-[300px_1fr] gap-8 max-w-6xl mx-auto">
           <div>
-            <h2 className="text-7xl font-bold text-[#5D4C7C] sticky top-20">
+            <h2 className="text-7xl font-bold text-[#5D4C7C] sticky top-20 font-nunito">
               FAQ
             </h2>
           </div>

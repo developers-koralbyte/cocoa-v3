@@ -42,7 +42,7 @@ const ProcurementSection = () => {
 
                         {/* Right Column: Text */}
                         <div className="mt-8 md:mt-0">
-                            <h3 className="text-[24px] font-bold leading-[2.75rem]">
+                            <h3 className="text-[24px] font-bold leading-[2.75rem] font-nunito">
                                 Real-Time Chat with Suppliers
                             </h3>
                             <p className="font-sourceSans text-[20px]">
@@ -60,7 +60,7 @@ const ProcurementSection = () => {
                     <div className="mt-10 ml-10 md:flex items-center gap-x-12 text-right">
                         {/* Left Column: Text */}
                         <div className="mt-8 max-w-xl text-right">
-                            <h3 className="font-sourceSans  text-[24px] font-bold leading-[0.75rem]">
+                            <h3 className="font-nunito  text-[24px] font-bold leading-[0.75rem]">
                                 AI-Powered Match & Chat-to-Order <br /> <br /> Conversion
                             </h3>
                             <p className="font-sourceSans place-items-start mt-4 text-[20px]">
@@ -106,7 +106,7 @@ const ProcurementSection = () => {
                         <div className="mt-[-30px]">
                             {' '}
                             {/* Slight upward adjustment */}
-                            <h3 className="text-[24px] font-bold leading-[2.75rem]">
+                            <h3 className="text-[24px] font-bold leading-[2.75rem] font-nunito">
                                 Live Document Sharing
                             </h3>
                             <p className="font-sourceSans text-[20px]">
