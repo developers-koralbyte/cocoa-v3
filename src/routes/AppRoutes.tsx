@@ -26,6 +26,7 @@ const VendorPricingVerification = React.lazy(() => import('../components/VendorP
 const CataloguePage = React.lazy(() => import('../pages/Dashboard/Catalogue/CataloguePage'));
 const ServiceDetailPage = React.lazy(() => import('../pages/Dashboard/Catalogue/ServiceDetailPage'));
 const ProductDetailPage = React.lazy(() => import('../pages/Dashboard/Catalogue/ProductDetailPage'));
+const EditInvoicePage = React.lazy(() => import('../pages/Dashboard/InvoicePage/EditInvoicePage'));
 const CorporateSolutions = React.lazy(() => import('../components/CorporateSolutions/CorporateSolutions'));
 const SaaSandERP = React.lazy(() => import('../components/SasSAndERP/SaaSAndERP'));
 const CommercialEquipment = React.lazy(() => import('../components/CommericalEquipment/CommericalEquipment'));
@@ -71,6 +72,7 @@ const AppRoutes: React.FC = () => {
                         path="/create-new-invoice"
                         element={<CreateNewInvoice />}
                     />
+                    <Route path="/edit-invoice/:invoiceId" element={<EditInvoicePage />} />
                 </Route>
                 <Route path="/service/:serviceId" element={<ServiceDetailPage />} />
                 {/* Protected Routes for Buyers */}

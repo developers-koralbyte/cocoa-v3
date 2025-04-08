@@ -232,8 +232,9 @@ if (loadingDocCheck) {
                 <div className="flex min-h-screen bg-transparent">
                     <div className="flex-1 p-8">
                         <div className="flex justify-between items-center mb-8">
-                            <h1 className="text-4xl font-bold font-nunito">
-                                Welcome, {user?.firstName || "buyer"}
+                            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-[60px] font-bold font-nunito">
+                                Welcome, {currentUser?.firstName || "buyer"}
+
                             </h1>
                             <div className="flex gap-4">
                                 <button className="p-2 rounded-full bg-white shadow-sm hover:shadow-md transition-shadow">

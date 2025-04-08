@@ -633,7 +633,7 @@ const InboxPage = () => {
             <div className="flex flex-col h-screen">
                 <div className="flex justify-between items-center px-3 sm:px-6 pt-3 sm:pt-6 pb-2 sm:pb-4">
                     <div className="flex items-center">
-                        <h1 className="text-[32px] sm:text-[45px] md:text-[60px] font-nunito font-bold">
+                        <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-[60px] font-bold font-nunito">
                             Inbox
                         </h1>
                     </div>
@@ -676,7 +676,7 @@ const InboxPage = () => {
                                         onClick={() =>
                                             setShowNewChatModal(true)
                                         }
-                                        className="w-full py-2 mt-2 rounded-lg bg-[#5F4B8B] text-white flex items-center justify-center hover:bg-[#4A3B7A] transition-colors"
+                                        className="w-full py-2 mt-2 rounded-lg bg-buttonBg rounded-[2.5rem] text-white flex items-center justify-center hover:bg-[#4A3B7A] transition-colors"
                                     >
                                         <span className="mr-2">+</span>
                                         {currentUser?.role === 'vendor'
