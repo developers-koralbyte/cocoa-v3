@@ -59,17 +59,18 @@ const ProcurementSection = () => {
                     {/* Second Row */}
                     <div className="mt-10 ml-10 md:flex items-center gap-x-12 text-right">
                         {/* Left Column: Text */}
-                        <div className="mt-8  ">
+                        <div className="mt-8 max-w-xl text-right">
                             <h3 className="font-sourceSans  text-[24px] font-bold leading-[0.75rem]">
-                                Chat-to-Order Conversion
+                                AI-Powered Match & Chat-to-Order <br /> <br /> Conversion
                             </h3>
-                            <p className="font-sourceSans items-end mt-4 text-[20px]">
-                                Turn chat conversations directly into <br />
-                                purchase orders with a single click. Maintain{' '}
-                                <br />
-                                clear documentation of all negotiations and
-                                <br />
-                                agreements through your chat history.
+                            <p className="font-sourceSans place-items-start mt-4 text-[20px]">
+                                Get matched with the most suitable
+                                buyers/vendors through our intelligent AI
+                                matching algorithm. Then turn chat conversations
+                                directly into purchase orders with a single
+                                click. Maintain clear documentation of all
+                                negotiations and agreements through your chat <br />
+                                history.
                             </p>
                         </div>
 

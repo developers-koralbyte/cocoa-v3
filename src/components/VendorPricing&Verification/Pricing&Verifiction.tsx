@@ -121,10 +121,10 @@ const PricingAndVerification: React.FC = () => {
                                     label: 'Becoming a Vendor',
                                     path: '/become-a-vendor',
                                 },
-                                {
-                                    label: "Vendor's Blog",
-                                    path: '/vendors-blog',
-                                },
+                                // {
+                                //     label: "Vendor's Blog",
+                                //     path: '/vendors-blog',
+                                // },
                                 { label: 'Prices', path: '/vendor-prices' },
                             ],
                         },
@@ -136,10 +136,10 @@ const PricingAndVerification: React.FC = () => {
                                     label: 'Becoming a Buyer',
                                     path: '/become-a-buyer',
                                 },
-                                {
-                                    label: "Buyer's Blog",
-                                    path: '/buyers-blog',
-                                },
+                                // {
+                                //     label: "Buyer's Blog",
+                                //     path: '/buyers-blog',
+                                // },
                             ],
                         },
                         {

@@ -24,36 +24,6 @@ const LandingPage: React.FC = () => {
                     </a>
                 </div>
                 <div className="flex space-x-12 font-nunito font-extrabold text-[22px] text-white">
-                    {/* Buyers Dropdown */}
-                    <div className="relative group">
-                        <button
-                            className="text-white px-4 py-2 relative group-hover:text-purple-300 transition-all duration-300 ease-in-out"
-                            onClick={() => toggleDropdown('buyers')}
-                        >
-                            Buyers <span className="ml-1">&#9662;</span>
-                        </button>
-                        <div
-                            className={`${
-                                activeDropdown === 'buyers'
-                                    ? 'opacity-100 scale-100'
-                                    : 'opacity-0 scale-95'
-                            } absolute left-0 w-48 bg-white shadow-[0_0_20px_rgba(128,0,128,0.5)] rounded-md transition-all duration-300 ease-in-out transform`}
-                        >
-                            <button
-                                className="w-full text-left px-6 py-3 text-sm text-purple-600 hover:bg-purple-600 hover:text-white transition-colors"
-                                onClick={() => navigate('/become-a-buyer')}
-                            >
-                                Becoming a Buyer
-                            </button>
-                            <button
-                                className="w-full text-left px-6 py-3 text-sm text-purple-600 hover:bg-purple-600 hover:text-white transition-colors"
-                                onClick={() => navigate('/')}
-                            >
-                                Buyer's Blog
-                            </button>
-                        </div>
-                    </div>
-
                     {/* Vendors Dropdown */}
                     <div className="relative group">
                         <button
@@ -75,18 +45,48 @@ const LandingPage: React.FC = () => {
                             >
                                 Becoming a Vendor
                             </button>
-                            <button
+                            {/* <button
                                 className="w-full text-left px-6 py-3 text-sm text-purple-600 hover:bg-purple-600 hover:text-white transition-colors"
                                 onClick={() => navigate('/')}
                             >
                                 Vendor's Blog
-                            </button>
+                            </button> */}
                             <button
                                 className="w-full text-left px-6 py-3 text-sm text-purple-600 hover:bg-purple-600 hover:text-white transition-colors"
-                                onClick={() => navigate('/marketplace')}
+                                onClick={() => navigate('/vendor-prices')}
                             >
                                 Prices
                             </button>
+                        </div>
+                    </div>
+
+                    {/* Buyers Dropdown */}
+                    <div className="relative group">
+                        <button
+                            className="text-white px-4 py-2 relative group-hover:text-purple-300 transition-all duration-300 ease-in-out"
+                            onClick={() => toggleDropdown('buyers')}
+                        >
+                            Buyers <span className="ml-1">&#9662;</span>
+                        </button>
+                        <div
+                            className={`${
+                                activeDropdown === 'buyers'
+                                    ? 'opacity-100 scale-100'
+                                    : 'opacity-0 scale-95'
+                            } absolute left-0 w-48 bg-white shadow-[0_0_20px_rgba(128,0,128,0.5)] rounded-md transition-all duration-300 ease-in-out transform`}
+                        >
+                            <button
+                                className="w-full text-left px-6 py-3 text-sm text-purple-600 hover:bg-purple-600 hover:text-white transition-colors"
+                                onClick={() => navigate('/become-a-buyer')}
+                            >
+                                Becoming a Buyer
+                            </button>
+                            {/* <button
+                                className="w-full text-left px-6 py-3 text-sm text-purple-600 hover:bg-purple-600 hover:text-white transition-colors"
+                                onClick={() => navigate('/')}
+                            >
+                                Buyer's Blog
+                            </button> */}
                         </div>
                     </div>
 
