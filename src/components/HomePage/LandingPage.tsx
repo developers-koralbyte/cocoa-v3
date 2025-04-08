@@ -16,7 +16,6 @@ const LandingPage = () => {
         setActiveDropdown((prev) => (prev === type ? null : type))
     }
 
-
     return (
         <>
             {/* Laptop Layout */}
@@ -49,10 +48,10 @@ const LandingPage = () => {
                                         label: 'Becoming a Vendor',
                                         path: '/become-a-vendor',
                                     },
-                                    {
-                                        label: "Vendor's Blog",
-                                        path: '/vendors-blog',
-                                    },
+                                    // {
+                                    //     label: "Vendor's Blog",
+                                    //     path: '/vendors-blog',
+                                    // },
                                     { label: 'Prices', path: '/vendor-prices' },
                                 ],
                             },
@@ -64,10 +63,10 @@ const LandingPage = () => {
                                         label: 'Becoming a Buyer',
                                         path: '/become-a-buyer',
                                     },
-                                    {
-                                        label: "Buyer's Blog",
-                                        path: '/buyers-blog',
-                                    },
+                                    // {
+                                    //     label: "Buyer's Blog",
+                                    //     path: '/buyers-blog',
+                                    // },
                                 ],
                             },
                             {
@@ -138,27 +137,29 @@ const LandingPage = () => {
                 <div className="flex w-full min-h-screen items-center">
                     <div className="w-1/2 pt-56 pl-28">
                         <h1 className="font-nunito text-[60px] font-bold leading-[75px] text-left text-buttonBg">
-                            Real-Time Global <br /> Procurement <br /> Through
-                            Chat
+                            Real-Time Global <br /> B2B Procurement <br />{' '}
+                            Through Chat
                         </h1>
                         <div className="font-sourceSans">
                             <p className="mt-4 text-[18px] text-buttonBg leading-relaxed">
-                                From enterprise-level corporate services and
-                                leading ERP solutions
-                                <br />
-                                (including NetSuite, SAP S/4HANA, Oracle) to
-                                commercial equipment <br />
-                                and food & beverage procurement, COCOA
-                                revolutionizes B2B <br /> purchasing by
-                                providing real-time communication with trusted{' '}
-                                <br />
-                                suppliers in one integrated platform.
+                                Transform your procurement process with
+                                COCOA—the first <br />
+                                chat-based procurement marketplace that connects
+                                you directly <br />
+                                with verified vendors and buyers in real-time.
+                            </p>
+                            <p className="mt-4 text-[18px] text-buttonBg leading-relaxed">
+                                From corporate services to SaaS & IT solutions,
+                                we eliminate <br />
+                                frangmented communication and lengthy RFPs,
+                                helping <br />
+                                you make faster decisions with qualified
+                                partners.
                             </p>
                             <p className="mt-6 text-[18px] font-bold text-buttonBg">
-                                Welcome to COCOA, your comprehensive procurement
-                                marketplace connecting <br />
-                                businesses with verified suppliers through
-                                instant chat communication.
+                                Welcome to COCOA, where procurement meets real
+                                conversation. Find & connect with verified
+                                suppliers in one unified platform.
                             </p>
                         </div>
 
@@ -169,12 +170,12 @@ const LandingPage = () => {
                             >
                                 START NOW
                             </button>
-                            <a
+                            {/* <a
                                 href="#demo"
                                 className="pt-3 text-black underline"
                             >
                                 Want a free demo?
-                            </a>
+                            </a> */}
                         </div>
                     </div>
 
