@@ -57,9 +57,9 @@ const BusinessFeatures = () => {
         <div className="text-center mb-12">
           <h1 className="text-5xl font-bold mb-4 font-nunito">
             Unleash your business potential <br /> with
-            <span className="text-[#6868AC]"> COCOA</span>
+            <span className="text-[#6868AC] font-nunito"> COCOA</span>
           </h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto font-nunito">
+          <p className="text-xl text-gray-600 max-w-2xl mx-auto font-sourceSans">
             Showcasing Our Trusted Solutions: Quality, Reliability, and
             Exceptional Service at Your Fingertips!
           </p>

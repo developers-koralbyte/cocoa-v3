@@ -59,7 +59,7 @@ const TopSuppliers = () => {
         <h1 className="font-nunito text-[56px] font-extrabold mb-4">
           Our Top Suppliers
         </h1>
-        <p className="font-nunito text-[25px] mb-16 max-w-2xl mx-auto">
+        <p className="font-sourceSans text-[25px] mb-16 max-w-2xl mx-auto">
           Showcasing Our Trusted Suppliers: Quality, Reliability, and
           Exceptional Service at Your Fingertips!
         </p>

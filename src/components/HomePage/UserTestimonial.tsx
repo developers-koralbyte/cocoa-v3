@@ -54,7 +54,7 @@ const UserTestimonial = () => {
                     {/* Left side - Quote */}
                     <div className="lg:w-1/2">
                         <div className="bg-white/50 backdrop-blur-sm rounded-3xl p-8">
-                            <p className="text-gray-800 text-lg mb-6 font-nunito">
+                            <p className="text-gray-800 text-lg mb-6 font-sourceSans">
                                 "In today's evolving enterprise procurement
                                 landscape, large providers dominate the market,
                                 creating high barriers for businesses seeking
@@ -95,7 +95,7 @@ const UserTestimonial = () => {
                                     className="w-16 h-16 rounded-full object-fill font-nunito"
                                 />
                                 <div className="flex-1">
-                                    <p className="text-sm leading-relaxed mb-2 font-nunito">
+                                    <p className="text-sm leading-relaxed mb-2 font-sourceSans">
                                         {testimonial.content}
                                     </p>
                                     <div className="text-xs opacity-90 italic font-nunito">
