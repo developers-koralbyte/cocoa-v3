@@ -36,39 +36,43 @@ const LatestNews = () => {
   ];
 
   return (
-    <section className="py-16 px-4 max-w-7xl mx-auto">
-      <div className="mb-12">
-        <h2 className="text-4xl font-nunito font-bold mb-2">Our latest News,</h2>
-        <h3 className="text-3xl font-nunito font-bold">Cocoa stays Press relevant</h3>
-      </div>
-
-      <div className="grid grid-cols-2 gap-6 md:grid-cols-4 auto-rows-[300px]">
-        {newsItems.map((item, index) => (
-          <a
-            key={index}
-            href={item.link}
-            className={`group relative overflow-hidden rounded-3xl bg-gray-100 ${
-              item.className || ""
-            }`}
-          >
-            <div className="absolute inset-0">
-              <img
-                src={item.image}
-                alt={item.title}
-                className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-            </div>
-            <div className="absolute bottom-0 p-6">
-              <h3 className="text-xl font-semibold text-pink-200 font-nunito">
-                {item.title}
+      <section className="py-16 px-4 max-w-5xl mx-auto">
+          <div className="mb-12">
+              <h2 className="text-4xl font-nunito font-bold mb-2">
+                  Our latest News,
+              </h2>
+              <h3 className="text-3xl font-nunito font-bold">
+                  Cocoa stays Press relevant
               </h3>
-            </div>
-          </a>
-        ))}
-      </div>
-    </section>
-  );
+          </div>
+
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4 auto-rows-[300px] px-2 md:px-4 lg:px-6">
+              {newsItems.map((item, index) => (
+                  <a
+                      key={index}
+                      href={item.link}
+                      className={`group relative overflow-hidden rounded-3xl bg-gray-100 ${
+                          item.className || ''
+                      }`}
+                  >
+                      <div className="absolute inset-0">
+                          <img
+                              src={item.image}
+                              alt={item.title}
+                              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                      </div>
+                      <div className="absolute bottom-0 p-6">
+                          <h3 className="text-xl font-semibold text-pink-200 font-nunito">
+                              {item.title}
+                          </h3>
+                      </div>
+                  </a>
+              ))}
+          </div>
+      </section>
+  )
 };
 
 export default LatestNews;
