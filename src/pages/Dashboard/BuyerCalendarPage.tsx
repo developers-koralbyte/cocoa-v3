@@ -1,3 +1,4 @@
+// BuyerCalendarPage.tsx
 import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import moment from 'moment'
@@ -5,10 +6,11 @@ import {
   Calendar as BigCalendar,
   momentLocalizer,
   View,
-  SlotInfo
+  SlotInfo,
+  Event as RBCEvent,
 } from 'react-big-calendar'
 import ReactCalendar from 'react-calendar'
-import { Bell } from 'lucide-react'
+import { Bell, User } from 'lucide-react'
 import {
   doc,
   getDoc,
@@ -16,199 +18,260 @@ import {
   query,
   where,
   getDocs,
-  Timestamp
+  updateDoc,
+  arrayUnion,
+  runTransaction,
 } from 'firebase/firestore'
-
 import BaseLayout from '../../components/Dashboard/BaseLayout'
 import chatImage from '../../assets/img/Dashboard/chatImage.png'
 import { db } from '../../utils/firebase'
 import { useAuth } from '../../utils/AuthContext'
+import 'react-big-calendar/lib/css/react-big-calendar.css'
+import AvailabilityFormModal from '../../components/calendar/AvailibilityFormModal'
+import AppointmentModal from '../../components/chat/AppointmentModal'
+import MeetingDetailsModal from '../../components/calendar/MeetingDetailsModal'
+import { toast, ToastContainer } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
 
-// Setup for react-big-calendar
 const localizer = momentLocalizer(moment)
 
-// Inline CSS for RBC & ReactCalendar
 const calendarOverrides = `
-/* BigCalendar event styling */
-.rbc-event,
-.rbc-day-slot .rbc-background-event {
-  background-color: #5F4B8B !important;
-  color: #fff !important;
-  border: none !important;
-  border-radius: 0.375rem;
+
+.rbc-off-range-bg {
+   
+    background-color:#e9d8fd  !important; /* Replace with your desired lighter accent color */
 }
-.rbc-event.rbc-selected,
-.rbc-day-slot .rbc-selected.rbc-background-event {
-  background-color: #6868AC !important;
-}
-.rbc-today {
-  background-color: #e9d8fd22 !important;
-}
-.rbc-toolbar {
-  margin-bottom: 1rem;
-  font-family: 'Nunito Sans', sans-serif;
-}
-.rbc-toolbar-button {
-  border: none !important;
-}
-.react-calendar {
-  border: none;
-  background: transparent;
-}
-.react-calendar__navigation {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 0.5rem;
-  font-weight: 600;
-}
-.react-calendar__navigation__label {
-  font-size: 1rem;
-}
-.react-calendar__navigation__prev2-button,
-.react-calendar__navigation__next2-button {
-  display: none;
-}
-.react-calendar__navigation button {
-  background: transparent;
-  border: none;
-  color: #5F4B8B;
-  font-size: 1.2rem;
-  cursor: pointer;
-}
-.react-calendar__tile {
-  text-align: center;
-  padding: 0.6rem 0;
-  margin: 0.2rem;
-  border-radius: 50%;
-  transition: background-color 0.2s;
-}
-.react-calendar__tile:hover {
-  background-color: #f3f0fa;
-}
-.react-calendar__tile--now {
-  background-color: #e9d8fd;
-  border-radius: 50%;
-}
-.react-calendar__tile--active {
-  background-color: #5F4B8B;
-  color: #fff;
-}
-.react-calendar__tile--active:enabled:hover {
-  background-color: #5F4B8B;
-}
+  /* Calendar & React Calendar CSS overrides */
+  .rbc-event,
+  .rbc-day-slot .rbc-background-event {
+    color: #fff !important;
+    border: none !important;
+    border-radius: 0.375rem;
+    padding: 2px 6px;
+    font-size: 0.85rem;
+  }
+  .rbc-event.rbc-selected,
+  .rbc-day-slot .rbc-selected.rbc-background-event {
+    opacity: 0.8;
+  }
+  .rbc-today {
+    background-color: #e9d8fd22 !important;
+  }
+  .rbc-toolbar {
+    margin-bottom: 1rem;
+    font-family: 'Nunito Sans', sans-serif;
+  }
+  .rbc-toolbar-button {
+    border: none !important;
+  }
+  .rbc-time-content > * + * > * {
+    min-height: 1.5rem;
+  }
+  .react-calendar {
+    border: none;
+    background: transparent;
+  }
+  .react-calendar__navigation {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+  }
+  .react-calendar__navigation__label {
+    font-size: 1rem;
+  }
+  .react-calendar__navigation__prev2-button,
+  .react-calendar__navigation__next2-button {
+    display: none;
+  }
+  .react-calendar__navigation button {
+    background: transparent;
+    border: none;
+    color: #5F4B8B;
+    font-size: 1.2rem;
+    cursor: pointer;
+  }
+  .react-calendar__tile {
+    text-align: center;
+    padding: 0.6rem 0;
+    margin: 0.2rem;
+    border-radius: 50%;
+    transition: background-color 0.2s;
+  }
+  .react-calendar__tile:hover {
+    background-color: #f3f0fa;
+  }
+  .react-calendar__tile--now {
+    background-color: #e9d8fd;
+    border-radius: 50%;
+  }
+  .react-calendar__tile--active {
+    background-color: #5F4B8B;
+    color: #fff;
+  }
+  .react-calendar__tile--active:enabled:hover {
+    background-color: #5F4B8B;
+  }
 `
 
-// Custom Toolbar for BigCalendar
-function CustomToolbar(props: any) {
+
+function MyToolbar(props: any) {
   const goToBack = () => props.onNavigate('PREV')
   const goToNext = () => props.onNavigate('NEXT')
-  const goToToday = () => props.onNavigate('TODAY')
-  const handleViewChange = (view: string) => props.onView(view)
+
+  // Switch BigCalendar's view: 'month' | 'week' | 'day'
+  const handleViewChange = (view: string) => {
+    props.onView(view)
+  }
 
   return (
-    <div className="rbc-toolbar flex items-center justify-between mb-4">
-      <div className="flex items-center space-x-2">
+    <div className="flex items-center justify-between mb-4 font-nunito p-4 
+                    bg-gradient-to-r from-[#936ab7] to-[#9082c6] 
+                    text-white rounded-lg shadow-lg">
+      {/* Left side: Label + Week/Month/Day */}
+      <div className="flex items-center gap-3">
+        <span className="font-medium select-none">Calendar View</span>
         <button
-          className="bg-gray-200 text-gray-700 px-2 py-1 rounded hover:bg-gray-300"
-          onClick={goToToday}
-        >
-          Today
-        </button>
-        <button
-          className="bg-gray-200 text-gray-700 px-2 py-1 rounded hover:bg-gray-300"
-          onClick={() => alert('Favourites clicked')}
-        >
-          Favourites
-        </button>
-      </div>
-      <div className="flex items-center space-x-4">
-        <button className="text-purple-600 text-2xl font-bold" onClick={goToBack}>
-          &lt;
-        </button>
-        <span className="font-semibold text-gray-800 text-lg">{props.label}</span>
-        <button className="text-purple-600 text-2xl font-bold" onClick={goToNext}>
-          &gt;
-        </button>
-      </div>
-      <div className="flex space-x-2">
-        <button
-          className={`px-2 py-1 rounded hover:bg-gray-300 ${
-            props.view === 'day'
-              ? 'bg-purple-600 text-white'
-              : 'bg-gray-200 text-gray-700'
-          }`}
-          onClick={() => handleViewChange('day')}
-        >
-          Day
-        </button>
-        <button
-          className={`px-2 py-1 rounded hover:bg-gray-300 ${
-            props.view === 'week'
-              ? 'bg-purple-600 text-white'
-              : 'bg-gray-200 text-gray-700'
-          }`}
           onClick={() => handleViewChange('week')}
+          className={`px-4 py-1 rounded text-sm font-medium transition-colors ${
+            props.view === 'week'
+              ? 'bg-white text-[#936ab7]'
+              : 'bg-transparent text-white hover:bg-white hover:text-[#936ab7]'
+          }`}
         >
           Week
         </button>
         <button
-          className={`px-2 py-1 rounded hover:bg-gray-300 ${
-            props.view === 'month'
-              ? 'bg-purple-600 text-white'
-              : 'bg-gray-200 text-gray-700'
-          }`}
           onClick={() => handleViewChange('month')}
+          className={`px-4 py-1 rounded text-sm font-medium transition-colors ${
+            props.view === 'month'
+              ? 'bg-white text-[#936ab7]'
+              : 'bg-transparent text-white hover:bg-white hover:text-[#936ab7]'
+          }`}
         >
           Month
+        </button>
+        <button
+          onClick={() => handleViewChange('day')}
+          className={`px-4 py-1 rounded text-sm font-medium transition-colors ${
+            props.view === 'day'
+              ? 'bg-white text-[#936ab7]'
+              : 'bg-transparent text-white hover:bg-white hover:text-[#936ab7]'
+          }`}
+        >
+          Day
+        </button>
+      </div>
+
+      {/* Right side: Month-Year Navigation */}
+      <div className="flex items-center gap-3">
+        <button
+          onClick={goToBack}
+          className="px-3 py-1 text-sm font-medium bg-transparent rounded 
+                     transition-colors hover:bg-[#936ab7]/70 hover:text-white"
+        >
+          &lt;
+        </button>
+        <span className="text-lg font-bold select-none">{props.label}</span>
+        <button
+          onClick={goToNext}
+          className="px-3 py-1 text-sm font-medium bg-transparent rounded 
+                     transition-colors hover:bg-[#936ab7]/70 hover:text-white"
+        >
+          &gt;
         </button>
       </div>
     </div>
   )
 }
 
-// Helper: convert a Firestore timestamp to a JS Date
-export function parseTimestampToDate(
-  timestamp: Timestamp | { seconds: number; nanoseconds: number } | string
-): Date | null {
-  if (!timestamp) return null
-  if (typeof timestamp === 'string') {
-    return new Date(timestamp)
+
+
+function hashStringToColor(str: string): string {
+  let hash = 0
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash)
+    hash |= 0
   }
-  if ((timestamp as Timestamp).toDate) {
-    return (timestamp as Timestamp).toDate()
+  let color = '#'
+  for (let i = 0; i < 3; i++) {
+    const value = (hash >> (i * 8)) & 0xff
+    color += ('00' + value.toString(16)).slice(-2)
   }
-  if (
-    typeof (timestamp as { seconds: number; nanoseconds: number }).seconds === 'number' &&
-    typeof (timestamp as { seconds: number; nanoseconds: number }).nanoseconds === 'number'
-  ) {
-    const ts = timestamp as { seconds: number; nanoseconds: number }
-    return new Date(ts.seconds * 1000 + ts.nanoseconds / 1e6)
-  }
-  return null
+  return color
 }
+
+function darkenColor(hexColor: string, factor = 0.7): string {
+  hexColor = hexColor.replace('#', '')
+  let r = parseInt(hexColor.substring(0, 2), 16)
+  let g = parseInt(hexColor.substring(2, 4), 16)
+  let b = parseInt(hexColor.substring(4, 6), 16)
+  r = Math.floor(r * factor)
+  g = Math.floor(g * factor)
+  b = Math.floor(b * factor)
+  return '#' + [r, g, b].map((x) => ('0' + x.toString(16)).slice(-2)).join('')
+}
+
+function getContrastingTextColor(hexColor: string): string {
+  hexColor = hexColor.replace('#', '')
+  const r = parseInt(hexColor.substring(0, 2), 16)
+  const g = parseInt(hexColor.substring(2, 4), 16)
+  const b = parseInt(hexColor.substring(4, 6), 16)
+  const brightness = (r * 299 + g * 587 + b * 114) / 1000
+  return brightness < 128 ? '#ffffff' : '#000000'
+}
+
+function eventStyleGetter(event: AppointmentEvent) {
+ 
+  const colorKey = event.buyerId || event.vendorId || event.id
+  const rawColor = hashStringToColor(colorKey.toString())
+  const backgroundColor = darkenColor(rawColor, 0.7)
+  const textColor = getContrastingTextColor(backgroundColor)
+  return {
+    style: {
+      backgroundColor,
+      color: textColor,
+      borderRadius: '4px',
+      border: 'none',
+      padding: '2px 6px',
+    },
+  }
+}
+
+function combineDateAndTime(date: Date, timeString: string): Date {
+  const dateMoment = moment(date).startOf('day')
+  const timeMoment = moment(timeString, 'h:mm A')
+  dateMoment.hours(timeMoment.hours())
+  dateMoment.minutes(timeMoment.minutes())
+  return dateMoment.toDate()
+}
+
 
 interface AppointmentDoc {
-  vendorId: string
   buyerId: string
+  vendorId: string
+  category?: string
   createdAt?: any
   description?: string
-  selectedDay?: {
-    dateObj: Timestamp | { seconds: number; nanoseconds: number } | string
-    label?: string
-    date?: number
-  }
+  selectedDate?: any
   selectedTime?: string
   title?: string
+  guests?: string[]
+  meetingLink?: string
 }
 
-interface BuyerCalendarEvent {
-  id: string
+export interface AppointmentEvent extends RBCEvent {
+  id: string | number
   title: string
   start: Date
-  // we remove 'end' because we use only one common date (set it same as start)
+  end: Date
   desc?: string
+  buyerId?: string
   vendorId?: string
+  category?: string
+  guests?: string[]
+  meetingLink?: string
 }
 
 interface UserInfo {
@@ -220,322 +283,518 @@ interface UserInfo {
   businessName?: string
 }
 
+export function parseTimestampToDate(value: any): Date | null {
+  if (!value) return null
+  if (typeof value === 'string') return new Date(value)
+  if (value.toDate) return value.toDate()
+  if (value.seconds) return new Date(value.seconds * 1000)
+  return null
+}
+
+
 const BuyerCalendarPage: React.FC = () => {
   const navigate = useNavigate()
   const { user: authUser } = useAuth()
-  const [events, setEvents] = useState<BuyerCalendarEvent[]>([])
+
+ 
+  const [events, setEvents] = useState<AppointmentEvent[]>([])
+  const [selectedMeeting, setSelectedMeeting] = useState<any | null>(null)
+  const [showMeetingModal, setShowMeetingModal] = useState(false)
   const [view, setView] = useState<View>('month')
+
   const [oppositeUsers, setOppositeUsers] = useState<Record<string, UserInfo>>({})
+  const [availability, setAvailability] = useState<any[]>([])
+  const [showAvailabilityForm, setShowAvailabilityForm] = useState(false)
 
-  // For demonstration, we also keep a static list for all appointments view
-  const [allAppointments, setAllAppointments] = useState([
-    {
-      name: 'Vendor: Koralbyte Tech',
-      dateTime: 'Wed, Jan 9, 10:00 AM',
-      image:
-        'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&h=150&q=80'
-    },
-    {
-      name: 'Vendor: Accountix',
-      dateTime: 'Wed, Jan 15, 2:00 PM',
-      image:
-        'https://images.unsplash.com/photo-1586486855514-8c633cc6fd38?auto=format&fit=crop&w=150&h=150&q=80'
-    }
-  ])
 
-  // Fetch buyer appointments from Firebase
-  useEffect(() => {
-    const fetchAppointments = async (
-      authUser: { uid: string },
-      setEvents: (events: BuyerCalendarEvent[]) => void,
-      setOppositeUsers: (users: Record<string, UserInfo>) => void
-    ) => {
-      if (!authUser) return
+  const [opponentUsers, setOpponentUsers] = useState<UserInfo[]>([])
 
-      try {
-        // For buyers, we query appointments where buyerId equals the current user uid
-        const q = query(
-          collection(db, 'appointments'),
-          where('buyerId', '==', authUser.uid)
-        )
-        const querySnapshot = await getDocs(q)
-        const fetchedEvents: BuyerCalendarEvent[] = []
-        const vendorIdsToFetch = new Set<string>()
+  const [selectedOpponent, setSelectedOpponent] = useState<string>('')
+  const [opponentRole] = useState<string>('vendor')
 
-        querySnapshot.forEach((docSnap) => {
-          const data = docSnap.data() as AppointmentDoc
-          const docId = docSnap.id
+  const [showAppointmentModal, setShowAppointmentModal] = useState(false)
 
-          
-          if (data.vendorId) {
-            vendorIdsToFetch.add(data.vendorId)
-          }
+  const [upcomingIndex, setUpcomingIndex] = useState(0)
 
-          let eventDate = new Date()
-          const titleStr = data.title || ''
-          const descStr = data.description || ''
+ 
+  const fetchAppointmentsData = async () => {
+    if (!authUser) return
+    try {
+      
+      const q = query(
+        collection(db, 'appointments'),
+        where('buyerId', '==', authUser.uid)
+      )
+      const querySnapshot = await getDocs(q)
+      const fetchedEvents: AppointmentEvent[] = []
+      const vendorIdsToFetch = new Set<string>()
 
-          if (data.selectedDay?.dateObj) {
-            const parsedDate = parseTimestampToDate(data.selectedDay.dateObj)
-            eventDate = parsedDate ? parsedDate : new Date()
-          } else {
-            eventDate = new Date()
-          }
-
-          fetchedEvents.push({
-            id: docId,
-            title: titleStr,
-            start: eventDate,
-            desc: descStr,
-            vendorId: data.vendorId
-          })
-        })
-
-        // Fetch vendor details from "users" collection for each vendorId
-        const userMap: Record<string, UserInfo> = {}
-        for (const vendorId of vendorIdsToFetch) {
-          const userRef = doc(db, 'users', vendorId)
-          const userSnap = await getDoc(userRef)
-          if (userSnap.exists()) {
-            const uData = userSnap.data()
-            userMap[vendorId] = {
-              avatar: uData.avatar || '',
-              firstName: uData.firstName || 'Unknown',
-              lastName: uData.lastName || '',
-              role: uData.role || '',
-              id: vendorId,
-              businessName: uData.businessName || 'Vendor'
-            }
-          } else {
-            userMap[vendorId] = {
-              avatar: '',
-              firstName: 'Unknown',
-              lastName: '',
-              role: '',
-              id: vendorId,
-              businessName: 'Vendor'
-            }
+      querySnapshot.forEach((docSnap) => {
+        const data = docSnap.data() as AppointmentDoc
+        const docId = docSnap.id
+        if (data.vendorId) {
+          vendorIdsToFetch.add(data.vendorId)
+        }
+        let startDate = new Date()
+        const rawDate = parseTimestampToDate(data.selectedDate)
+        if (rawDate) {
+          startDate = rawDate
+          if (data.selectedTime) {
+            const timeMoment = moment(data.selectedTime, 'h:mm A')
+            startDate.setHours(timeMoment.hours())
+            startDate.setMinutes(timeMoment.minutes())
           }
         }
-
-        // If event title is empty, use the vendor's businessName as fallback
-        const updatedEvents = fetchedEvents.map((event) => {
-          if (!event.title || event.title.trim() === '') {
-            if (event.vendorId && userMap[event.vendorId]?.businessName) {
-              return { ...event, title: userMap[event.vendorId].businessName }
-            } else {
-              return { ...event, title: 'Vendor' }
-            }
-          }
-          return event
+        const endDate = new Date(startDate.getTime() + 60 * 60 * 1000)
+        fetchedEvents.push({
+          id: docId,
+          title: data.title || '',
+          start: startDate,
+          end: endDate,
+          desc: data.description || '',
+          buyerId: data.buyerId,
+          vendorId: data.vendorId,
+          category: data.category,
+          guests: data.guests || [],
+          meetingLink: data.meetingLink || '',
         })
+      })
 
-        updatedEvents.sort((a, b) => a.start.getTime() - b.start.getTime())
-        setEvents(updatedEvents)
-        setOppositeUsers(userMap)
-      } catch (error) {
-        console.error('Error fetching appointments:', error)
+      
+      const userMap: Record<string, UserInfo> = {}
+      for (const vendId of vendorIdsToFetch) {
+        const userRef = doc(db, 'users', vendId)
+        const userSnap = await getDoc(userRef)
+        if (userSnap.exists()) {
+          const uData = userSnap.data()
+          userMap[vendId] = {
+            avatar: uData.avatar || '',
+            firstName: uData.firstName || 'Unknown',
+            lastName: uData.lastName || '',
+            role: uData.role || 'vendor',
+            id: vendId,
+            businessName: uData.businessName || 'Unknown Vendor',
+          }
+        } else {
+          userMap[vendId] = {
+            avatar: '',
+            firstName: 'Unknown',
+            lastName: '',
+            role: 'vendor',
+            id: vendId,
+            businessName: 'Unknown Vendor',
+          }
+        }
+      }
+
+      
+      const updatedEvents = fetchedEvents.map((evt) => {
+        if (!evt.title.trim()) {
+          const vend = userMap[evt.vendorId || '']
+          const vendName = vend ? `${vend.firstName} ${vend.lastName}`.trim() : ''
+          return { ...evt, title: vendName || 'Unknown Vendor' }
+        }
+        return evt
+      })
+
+      updatedEvents.sort((a, b) => a.start.getTime() - b.start.getTime())
+      setEvents(updatedEvents)
+      setOppositeUsers(userMap)
+      setUpcomingIndex(0)
+    } catch (error) {
+      console.error('Error fetching appointments:', error)
+    }
+  }
+
+  
+  useEffect(() => {
+    if (!authUser) return
+    async function fetchBuyerAvailability() {
+      const buyerDocRef = doc(db, 'Buyers', authUser.uid)
+      const buyerDocSnap = await getDoc(buyerDocRef)
+      if (buyerDocSnap.exists()) {
+        const data = buyerDocSnap.data()
+        if (data.availability) {
+          setAvailability(data.availability)
+        }
       }
     }
-
-    if (!authUser) return
-    fetchAppointments({ uid: authUser.uid }, setEvents, setOppositeUsers)
+    fetchBuyerAvailability()
   }, [authUser])
 
-  // Get the earliest appointment from all events
-  const earliest =
-    events.length > 0
-      ? events.sort((a, b) => a.start.getTime() - b.start.getTime())[0]
-      : null
+  
+  useEffect(() => {
+    fetchAppointmentsData()
+  }, [authUser])
 
-  let earliestAppointmentUser: UserInfo | undefined
-  if (earliest?.vendorId && oppositeUsers[earliest.vendorId]) {
-    earliestAppointmentUser = oppositeUsers[earliest.vendorId]
-  }
-
-  // Slot & event selection handlers remain similar
-  const handleSelectSlot = (slotInfo: SlotInfo) => {
-    // For new appointment creation – use current slot as default
-    const newEvent: BuyerCalendarEvent = {
-      id: Date.now().toString(),
-      title: '',
-      start: slotInfo.start,
-      // Using the same time as end (or add a default duration if needed)
-      desc: '',
-      vendorId: ''
+  
+  useEffect(() => {
+    if (!authUser?.role) return
+    // For buyer, we need vendors as opponents.
+    const fetchOpponents = async () => {
+      try {
+        const q = query(collection(db, 'users'), where('role', '==', 'vendor'))
+        const querySnapshot = await getDocs(q)
+        const arr: UserInfo[] = []
+        querySnapshot.forEach((docSnap) => {
+          const d = docSnap.data()
+          arr.push({
+            id: docSnap.id,
+            firstName: d.firstName || 'Unknown',
+            lastName: d.lastName || '',
+            role: d.role || 'vendor',
+            businessName: d.businessName || '',
+            avatar: d.avatar || '',
+          })
+        })
+        setOpponentUsers(arr)
+      } catch (err) {
+        console.error('Error fetching vendors:', err)
+      }
     }
-    setModalData(newEvent)
-    setIsEditing(false)
-    setShowModal(true)
+    fetchOpponents()
+  }, [authUser])
+
+  
+  const upcomingAppointments = [...events].sort(
+    (a, b) => a.start.getTime() - b.start.getTime()
+  )
+  const displayedAppointment = upcomingAppointments[upcomingIndex] || null
+
+  const handlePrevUpcoming = () => {
+    if (upcomingIndex > 0) {
+      setUpcomingIndex(upcomingIndex - 1)
+    }
   }
 
-  const [showModal, setShowModal] = useState(false)
-  const [modalData, setModalData] = useState<BuyerCalendarEvent | null>(null)
-  const [isEditing, setIsEditing] = useState(false)
-
-  const handleSelectEvent = (event: BuyerCalendarEvent) => {
-    setModalData(event)
-    setIsEditing(true)
-    setShowModal(true)
+  const handleNextUpcoming = () => {
+    if (upcomingIndex < upcomingAppointments.length - 1) {
+      setUpcomingIndex(upcomingIndex + 1)
+    }
   }
 
-  const closeModal = () => {
-    setShowModal(false)
-    setModalData(null)
-    setIsEditing(false)
+ 
+  const handleOpenAppointmentModal = () => {
+    if (!selectedOpponent) {
+      alert(`Please select a ${opponentRole} to schedule an appointment.`)
+      return
+    }
+    setShowAppointmentModal(true)
   }
 
-  const handleSaveEvent = () => {
-    if (!modalData) return
-    if (isEditing) {
-      setEvents((prev) =>
-        prev.map((evt) => (evt.id === modalData.id ? modalData : evt))
+  const saveAppointment = async (appointmentData: any) => {
+    try {
+     
+      const buyerId = authUser?.uid
+      const vendorId = selectedOpponent
+
+      if (!buyerId || !vendorId) {
+        throw new Error('Buyer or Vendor info missing!')
+      }
+
+      const combinedDateTime = combineDateAndTime(
+        appointmentData.selectedDate,
+        appointmentData.selectedTime
       )
-    } else {
-      setEvents((prev) => [...prev, modalData])
+
+      const appointmentId = new Date().getTime().toString()
+      const safeData = {
+        ...appointmentData,
+        buyerId,
+        vendorId,
+        createdAt: new Date(),
+        selectedDate: combinedDateTime,
+      }
+
+      await runTransaction(db, async (transaction) => {
+        const startOfDay = moment(combinedDateTime).startOf('day').toDate()
+        const endOfDay = moment(combinedDateTime).endOf('day').toDate()
+        const appointmentsRef = collection(db, 'appointments')
+        const qCheck = query(
+          appointmentsRef,
+          where('vendorId', '==', vendorId),
+          where('selectedDate', '>=', startOfDay),
+          where('selectedDate', '<=', endOfDay)
+        )
+        const querySnapshot = await getDocs(qCheck)
+
+        let conflict = false
+        querySnapshot.forEach((docSnap) => {
+          const data = docSnap.data() as any
+          if (data.selectedTime === appointmentData.selectedTime) {
+            conflict = true
+          }
+        })
+        if (conflict) {
+          throw new Error('This time slot is already booked.')
+        }
+
+        const appointmentDocRef = doc(db, 'appointments', appointmentId)
+        transaction.set(appointmentDocRef, safeData)
+      })
+
+      toast.success('Appointment scheduled successfully!')
+      setTimeout(() => {
+        fetchAppointmentsData()
+      }, 1000)
+    } catch (error: any) {
+      console.error('Error scheduling appointment:', error)
+      toast.error(error.message || 'Failed to schedule appointment.')
     }
-    closeModal()
+  }
+
+  const handleSaveAppointment = (appointmentData: any) => {
+    saveAppointment(appointmentData)
+    setShowAppointmentModal(false)
+  }
+
+  
+  function handleSelectEvent(event: AppointmentEvent) {
+    
+    const vendor = oppositeUsers[event.vendorId || '']
+    const vendorName = vendor
+      ? `${vendor.firstName || ''} ${vendor.lastName || ''}`.trim()
+      : 'Unknown Vendor'
+
+    setSelectedMeeting({
+      appointmentId: event.id,
+      title: event.title,
+      description: event.desc,
+      start: event.start,
+      end: event.end,
+      category: event.category,
+      withUserName: vendorName,
+      withUserAvatar: vendor?.avatar || '',
+      opponentRole: 'vendor',
+      opponentId: event.vendorId || '',
+      selectedTime: event.selectedTime,
+      durationMinutes: event.duration || 30,
+      guests: event.guests,         
+      meetingLink: event.meetingLink  
+    })
+    setShowMeetingModal(true)
   }
 
   return (
-    <>
-      <BaseLayout>
-        <style dangerouslySetInnerHTML={{ __html: calendarOverrides }} />
-
-        <div className="p-6 font-nunito">
-          <div className="flex items-center justify-between mb-6">
-            <h1 className="text-4xl font-bold text-gray-800">
-              Buyer Calendar
-            </h1>
-            <div className="text-right">
-              <h2 className="text-lg font-semibold text-gray-700">
-                {authUser?.firstName || 'Buyer'}, TechNest (Buyer)
+    <BaseLayout>
+      <ToastContainer />
+      <style dangerouslySetInnerHTML={{ __html: calendarOverrides }} />
+      <div className="p-6 font-nunito">
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-4xl font-bold text-gray-800">Calendar</h1>
+          <div className="flex items-center gap-x-5 gap-4">
+            <div>
+              <h2 className="font-bold">
+                {authUser?.firstName || 'Buyer'},{' '}
+                {authUser?.businessName || 'MyCompany'}
               </h2>
-              <p className="text-sm text-purple-600">★ Premium Account</p>
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-600">
+                  {authUser?.role || 'Buyer'}
+                </span>
+                <span className="text-xs bg-purple-200 px-2 py-1 rounded-full">
+                  Premium Account
+                </span>
+              </div>
             </div>
-          </div>
-
-          <div className="rounded-[3rem] bg-white p-6">
-            <div className="flex">
-              <div className="flex-1 border-4 border-[#6868AC] rounded-l-[3.5rem] bg-white p-6">
-                <BigCalendar
-                  localizer={localizer}
-                  events={events.map((evt) => ({
-                    ...evt,
-                    // BigCalendar requires an end date; using start as a fallback
-                    end: evt.start
-                  }))}
-                  startAccessor="start"
-                  endAccessor="end"
-                  selectable
-                  onSelectSlot={handleSelectSlot}
-                  onSelectEvent={handleSelectEvent}
-                  components={{ toolbar: CustomToolbar }}
-                  views={['month', 'week', 'day']}
-                  view={view}
-                  onView={(newView) => setView(newView)}
-                  defaultDate={new Date()}
-                  style={{ height: '70vh' }}
-                />
-              </div>
-
-              <div className="w-80 border-4 border-[#6868AC] border-l-0 rounded-r-[3.5rem] bg-white p-6 space-y-6">
-                <div className="bg-white shadow rounded-lg p-4">
-                  <ReactCalendar
-                    defaultDate={new Date()}
-                    next2Label={null}
-                    prev2Label={null}
-                    minDetail="month"
-                    maxDetail="month"
-                    formatMonthYear={(locale, date) =>
-                      moment(date).format('MMMM YYYY')
-                    }
-                  />
-                </div>
-
-               
-                <div className="bg-white rounded-[2rem] p-6 shadow">
-                  <div className="flex justify-between items-center mb-4">
-                    <h3 className="font-bold">Upcoming Appointment</h3>
-                    <div className="flex gap-2">
-                      <button className="text-purple-600">&lt;</button>
-                      <button className="text-purple-600">&gt;</button>
-                    </div>
-                  </div>
-                  <div className="space-y-4">
-                    {earliest ? (
-                      <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-full overflow-hidden">
-                          {earliestAppointmentUser?.avatar ? (
-                            <img
-                              src={earliestAppointmentUser.avatar}
-                              alt="Vendor avatar"
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <div className="w-6 h-6 bg-gray-300 rounded-full" />
-                          )}
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex justify-between">
-                            <h4 className="font-medium">
-                              {earliest.title || earliestAppointmentUser?.firstName},{' '}
-                              <span className="text-purple-600">
-                                {earliest.desc || 'No company info'}
-                              </span>
-                            </h4>
-                          </div>
-                          <div className="text-sm text-gray-500">
-                            {moment(earliest.start).format('ddd, MMM Do, h:mm A')}
-                          </div>
-                        </div>
-                        <div
-                          className="cursor-pointer"
-                          onClick={() =>
-                            alert(`Reminder set for ${earliest.title || 'Appointment'}`)
-                          }
-                        >
-                          <Bell className="w-4 h-4 text-purple-600" />
-                        </div>
-                      </div>
-                    ) : (
-                      <p className="text-sm text-gray-500">
-                        No appointments available.
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                {/* All Appointments card */}
-                <div className="bg-white shadow rounded-lg p-4">
-                  <h3 className="font-bold mb-3">All Appointments</h3>
-                  <div className="space-y-3">
-                    {allAppointments.map((apt, idx) => (
-                      <div key={idx} className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full overflow-hidden">
-                          <img
-                            src={apt.image}
-                            alt={apt.name}
-                            className="object-cover w-full h-full"
-                          />
-                        </div>
-                        <div>
-                          <p className="font-medium text-sm">{apt.name}</p>
-                          <p className="text-xs text-gray-500">{apt.dateTime}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
+            <div className="w-12 h-12 rounded-full overflow-hidden">
+              <img
+                src={
+                  authUser?.avatar ||
+                  'https://via.placeholder.com/150?text=No+Image'
+                }
+                alt="User Avatar"
+                className="w-full h-full object-cover"
+              />
             </div>
           </div>
         </div>
-      </BaseLayout>
 
+        <div className="flex gap-0">
+          {/* LEFT SIDE: BigCalendar */}
+          <div className="flex-1 border-4 border-[#6868AC] rounded-l-[3.5rem] bg-white p-6">
+            <div className="shadow rounded-lg p-4 h-full">
+              <BigCalendar
+                localizer={localizer}
+                events={events}
+                startAccessor="start"
+                endAccessor="end"
+                selectable
+                onSelectSlot={(slotInfo: SlotInfo) =>
+                  console.log('Selected slot', slotInfo)
+                }
+                onSelectEvent={handleSelectEvent}
+                components={{ toolbar: MyToolbar }}
+                views={['month', 'week', 'day']}
+                view={view}
+                onView={(newView) => setView(newView)}
+                defaultDate={new Date()}
+                getNow={() => new Date()}
+                style={{ height: '70vh' }}
+                eventPropGetter={eventStyleGetter}
+              />
+            </div>
+          </div>
+
+         
+          <div className="w-80 border-4 border-[#6868AC] border-l-0 rounded-r-[3.5rem] bg-white p-6 space-y-6">
+          
+            <div className="bg-white shadow rounded-lg p-4">
+              <ReactCalendar
+                defaultValue={new Date()}
+                next2Label={null}
+                prev2Label={null}
+                minDetail="month"
+                maxDetail="month"
+                formatMonthYear={(locale, date) =>
+                  moment(date).format('MMMM YYYY')
+                }
+              />
+            </div>
+
+          
+            <div className="bg-white rounded-[2rem] p-6 shadow transition-all duration-500">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="font-bold">Upcoming Appointment</h3>
+                <div className="flex gap-2">
+                  <button className="text-purple-600" onClick={handlePrevUpcoming}>
+                    &lt;
+                  </button>
+                  <button className="text-purple-600" onClick={handleNextUpcoming}>
+                    &gt;
+                  </button>
+                </div>
+              </div>
+              {displayedAppointment ? (
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-full overflow-hidden">
+                    {displayedAppointment.vendorId &&
+                    oppositeUsers[displayedAppointment.vendorId] &&
+                    oppositeUsers[displayedAppointment.vendorId].avatar ? (
+                      <img
+                        src={oppositeUsers[displayedAppointment.vendorId].avatar}
+                        alt="Vendor avatar"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <User className="text-gray-400 w-6 h-6" />
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex justify-between">
+                      <h4 className="font-medium">
+                        {displayedAppointment.title || 'Unknown Vendor'},{' '}
+                        <span className="text-purple-600">
+                          {displayedAppointment.desc || 'No company info'}
+                        </span>
+                      </h4>
+                    </div>
+                    <div className="text-sm text-gray-500">
+                      {moment(displayedAppointment.start).isValid()
+                        ? moment(displayedAppointment.start).format('ddd, MMM Do, h:mm A')
+                        : 'Invalid date'}
+                    </div>
+                  </div>
+                  <div
+                    className="cursor-pointer"
+                    onClick={() =>
+                      alert(`Reminder set for ${displayedAppointment.title || 'Appointment'}`)
+                    }
+                  >
+                    <Bell className="w-4 h-4 text-purple-600" />
+                  </div>
+                </div>
+              ) : (
+                <p className="text-sm text-gray-500">No appointments available.</p>
+              )}
+            </div>
+
+            
+            <div className="bg-white rounded-[2rem] p-6 shadow">
+              <h3 className="font-bold mb-4">Schedule Appointment</h3>
+              <div className="flex items-center mb-3">
+                <div className="w-10 h-10 mr-3">
+                  {(() => {
+                    const opponent = opponentUsers.find((op) => op.id === selectedOpponent)
+                    if (opponent && opponent.avatar) {
+                      return (
+                        <img
+                          src={opponent.avatar}
+                          alt="Vendor avatar"
+                          className="w-full h-full rounded-full object-cover"
+                        />
+                      )
+                    } else {
+                      return <User className="w-10 h-10 text-gray-400" />
+                    }
+                  })()}
+                </div>
+                <div className="flex-1">
+                  <label className="block text-sm text-gray-700 font-semibold mb-1">
+                    Select Vendor:
+                  </label>
+                  <select
+                    className="border border-gray-300 rounded px-2 py-1 w-full"
+                    value={selectedOpponent}
+                    onChange={(e) => setSelectedOpponent(e.target.value)}
+                  >
+                    <option value="">Select</option>
+                    {opponentUsers.map((op) => (
+                      <option key={op.id} value={op.id}>
+                        {op.firstName} {op.lastName}
+                        {op.businessName ? ` - ${op.businessName}` : ''}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <button
+                className="bg-[#5F4B8B] text-white px-3 py-2 rounded shadow hover:bg-[#4A3971]"
+                onClick={handleOpenAppointmentModal}
+              >
+                Schedule Appointment
+              </button>
+            </div>
+
+            
+            <div className="bg-white shadow rounded-lg p-4">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-md font-semibold text-gray-700">My Availability</h3>
+                <button
+                  onClick={() => setShowAvailabilityForm(true)}
+                  className="bg-[#5F4B8B] text-white px-2 py-1 rounded shadow hover:bg-[#4A3971]"
+                >
+                  +
+                </button>
+              </div>
+              <ul className="text-sm text-gray-600 space-y-1">
+                {availability.map((slot, idx) => {
+                  const formattedStart = slot.startTime
+                    ? moment(slot.startTime, 'HH:mm').format('h:mm A')
+                    : ''
+                  const formattedEnd = slot.endTime
+                    ? moment(slot.endTime, 'HH:mm').format('h:mm A')
+                    : ''
+                  const formattedDay = slot.date ? moment(slot.date).format('ddd') : ''
+                  return (
+                    <li key={idx} className="flex justify-between">
+                      <span className="font-medium text-gray-700">{formattedDay}</span>
+                      <span>
+                        {formattedStart && formattedEnd ? `${formattedStart} - ${formattedEnd}` : ''}
+                      </span>
+                    </li>
+                  )
+                })}
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      
       <div
         className="fixed bottom-3 right-10 cursor-pointer z-50"
-        onClick={() => navigate('/buyer-chat')}
+        onClick={() => navigate('/inbox')}
       >
         <img
           src={chatImage}
@@ -544,86 +803,73 @@ const BuyerCalendarPage: React.FC = () => {
         />
       </div>
 
-      {/* Modal for creating/editing an appointment */}
-      {showModal && modalData && (
-        <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
-          <div className="bg-white rounded shadow-lg p-6 w-96">
-            <h2 className="text-xl font-bold mb-4">
-              {isEditing ? 'Edit Appointment' : 'New Appointment'}
-            </h2>
-            <div className="mb-4">
-              <label className="block text-sm font-semibold mb-1">Title</label>
-              <input
-                type="text"
-                className="border p-2 w-full rounded"
-                value={modalData.title}
-                onChange={(e) =>
-                  setModalData({ ...modalData, title: e.target.value })
-                }
-              />
-            </div>
-            <div className="mb-4">
-              <label className="block text-sm font-semibold mb-1">Start</label>
-              <input
-                type="datetime-local"
-                className="border p-2 w-full rounded"
-                value={moment(modalData.start).format('YYYY-MM-DDTHH:mm')}
-                onChange={(e) =>
-                  setModalData({
-                    ...modalData,
-                    start: new Date(e.target.value)
-                  })
-                }
-              />
-            </div>
-            <div className="mb-4">
-              <label className="block text-sm font-semibold mb-1">End</label>
-              <input
-                type="datetime-local"
-                className="border p-2 w-full rounded"
-                value={moment(modalData.end).format('YYYY-MM-DDTHH:mm')}
-                onChange={(e) =>
-                  setModalData({
-                    ...modalData,
-                    end: new Date(e.target.value)
-                  })
-                }
-              />
-            </div>
-            <div className="mb-4">
-              <label className="block text-sm font-semibold mb-1">
-                Description
-              </label>
-              <textarea
-                className="border p-2 w-full rounded"
-                value={modalData.desc || ''}
-                onChange={(e) =>
-                  setModalData({ ...modalData, desc: e.target.value })
-                }
-              />
-            </div>
-            <div className="flex justify-end space-x-2">
-              <button
-                onClick={() => {
-                  setShowModal(false)
-                  setModalData(null)
-                  setIsEditing(false)
-                }}
-                className="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleSaveEvent}
-                className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded"
-              >
-                {isEditing ? 'Update' : 'Save'}
-              </button>
-            </div>
-          </div>
-        </div>
+      
+      {showAvailabilityForm && (
+        <AvailabilityFormModal
+          onClose={() => setShowAvailabilityForm(false)}
+          onSave={(availabilityData) => {
+            const buyerDocRef = doc(db, 'Buyers', authUser?.uid || '')
+            const newAvail = {
+              date: availabilityData.selectedDate.toISOString(),
+              startTime: availabilityData.startTime,
+              endTime: availabilityData.endTime,
+              duration: availabilityData.duration,
+            }
+            updateDoc(buyerDocRef, { availability: arrayUnion(newAvail) })
+              .then(() => {
+                console.log('Availability updated:', newAvail)
+                setAvailability((prev) => [...prev, newAvail])
+              })
+              .catch((err) => {
+                console.error('Error saving availability:', err)
+                alert('Failed to save availability.')
+              })
+            setShowAvailabilityForm(false)
+          }}
+        />
       )}
-    </>
+
+      
+      {showAppointmentModal && (
+        <AppointmentModal
+          onClose={() => setShowAppointmentModal(false)}
+          onSchedule={handleSaveAppointment}
+          selectedPartner={selectedOpponent}
+        />
+      )}
+
+      
+      {showMeetingModal && selectedMeeting && (
+        <MeetingDetailsModal
+          isOpen={showMeetingModal}
+          onClose={() => setShowMeetingModal(false)}
+          appointmentId={selectedMeeting.appointmentId}
+          title={selectedMeeting.title}
+          description={selectedMeeting.description}
+          start={selectedMeeting.start}
+          end={selectedMeeting.end}
+          category={selectedMeeting.category}
+          withUserName={selectedMeeting.withUserName}
+          withUserAvatar={selectedMeeting.withUserAvatar}
+          opponentRole={selectedMeeting.opponentRole}
+          opponentId={selectedMeeting.opponentId}
+          selectedTime={selectedMeeting.selectedTime}
+          durationMinutes={selectedMeeting.durationMinutes || 30}
+          guests={selectedMeeting.guests}
+          meetingLink={selectedMeeting.meetingLink}
+          onRescheduleSuccess={(newStart, newSlot) => {
+            setSelectedMeeting((prev: any) => {
+              if (!prev) return prev
+              return {
+                ...prev,
+                start: newStart,
+                selectedTime: newSlot,
+              }
+            })
+          }}
+        />
+      )}
+    </BaseLayout>
   )
 }
 

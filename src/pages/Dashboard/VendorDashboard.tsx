@@ -7,11 +7,11 @@ import { doc, getDoc, setDoc, collection, query, where, getDocs } from 'firebase
 import { useAuth } from '../../utils/AuthContext';
 import { User } from 'lucide-react'
 
-// Example child components (you can remove them if you prefer to fetch directly here)
+
 import VendorServices from '../../components/Dashboard/Catalogue/VendorServices';
 import VendorProducts from '../../components/Dashboard/Catalogue/VendorProducts';
 
-// Example interfaces
+
 interface Buyer {
   name: string;
   company: string;
@@ -319,9 +319,9 @@ const VendorDashboard: React.FC = () => {
             </div>
           ) : (
             <>
-              {/* If we do have some services or products, show them normally */}
+             
               <div className="space-y-8 md:space-y-12">
-                {/* Example child components that display services/products */}
+               
                 <VendorServices />
                 <VendorProducts />
               </div>
