@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { runTransaction } from 'firebase/firestore'
 import {
     doc,
     getDoc,
@@ -29,6 +30,10 @@ import ImprovedPdfViewer from '../../components/chat/ImprovedPdfViewer'
 import DocumentPreview from '../../components/chat/DocumentPreview'
 import AppointmentModal from '../../components/chat/AppointmentModal';
 import moment from 'moment'
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import { useAuth } from '../../utils/AuthContext'
+
 
 const InboxPage = () => {
     // States
@@ -42,9 +47,11 @@ const InboxPage = () => {
     // At the top with your other state declarations:
     const [documentFile, setDocumentFile] = useState(null)
     const [documentPreview, setDocumentPreview] = useState(null)
+    const [selectedPartner, setSelectedPartner] = useState('');
       
     // Appointment states 
     const [showAppointmentModal, setShowAppointmentModal] = useState(false)
+    
 
     // Use store hooks
     const { currentUser, fetchUserInfo } = useUserStore()
@@ -57,16 +64,20 @@ const InboxPage = () => {
     )
     const [showChatList, setShowChatList] = useState(true)
 
-    const vendorAvailabilityData = [
-        { day: 'Monday', start: '08:00', end: '17:00' },
-        { day: 'Tuesday', start: '08:00', end: '17:00' },
-        { day: 'Wednesday', start: '08:00', end: '17:00' },
-        { day: 'Thursday', start: '08:00', end: '17:00' },
-        { day: 'Friday', start: '08:00', end: '17:00' },
-        { day: 'Saturday', start: '10:00', end: '14:00' },
-        { day: 'Sunday', start: '00:00', end: '00:00' }, // No availability on Sunday
-      ]
+    // const vendorAvailabilityData = [
+    //     { day: 'Monday', start: '08:00', end: '17:00' },
+    //     { day: 'Tuesday', start: '08:00', end: '17:00' },
+    //     { day: 'Wednesday', start: '08:00', end: '17:00' },
+    //     { day: 'Thursday', start: '08:00', end: '17:00' },
+    //     { day: 'Friday', start: '08:00', end: '17:00' },
+    //     { day: 'Saturday', start: '10:00', end: '14:00' },
+    //     { day: 'Sunday', start: '00:00', end: '00:00' }, // No availability on Sunday
+    //   ]
 
+      // Fetch availability from Firestore (using the correct collection based on role)
+
+
+     
     // Handle window resize for responsive design
     useEffect(() => {
         const handleResize = () => {
@@ -283,20 +294,49 @@ const InboxPage = () => {
         }
     }, [chatId])
 
+    const fetchAvailabilityForUser = async (userId, role) => {
+        const collectionName = role === 'vendor' ? 'Vendors' : 'Buyers';
+        const userDocRef = doc(db, collectionName, userId);
+        try {
+          const userDocSnap = await getDoc(userDocRef);
+          if (userDocSnap.exists()) {
+            const data = userDocSnap.data();
+            return data.availability || [];
+          } else {
+            console.warn('No availability found for user in collection', collectionName);
+            return [];
+          }
+        } catch (error) {
+          console.error('Error fetching availability for user:', error);
+          return [];
+        }
+      };
+
     // Scroll to bottom when messages update
     useEffect(() => {
         endRef.current?.scrollIntoView({ behavior: 'smooth' })
     }, [messages])
+
 
     // Handle selecting a chat
     const handleSelectChat = async (chat) => {
         try {
             console.log('Selected chat user data:', chat.user)
 
+            if (chat.user) {
+                // *** ADD THIS LINE ***
+                setSelectedPartner(chat.user.id);
+                console.log("Selected partner ID:", chat.user.id);
+              }
+          
+
+
             // Mark as seen
             const updatedChats = chats.map((c) =>
                 c.chatId === chat.chatId ? { ...c, isSeen: true } : c
             )
+
+            
 
             const userId = getCurrentUserId()
 
@@ -563,59 +603,106 @@ const InboxPage = () => {
             console.error('Error changing chat:', error)
         }
     }
+    const combineDateAndTime = (date, timeString) => {
+        // Set the date to start of day (local)
+        const dateMoment = moment(date).startOf('day')
+        // Parse the time string (assumed to be in 'h:mm A' format)
+        const timeMoment = moment(timeString, 'h:mm A')
+        // Merge hours and minutes from the time into the date
+        dateMoment.hours(timeMoment.hours())
+        dateMoment.minutes(timeMoment.minutes())
+        return dateMoment.toDate()
+      }
 
-       // New: Save appointment data to Firestore
-       const saveAppointment = async (appointmentData) => {
-        try {
-          const buyerId = user?.id;
-          const vendorId = getCurrentUserId();
-          if (!buyerId || !vendorId) {
-            alert("Missing buyer or vendor information.");
-            return;
+      const { user: authUser } = useAuth();
+  // Updated saveAppointment using selectedDate directly
+  const saveAppointment = async (appointmentData) => {
+    console.log("Saving appointment with data:", appointmentData)
+    try {
+
+
+    const isBuyer = authUser?.role === 'buyer';
+    const buyerId = isBuyer ? authUser?.uid : selectedPartner;
+    const vendorId = isBuyer ? selectedPartner : authUser?.uid;
+
+    console.log('buyerid',buyerId)
+    console.log('vendorid',vendorId)
+    
+    if (!buyerId || !vendorId) {
+        alert("Missing buyer or vendor information.")
+        return
+      }
+      
+      // Combine selectedDate and selectedTime into a single Date object
+      const combinedDateTime = combineDateAndTime(
+        appointmentData.selectedDate,
+        appointmentData.selectedTime
+      )
+      
+      const appointmentId = new Date().getTime().toString()
+      
+      // Create the data to store, using the combined date/time.
+      const safeData = {
+        ...appointmentData,
+        buyerId,
+        vendorId,
+        createdAt: new Date(),
+        // Save the combined Date (Firestore will store it as a Timestamp)
+        selectedDate: combinedDateTime,
+      }
+      
+      // Run a transaction to check for conflicts and create the appointment atomically.
+      await runTransaction(db, async (transaction) => {
+        // Build a query to check for any existing appointment for this vendor on the same day.
+        const startOfDay = moment(combinedDateTime).startOf('day').toDate()
+        const endOfDay = moment(combinedDateTime).endOf('day').toDate()
+        const appointmentsRef = collection(db, "appointments")
+        const q = query(
+          appointmentsRef,
+          where("vendorId", "==", vendorId),
+          where("selectedDate", ">=", startOfDay),
+          where("selectedDate", "<=", endOfDay)
+        )
+        const querySnapshot = await getDocs(q)
+        
+        // Check if any appointment exists with the same selectedTime.
+        let conflict = false
+        querySnapshot.forEach(docSnap => {
+          const data = docSnap.data()
+          // For a strict equality check on the time string.
+          if (data.selectedTime === appointmentData.selectedTime) {
+            conflict = true
           }
-      
-          // Generate a unique ID for the appointment
-          const appointmentId = new Date().getTime().toString();
-      
-          // Convert the moment object to a JavaScript Date
-          const dateObjAsDate = appointmentData.selectedDay.dateObj.toDate();
-      
-          // Build a safe object for Firestore with a plain Date for the selected day
-          const safeData = {
-            ...appointmentData,
-            buyerId,
-            vendorId,
-            createdAt: new Date(),
-            selectedDay: {
-              ...appointmentData.selectedDay,
-              dateObj: dateObjAsDate,
-            },
-          };
-      
-          await setDoc(doc(db, "appointments", appointmentId), safeData);
-      
-          // Add an appointment notification message to the chat as a system message
-          if (chatId) {
-            const notificationMessage = {
-              senderId: "system",
-              text: `Appointment scheduled for ${moment(dateObjAsDate).format(
-                "ddd, MMM Do, h:mm A"
-              )}`,
-              createdAt: new Date(),
-              isNotification: true, // Flag to identify this as a notification message
-            };
-      
-            await updateDoc(doc(db, "chats", chatId), {
-              messages: arrayUnion(notificationMessage),
-            });
-          }
-      
-          toast.success("Appointment scheduled successfully!");
-        } catch (error) {
-          console.error("Error scheduling appointment:", error);
-          toast.error("Failed to schedule appointment.");
+        })
+        
+        if (conflict) {
+          throw new Error("This time slot is already booked.")
         }
-      };
+        
+        // If no conflict, create the appointment document.
+        const appointmentDocRef = doc(db, "appointments", appointmentId)
+        transaction.set(appointmentDocRef, safeData)
+      })
+      
+      // Optionally update the chat with a notification message.
+      if (chatId) {
+        const notificationMessage = {
+          senderId: "system",
+          text: `Appointment scheduled for ${moment(combinedDateTime).format("ddd, MMM Do, h:mm A")}`,
+          createdAt: new Date(),
+          isNotification: true,
+        }
+        await updateDoc(doc(db, "chats", chatId), {
+          messages: arrayUnion(notificationMessage),
+        })
+      }
+      
+      toast.success("Appointment scheduled successfully!")
+    } catch (error) {
+      console.error("Error scheduling appointment:", error)
+      toast.error(error.message || "Failed to schedule appointment.")
+    }
+  }
       
   // Handler to open appointment modal
   const handleOpenAppointmentModal = () => {
@@ -624,8 +711,9 @@ const InboxPage = () => {
 
   // Handler for appointment modal save
   const handleSaveAppointment = (appointmentData) => {
-    saveAppointment(appointmentData)
-    setShowAppointmentModal(false)
+    console.log("Received appointment data in parent:", appointmentData);
+    saveAppointment(appointmentData);
+    setShowAppointmentModal(false);
   }
 
     return (
@@ -1090,14 +1178,14 @@ const InboxPage = () => {
                     )}
                 </div>
             </div>
-
+        <ToastContainer></ToastContainer>
             {showAppointmentModal && (
-        <AppointmentModal
-          onClose={() => setShowAppointmentModal(false)}
-          onSchedule={handleSaveAppointment}
-          availability={vendorAvailabilityData}
-        />
-      )}
+  <AppointmentModal
+  onClose={() => setShowAppointmentModal(false)}
+  onSchedule={handleSaveAppointment}
+  selectedPartner={selectedPartner} // Provide a fallback array
+/>
+)}
 
             {showNewChatModal && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">

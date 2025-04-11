@@ -6,11 +6,11 @@ import { db } from '../../utils/firebase';
 import { doc, getDoc, setDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { useAuth } from '../../utils/AuthContext';
 
-// Example child components (you can remove them if you prefer to fetch directly here)
+
 import VendorServices from '../../components/Dashboard/Catalogue/VendorServices';
 import VendorProducts from '../../components/Dashboard/Catalogue/VendorProducts';
 
-// Example interfaces
+
 interface Buyer {
   name: string;
   company: string;
@@ -324,8 +324,9 @@ const VendorDashboard: React.FC = () => {
             </div>
           ) : (
             <>
-              {/* If we do have some services or products, show them normally */}
+             
               <div className="space-y-8 md:space-y-12">
+               
                 <VendorServices />
                 <VendorProducts />
               </div>
