@@ -115,6 +115,8 @@ useEffect(() => {
     console.log('BuyerDashboard: user changed:', user)
 }, [user])
 
+
+
 // State for the popup form
 const [showPopup, setShowPopup] = useState(false)
 const [formData, setFormData] = useState({
@@ -233,7 +235,7 @@ if (loadingDocCheck) {
                     <div className="flex-1 p-8">
                         <div className="flex justify-between items-center mb-8">
                             <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-[60px] font-bold font-nunito">
-                                Welcome, {currentUser?.firstName || "buyer"}
+                                Welcome, {user?.firstName || "buyer"}
 
                             </h1>
                             <div className="flex gap-4">
