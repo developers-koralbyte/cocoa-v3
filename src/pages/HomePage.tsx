@@ -17,8 +17,8 @@ function App() {
       <LandingPage />
       <CollaborationSection />
       <ProcurementSection />
-      <TopSuppliers/>
       <BusinessFeatures />
+      <TopSuppliers/>
       <UserTestimonial />
       <LatestNews />
       <Pricing/>

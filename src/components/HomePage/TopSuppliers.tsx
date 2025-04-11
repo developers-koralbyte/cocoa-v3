@@ -1,94 +1,95 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react'
 
 const suppliers = [
-  {
-    id: 1,
-    image:
-      "https://images.unsplash.com/photo-1574169208507-84376144848b?auto=format&fit=crop&q=80&w=200&h=200",
-  },
-  {
-    id: 2,
-    image:
-      "https://images.unsplash.com/photo-1579546929518-9e396f3cc809?auto=format&fit=crop&q=80&w=200&h=200",
-  },
-  {
-    id: 3,
-    image:
-      "https://images.unsplash.com/photo-1518640467707-6811f4a6ab73?auto=format&fit=crop&q=80&w=200&h=200",
-  },
-];
+    {
+        id: 1,
+        image: 'https://images.unsplash.com/photo-1574169208507-84376144848b?auto=format&fit=crop&q=80&w=200&h=200',
+    },
+    {
+        id: 2,
+        image: 'https://images.unsplash.com/photo-1579546929518-9e396f3cc809?auto=format&fit=crop&q=80&w=200&h=200',
+    },
+    {
+        id: 3,
+        image: 'https://images.unsplash.com/photo-1518640467707-6811f4a6ab73?auto=format&fit=crop&q=80&w=200&h=200',
+    },
+]
 
 const TopSuppliers = () => {
-  const [position, setPosition] = useState(0);
-  const itemWidth = 220; // width + gap
-  const screenWidth = window.innerWidth;
-  const duplicateCount = Math.ceil(screenWidth / itemWidth) + 5; // Enough duplicates to fill screen
-  const suppliersLoop = Array(duplicateCount)
-    .fill(suppliers)
-    .flat()
-    .map((supplier, index) => ({
-      ...supplier,
-      uniqueId: `${supplier.id}-${index}`,
-    }));
+    const [position, setPosition] = useState(0)
+    const itemWidth = 220
+    const screenWidth = window.innerWidth
+    const duplicateCount = Math.ceil(screenWidth / itemWidth) + 5
 
-  const totalItems = suppliersLoop.length;
-  const containerWidth = totalItems * itemWidth;
+    const suppliersLoop = Array(duplicateCount)
+        .fill(suppliers)
+        .flat()
+        .map((supplier, index) => ({
+            ...supplier,
+            uniqueId: `${supplier.id}-${index}`,
+        }))
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setPosition((prev) => {
-        const newPosition = prev - 2;
-        if (Math.abs(newPosition) >= containerWidth / 2) {
-          return 0;
-        }
-        return newPosition;
-      });
-    }, 20);
+    const totalItems = suppliersLoop.length
+    const containerWidth = totalItems * itemWidth
 
-    return () => clearInterval(interval);
-  }, [containerWidth]);
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setPosition((prev) => {
+                const newPosition = prev - 2
+                if (Math.abs(newPosition) >= containerWidth / 2) {
+                    return 0
+                }
+                return newPosition
+            })
+        }, 20)
 
-  return (
-    <div
-      className="font-nunito min-h-screen overflow-hidden"
-      style={{
-        background: "linear-gradient(to bottom, #D4CDF4A1, white)",
-      }}
-    >
-      <div className="container mx-auto px-4 py-8 text-center">
-        <h1 className="font-nunito text-[56px] font-extrabold mb-4">
-          Our Top Suppliers
-        </h1>
-        <p className="font-sourceSans text-[25px] mb-16 max-w-2xl mx-auto">
-          Showcasing Our Trusted Suppliers: Quality, Reliability, and
-          Exceptional Service at Your Fingertips!
-        </p>
+        return () => clearInterval(interval)
+    }, [containerWidth])
 
-        <div className="relative w-full h-[200px] overflow-hidden">
-          <div
-            className="absolute flex gap-8"
-            style={{
-              transform: `translateX(${position}px)`,
-              width: `${containerWidth}px`, // Ensure the moving container is wide enough
-            }}
-          >
-            {suppliersLoop.map((supplier) => (
-              <div
-                key={supplier.uniqueId}
-                className="w-[200px] h-[200px] flex-shrink-0 rounded-full overflow-hidden shadow-xl transform hover:scale-105 transition-transform duration-300"
-              >
-                <img
-                  src={supplier.image}
-                  alt={`Supplier ${supplier.uniqueId}`}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-            ))}
-          </div>
+    return (
+        <div className="bg-gradient-to-b from-purple-50 to-white pt-20 pb-10">
+            <div className="container mx-auto px-4 text-center">
+                <h1 className="text-5xl font-bold mb-4 font-nunito">
+                    Our Top Suppliers
+                </h1>
+                <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-12 font-sourceSans">
+                    Showcasing Our Trusted Suppliers: Quality, Reliability, and
+                    Exceptional Service at Your Fingertips!
+                </p>
+
+                <div
+                    className="relative w-full h-[200px] overflow-hidden"
+                    style={{
+                        WebkitMaskImage:
+                            'linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%)',
+                        maskImage:
+                            'linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%)',
+                    }}
+                >
+                    <div
+                        className="absolute flex gap-8"
+                        style={{
+                            transform: `translateX(${position}px)`,
+                            width: `${containerWidth}px`,
+                        }}
+                    >
+                        {suppliersLoop.map((supplier) => (
+                            <div
+                                key={supplier.uniqueId}
+                                className="w-[200px] h-[200px] flex-shrink-0 rounded-full overflow-hidden transform hover:scale-105 transition-transform duration-300"
+                            >
+                                <img
+                                    src={supplier.image}
+                                    alt={`Supplier ${supplier.uniqueId}`}
+                                    className="w-full h-full object-cover"
+                                />
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </div>
         </div>
-      </div>
-    </div>
-  );
-};
+    )
+}
 
-export default TopSuppliers;
+export default TopSuppliers
