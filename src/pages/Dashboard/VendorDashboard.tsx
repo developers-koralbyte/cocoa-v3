@@ -1,11 +1,10 @@
 import React, { useState, useEffect, ChangeEvent, FormEvent } from 'react';
-import { Search, RotateCcw, Plus, Bell } from 'lucide-react';
+import { Search, RotateCcw, Plus, Bell, User } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import BaseLayout from '../../components/Dashboard/BaseLayout';
 import { db } from '../../utils/firebase';
 import { doc, getDoc, setDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { useAuth } from '../../utils/AuthContext';
-import { User } from 'lucide-react'
 
 
 import VendorServices from '../../components/Dashboard/Catalogue/VendorServices';
@@ -98,10 +97,10 @@ const VendorDashboard: React.FC = () => {
   });
 
   // Suppose you fetch services & products here OR use child components that do it
-  const [services, setServices] = useState<any[]>([]);  // any[] or define an interface
+  const [services, setServices] = useState<any[]>([]);
   const [products, setProducts] = useState<any[]>([]);
 
-  // Potential buyers
+  // Potential buyers from Firestore (if you implement a real matching system)
   const [potentialBuyers, setPotentialBuyers] = useState<Buyer[]>([]);
 
   useEffect(() => {
@@ -199,7 +198,7 @@ const VendorDashboard: React.FC = () => {
     fetchVendorData();
   }, [user.id]);
 
-  // 6) If categories exist, we can fetch potential buyers
+  // 6) If categories exist, we can fetch potential buyers from Firestore (example)
   useEffect(() => {
     const fetchPotentialBuyers = async () => {
       if (user.categories) {
@@ -214,21 +213,25 @@ const VendorDashboard: React.FC = () => {
           );
           const snapshot = await getDocs(buyersQ);
           const fetchedBuyers: Buyer[] = snapshot.docs.map((doc) => ({
-            id: doc.id,
-            ...(doc.data() as Buyer),
+            // Adjust to your actual data structure
+            name: doc.data().firstName || 'Unknown',
+            company: doc.data().businessName || 'Unknown',
+            match: 0, // placeholder
+            image: doc.data().avatar || '',
           }));
 
           // Calculate match
           const matched = fetchedBuyers.map((b) => {
-            const buyerInterests = Array.isArray(b.categories)
-              ? b.categories.map((c: string) => c.toLowerCase())
-              : [];
-            const common = vendorInterests.filter((v) => buyerInterests.includes(v));
+            // Suppose 'categories' is an array on each buyer
+            // This is just a quick example:
+            const buyerCats = (doc.data().categories || []).map((c: string) => c.toLowerCase());
+            const common = vendorInterests.filter((v) => buyerCats.includes(v));
             const match = vendorInterests.length
               ? Math.floor((common.length / vendorInterests.length) * 100)
               : 0;
             return { ...b, match };
           });
+
           setPotentialBuyers(matched);
         } catch (error) {
           console.error('Error fetching potential buyers:', error);
@@ -244,6 +247,7 @@ const VendorDashboard: React.FC = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  // Save vendor doc (merging any new fields)
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     try {
@@ -287,6 +291,7 @@ const VendorDashboard: React.FC = () => {
   return (
     <BaseLayout>
       <div className="flex min-h-screen bg-transparent">
+        {/* Main Content */}
         <div className="flex-1 p-8">
           <div className="flex justify-between items-center mb-8">
             <h1 className="text-4xl font-bold font-nunito">
@@ -369,20 +374,19 @@ const VendorDashboard: React.FC = () => {
               </h2>
               <div className="flex items-center gap-2">
                 <span className="text-sm text-gray-600 font-nunito">Vendor</span>
-                
               </div>
             </div>
             <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center">
-                {user.avatar ? (
-                  <img
-                    src={user.avatar}
-                    alt="User Avatar"
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <User className="text-gray-400 w-6 h-6" />
-                )}
-              </div>
+              {user.avatar ? (
+                <img
+                  src={user.avatar}
+                  alt="User Avatar"
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <User className="text-gray-400 w-6 h-6" />
+              )}
+            </div>
           </div>
 
           {/* Upcoming Appointments */}

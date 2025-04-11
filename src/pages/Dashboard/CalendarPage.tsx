@@ -1,15 +1,15 @@
-import React, { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import moment from 'moment'
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import moment from 'moment';
 import {
   Calendar as BigCalendar,
   momentLocalizer,
   View,
   SlotInfo,
   Event as RBCEvent,
-} from 'react-big-calendar'
-import ReactCalendar from 'react-calendar'
-import { Bell, User } from 'lucide-react'
+} from 'react-big-calendar';
+import ReactCalendar from 'react-calendar';
+import { Bell, User, Loader } from 'lucide-react';
 import {
   doc,
   getDoc,
@@ -592,32 +592,37 @@ const CalendarPage: React.FC = () => {
       <ToastContainer />
       <style dangerouslySetInnerHTML={{ __html: calendarOverrides }} />
       <div className="p-6 font-nunito">
+        {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-4xl font-bold text-gray-800">Calendar</h1>
+          {/* Example top-right user info */}
           <div className="flex items-center gap-x-5 gap-4">
             <div>
               <h2 className="font-bold">
-                {authUser?.firstName || 'Harsh'},{' '}
-                {authUser?.businessName || 'Accountix'}
+                {authUser?.firstName || 'User'},{' '}
+                {authUser?.businessName || 'Company'}
               </h2>
               <div className="flex items-center gap-2">
                 <span className="text-sm text-gray-600">
-                  {authUser?.role || 'Vendor'}
+                  {authUser?.role || 'User'}
                 </span>
-                <span className="text-xs bg-purple-200 px-2 py-1 rounded-full">
-                  Premium Account
-                </span>
+                {authUser?.premiumAccount && (
+                  <span className="text-xs bg-purple-200 px-2 py-1 rounded-full">
+                    Premium Account
+                  </span>
+                )}
               </div>
             </div>
-            <div className="w-12 h-12 rounded-full overflow-hidden">
-              <img
-                src={
-                  authUser?.avatar ||
-                  'https://via.placeholder.com/150?text=No+Image'
-                }
-                alt="User Avatar"
-                className="w-full h-full object-cover"
-              />
+            <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center">
+              {authUser?.avatar ? (
+                <img
+                  src={authUser.avatar}
+                  alt="User Avatar"
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <User className="text-gray-400 w-6 h-6" />
+              )}
             </div>
           </div>
         </div>
@@ -658,9 +663,7 @@ const CalendarPage: React.FC = () => {
                 prev2Label={null}
                 minDetail="month"
                 maxDetail="month"
-                formatMonthYear={(locale, date) =>
-                  moment(date).format('MMMM YYYY')
-                }
+                formatMonthYear={(_, date) => moment(date).format('MMMM YYYY')}
               />
             </div>
 
@@ -896,7 +899,7 @@ const CalendarPage: React.FC = () => {
 )}
 
     </BaseLayout>
-  )
-}
+  );
+};
 
-export default CalendarPage
+export default CalendarPage;

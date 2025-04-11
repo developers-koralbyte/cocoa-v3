@@ -3,6 +3,9 @@ import { useUserStore } from "../../../utils/userStore";
 
 interface HeaderProps {
   defaultAvatar?: string;
+  userName: string;
+  userRole: string;
+  userImage: string;
 }
 
 const Header: React.FC<HeaderProps> = ({
