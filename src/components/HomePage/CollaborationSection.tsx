@@ -1,7 +1,7 @@
 import fourCards from "../../assets/img/sectionTwo/four_cards.png";
 const CollaborationSection = () => {
   return (
-      <section className="flex flex-col md:flex-row items-center justify-between px-1 md:px-28 py-2 bg-white ">
+      <section className="flex flex-col md:flex-row items-center justify-between px-1 md:px-28 py-20 mt-0 pt-16 bg-white">
           {/* Left side: Just one big image */}
           <div className="md:w-full flex justify-center md:justify-start ">
               <img
@@ -27,7 +27,7 @@ const CollaborationSection = () => {
                   <br /> collaboration, COCOA empowers corporate teams to make
                   quicker, more informed decisions in real-time.
               </p>
-              <button className="font-nunito mt-6 px-14 text-[18px] py-3 bg-buttonBg text-white font-semibold rounded-full shadow-md font-sourceSans">
+              <button className="mt-6 px-14 text-[18px] py-3 bg-buttonBg text-white font-semibold rounded-full shadow-md font-sourceSans">
                   Start Exploring
               </button>
           </div>
