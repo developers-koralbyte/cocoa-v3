@@ -147,7 +147,6 @@ const LandingPage = () => {
                                 From enterprise-level corporate services and
                                 leading ERP solutions (including NetSuite, SAP
                                 S/4HANA, Oracle) to commercial equipment and
-                                food & beverage procurement, COCOA
                                 revolutionizes B2B purchasing by providing
                                 real-time communication with trusted suppliers
                                 in one integrated platform.
