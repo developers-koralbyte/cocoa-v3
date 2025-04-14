@@ -4,6 +4,9 @@ import section2 from '../../assets/img/SellingPointSection/pro2.png'
 import invoice from '../../assets/img/SellingPointSection/invoice.png'
 import rectangle from '../../assets/img/SellingPointSection/rectangle.png'
 
+import imageOne from '../../assets/img/SellingPointSection/imageOne.png'
+import imageTwo from '../../assets/img/SellingPointSection/imageTwo.png'
+
 import bgImageMobile from '../../assets/img/SellingPointSection/bgImageMobile.png'
 
 const ProcurementSection = () => {
@@ -17,24 +20,22 @@ const ProcurementSection = () => {
                 }}
             >
                 {/* Title Section */}
-                <div className="flex flex-center font-nunito pt-16 px-40 font-black text-black-900 justify-center leading-[4.5rem]">
-                    <h1 className="text-[75px] text-center">
-                        First-ever, all in one <br />
-                        <span className="text-buttonBg italic">
-                            procurement
-                        </span>
+                <div className="font-nunito pt-0 px-40 font-black text-black-900 leading-[4.5rem]">
+                    <h1 className="text-[75px] text-left pl-10 md:pl-20 font-nunito font-bold max-w-5xl">
+                        Canada's Chat-Based <br />
+                        <span className="text-buttonBg">procurement</span>
                         <br />
-                        platform in Canada
+                        Revolution
                     </h1>
                 </div>
 
                 {/* Content Section */}
-                <section className="container mx-auto px-12 py-24 md:py-26 max-w-[1300px]">
+                <section className="container mx-auto px-12 py-12 md:py-26 max-w-[1300px]">
                     <div className="md:flex items-center gap-x-12">
                         {/* Left Column: Image */}
                         <div className="flex justify-center md:justify-start">
                             <img
-                                src={section1}
+                                src={imageOne}
                                 alt="Chat bubble design representing procurement features"
                                 className="max-w-2xl"
                             />
@@ -45,14 +46,10 @@ const ProcurementSection = () => {
                             <h3 className="text-[24px] font-bold leading-[2.75rem] font-nunito">
                                 Real-Time Chat with Suppliers
                             </h3>
-                            <p className="font-sourceSans text-[20px]">
-                                Connect instantly with verified suppliers
-                                accross <br />
-                                Canada through direct messaging. No more <br />
-                                waiting for emails or phone calls - discuss
-                                quotes
-                                <br />
-                                negotitate terms, and close deal in real time.
+                            <p className="font-sourceSans text-[20px] max-w-[820px]">
+                                Instantly connect with verified suppliers across
+                                Canada via direct messaging. Skip the wait—chat,
+                                negotiate, and close deals in real time.
                             </p>
                         </div>
                     </div>
@@ -60,24 +57,21 @@ const ProcurementSection = () => {
                     <div className="mt-10 ml-10 md:flex items-center gap-x-12 text-right">
                         {/* Left Column: Text */}
                         <div className="mt-8 max-w-xl text-right">
-                            <h3 className="font-nunito  text-[24px] font-bold leading-[0.75rem]">
-                                AI-Powered Match & Chat-to-Order <br /> <br /> Conversion
+                            <h3 className="font-nunito  text-[22px] font-bold leading-[0.75rem]">
+                                AI-Powered Buyers / Vendors Matching
+                                <br /> <br />{' '}
                             </h3>
                             <p className="font-sourceSans place-items-start mt-4 text-[20px]">
-                                Get matched with the most suitable
-                                buyers/vendors through our intelligent AI
-                                matching algorithm. Then turn chat conversations
-                                directly into purchase orders with a single
-                                click. Maintain clear documentation of all
-                                negotiations and agreements through your chat <br />
-                                history.
+                                AI/ML driven model to match you with the most
+                                compatible business partners and opportunities
+                                in the market.
                             </p>
                         </div>
 
                         {/* Right Column: Image */}
                         <div className="flex justify-center md:justify-start">
                             <img
-                                src={section2}
+                                src={imageTwo}
                                 alt="Match percentage with suppliers bubble image"
                                 className="max-w-2xl"
                             />
@@ -109,18 +103,17 @@ const ProcurementSection = () => {
                             <h3 className="text-[24px] font-bold leading-[2.75rem] font-nunito">
                                 Live Document Sharing
                             </h3>
-                            <p className="font-sourceSans text-[20px]">
-                                Share and review crucial documents in real{' '}
-                                <br />
-                                time during chat conversations. Instantly
-                                <br />
+                            <p className="font-sourceSans text-[20px] max-w-[800px]">
+                                Share and review crucial documents in real time
+                                during chat <br /> conversations. Instantly
                                 exchange quotes, specifications, and contracts
-                                <br />
                                 while discussing details with suppliers.
                             </p>
                         </div>
                     </div>
                 </section>
+                {/* Fade-out gradient for seamless transition to next section */}
+                <div className="hidden lg:block h-20 w-full bg-gradient-to-b from-transparent to-white"></div>
             </section>
 
             {/* Mobile Layout - Only visible on small screens */}
