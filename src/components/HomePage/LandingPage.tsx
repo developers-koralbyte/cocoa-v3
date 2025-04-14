@@ -1,5 +1,6 @@
 import bgWave from '../../assets/img/MainSection/bgWave.png'
 import bgWaveUpdated from '../../assets/img/MainSection/bgWaveUpdated.png'
+import bgWaveNew from '../../assets/img/MainSection/bgWaveNew.png'
 import cocoaLogo from '../../assets/img/cocoa-logo.png'
 import { useNavigate } from 'react-router-dom'
 import laptopImage from '../../assets/img/MainSection/laptop.png'
@@ -23,7 +24,7 @@ const LandingPage = () => {
             <section
                 className="relative bg-white w-full hidden lg:block pb-[160px]"
                 style={{
-                    backgroundImage: `url(${bgWaveUpdated})`,
+                    backgroundImage: `url(${bgWaveNew})`,
                     backgroundSize: '100% auto',
                     backgroundRepeat: 'no-repeat',
                     backgroundPosition: 'bottom',
@@ -147,7 +148,6 @@ const LandingPage = () => {
                                 From enterprise-level corporate services and
                                 leading ERP solutions (including NetSuite, SAP
                                 S/4HANA, Oracle) to commercial equipment and
-                                food & beverage procurement, COCOA
                                 revolutionizes B2B purchasing by providing
                                 real-time communication with trusted suppliers
                                 in one integrated platform.
