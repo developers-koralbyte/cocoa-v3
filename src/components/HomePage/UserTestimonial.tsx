@@ -1,6 +1,7 @@
 import imgOne from '../../components/HomePage/userOne.jpeg'
 import imgTwo from '../../components/HomePage/userTwo.jpeg'
 import imgThree from '../../components/HomePage/userThree.jpeg'
+import aliPhoto from '../HomePage/aliPhoto.jpg'
 interface Testimonial {
     id: number
     name: string
@@ -52,7 +53,13 @@ const UserTestimonial = () => {
                 {/* Main content section */}
                 <div className="flex flex-col lg:flex-row gap-8 items-center mb-4">
                     {/* Left side - Placeholder for photo */}
-                    <div className="lg:w-1/2">{/* PHOTO WILL GO HERE */}</div>
+                    <div className="lg:w-1/2 flex justify-center lg:justify-end">
+                        <img
+                            src={aliPhoto}
+                            alt="Ibne Ali - COCOA CEO"
+                            className="rounded-3xl w-[500px] h-[300px] object-cover shadow-lg"
+                        />
+                    </div>
 
                     {/* Right side - Quote content */}
                     <div className="lg:w-2/3">

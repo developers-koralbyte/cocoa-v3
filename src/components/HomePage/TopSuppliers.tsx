@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
+import koralbyteImg from '../HomePage/Koralbyte Vertical logo.png'
 
 const suppliers = [
     {
         id: 1,
-        image: 'https://images.unsplash.com/photo-1574169208507-84376144848b?auto=format&fit=crop&q=80&w=200&h=200',
+        image: koralbyteImg,
     },
     {
         id: 2,
