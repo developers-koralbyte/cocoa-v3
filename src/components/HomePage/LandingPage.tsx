@@ -1,4 +1,5 @@
 import bgWave from '../../assets/img/MainSection/bgWave.png'
+import bgWaveUpdated from '../../assets/img/MainSection/bgWaveUpdated.png'
 import cocoaLogo from '../../assets/img/cocoa-logo.png'
 import { useNavigate } from 'react-router-dom'
 import laptopImage from '../../assets/img/MainSection/laptop.png'
@@ -20,11 +21,12 @@ const LandingPage = () => {
         <>
             {/* Laptop Layout */}
             <section
-                className="relative bg-cover bg-no-repeat min-h-[1200px] w-full hidden lg:block"
+                className="relative bg-white w-full hidden lg:block pb-[160px]"
                 style={{
-                    backgroundImage: `url(${bgWave})`,
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'bottom center',
+                    backgroundImage: `url(${bgWaveUpdated})`,
+                    backgroundSize: '100% auto',
+                    backgroundRepeat: 'no-repeat',
+                    backgroundPosition: 'bottom',
                 }}
             >
                 <nav className="flex justify-between items-center px-16 py-10 w-full absolute top-0 left-0 z-50 bg-transparent">
@@ -111,7 +113,7 @@ const LandingPage = () => {
                                     {items.map((item, idx) => (
                                         <button
                                             key={idx}
-                                            className="block w-full text-left px-6 py-3 text-sm text-buttonBg hover:text-white hover:bg-buttonBg transition-colors"
+                                            className="block w-full text-left px-6 py-1 text-sm text-buttonBg hover:text-white hover:bg-buttonBg transition-colors"
                                             onClick={() => {
                                                 navigate(item.path)
                                                 setActiveDropdown(null)
@@ -135,31 +137,26 @@ const LandingPage = () => {
                 </nav>
 
                 <div className="flex w-full min-h-screen items-center">
-                    <div className="w-1/2 pt-56 pl-28">
-                        <h1 className="font-nunito text-[60px] font-bold leading-[75px] text-left text-buttonBg">
-                            Real-Time Global <br /> B2B Procurement <br />{' '}
-                            Through Chat
+                    <div className="w-1/2 pt-44 pl-28">
+                        <h1 className="font-nunito text-[45px] font-bold leading-tight text-left text-buttonBg whitespace-nowrap">
+                            Real-Time Global B2B Procurement Through Chat
                         </h1>
+
                         <div className="font-sourceSans">
-                            <p className="mt-4 text-[18px] text-buttonBg leading-relaxed">
-                                Transform your procurement process with
-                                COCOA—the first <br />
-                                chat-based procurement marketplace that connects
-                                you directly <br />
-                                with verified vendors and buyers in real-time.
+                            <p className="mt-4 text-[18px] text-black leading-relaxed">
+                                From enterprise-level corporate services and
+                                leading ERP solutions (including NetSuite, SAP
+                                S/4HANA, Oracle) to commercial equipment and
+                                food & beverage procurement, COCOA
+                                revolutionizes B2B purchasing by providing
+                                real-time communication with trusted suppliers
+                                in one integrated platform.
                             </p>
-                            <p className="mt-4 text-[18px] text-buttonBg leading-relaxed">
-                                From corporate services to SaaS & IT solutions,
-                                we eliminate <br />
-                                frangmented communication and lengthy RFPs,
-                                helping <br />
-                                you make faster decisions with qualified
-                                partners.
-                            </p>
-                            <p className="mt-6 text-[18px] font-bold text-buttonBg">
-                                Welcome to COCOA, where procurement meets real
-                                conversation. Find & connect with verified
-                                suppliers in one unified platform.
+
+                            <p className="mt-6 text-[18px] font-bold text-black">
+                                Welcome to COCOA, your comprehensive procurement
+                                marketplace connecting businesses with verified
+                                suppliers through instant chat communication.
                             </p>
                         </div>
 
@@ -179,14 +176,15 @@ const LandingPage = () => {
                         </div>
                     </div>
 
-                    <div className="w-1/2 flex items-center justify-end pt-56">
+                    {/* <div className="w-1/2 flex items-center justify-end pt-24 pr-12">
                         <img
                             src={laptopImage}
                             alt="Laptop Display"
-                            className="h-auto w-auto"
+                            className="w-[500px] max-w-full h-auto"
                         />
-                    </div>
+                    </div> */}
                 </div>
+                <div className="absolute bottom-[-9px] left-0 w-full h-[10px] bg-white z-10" />
             </section>
 
             {/* Mobile Layout */}
