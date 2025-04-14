@@ -145,18 +145,22 @@ const LandingPage = () => {
 
                         <div className="font-sourceSans">
                             <p className="mt-4 text-[18px] text-black leading-relaxed">
-                                From enterprise-level corporate services and
-                                leading ERP solutions (including NetSuite, SAP
-                                S/4HANA, Oracle) to commercial equipment and
-                                revolutionizes B2B purchasing by providing
-                                real-time communication with trusted suppliers
-                                in one integrated platform.
+                                Transform your procurement process with
+                                COCOA—the first chat-based procurement
+                                marketplace that connects you directly with
+                                verified vendors and buyers in real-time.
                             </p>
 
+                            <p className="mt-4 text-[18px] text-black leading-relaxed">
+                                From corporate services to SaaS & IT solutions,
+                                we eliminate fragmented communication and
+                                lengthy RFPs, helping you make faster decisions
+                                with qualified partners.
+                            </p>
                             <p className="mt-6 text-[18px] font-bold text-black">
-                                Welcome to COCOA, your comprehensive procurement
-                                marketplace connecting businesses with verified
-                                suppliers through instant chat communication.
+                                Welcome to COCOA, where procurement meets real
+                                conversation. Find & connect with verified
+                                suppliers in one unified platform.
                             </p>
                         </div>
 
