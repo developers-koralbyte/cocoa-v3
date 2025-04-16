@@ -4,6 +4,7 @@ import bgWaveNew from '../../assets/img/MainSection/bgWaveNew.png'
 import cocoaLogo from '../../assets/img/cocoa-logo.png'
 import { useNavigate } from 'react-router-dom'
 import laptopImage from '../../assets/img/MainSection/laptop.png'
+import dashboard from '../../components/HomePage/Dashboard.png'
 import { useState } from 'react'
 
 // For Mobile Responsiveness
@@ -180,13 +181,13 @@ const LandingPage = () => {
                         </div>
                     </div>
 
-                    {/* <div className="w-1/2 flex items-center justify-end pt-24 pr-12">
+                     <div className="w-1/2 flex items-center justify-end pt-24 pr-12">
                         <img
-                            src={laptopImage}
+                            src={dashboard}
                             alt="Laptop Display"
-                            className="w-[500px] max-w-full h-auto"
+                            className="w-[600px] max-w-full h-[350px] mt-28"
                         />
-                    </div> */}
+                    </div> 
                 </div>
                 <div className="absolute bottom-[-9px] left-0 w-full h-[10px] bg-white z-10" />
             </section>

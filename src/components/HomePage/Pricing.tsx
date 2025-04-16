@@ -25,7 +25,7 @@ const PricingCard = ({
         <div
             className={`rounded-3xl p-8 transition-all duration-300 ease-in-out transform hover:scale-105 hover:shadow-xl ${
                 isHighlighted
-                    ? 'bg-purple-200 shadow-lg hover:bg-purple-300'
+                    ? 'bg-[#D4CDF4] shadow-lg hover:bg-[#D4CDF4]'
                     : 'bg-white shadow-md hover:bg-gray-100'
             }`}
         >
