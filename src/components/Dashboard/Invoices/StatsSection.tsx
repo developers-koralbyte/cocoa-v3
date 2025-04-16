@@ -1,53 +1,38 @@
 // StatsSection.tsx
+
 import React from "react";
 import StatsCard from "./StatsCard";
 
 interface StatsSectionProps {
-  totalSales: string;       // e.g. "20400" for $20.4k
-  todayRevenue: string;     // e.g. "8200" for $8.2k
-  inEscrow: string;         // e.g. "18200" for $18.2k
-  itemsSold: number;        // e.g. 123
+  // e.g. "18500" for $18,500 outstanding
+  balanceOutstanding: string;
+  // e.g. "32000" for $32,000 total issued
+  issuedBalance: string;
 }
 
 const StatsSection: React.FC<StatsSectionProps> = ({
-  totalSales,
-  todayRevenue,
-  inEscrow,
-  itemsSold,
+  balanceOutstanding,
+  issuedBalance,
 }) => {
   // Convert string props to numbers
-  const salesNumber = parseFloat(totalSales) || 0;
-  const revenueNumber = parseFloat(todayRevenue) || 0;
-  const escrowNumber = parseFloat(inEscrow) || 0;
+  const boNumber = parseFloat(balanceOutstanding) || 0;
+  const ibNumber = parseFloat(issuedBalance) || 0;
 
-  // For demonstration, setting a dailyGoal of 50k
-  const dailyGoal = 50000;
-
-  const salesPercentage = (salesNumber / dailyGoal) * 100;
-  const revenuePercentage = (revenueNumber / dailyGoal) * 100;
-  const escrowPercentage = (escrowNumber / dailyGoal) * 100;
-
+  // You can tweak the descriptions / labels as you like
   const stats = [
     {
-      title: "Today's Sales",
-      value: `$${(salesNumber / 1000).toFixed(1)}k`,
-      description: `We have sold ${itemsSold} items.`,
+      title: "Oustanding Balance",
+      value: `$${boNumber.toLocaleString()}`,
+      description: "Unpaid invoice amounts",
       color: "#8664C6",
-      percentage: salesPercentage,
+      percentage: 0, // or any logic for the donut ring
     },
     {
-      title: "Today's Revenue",
-      value: `$${(revenueNumber / 1000).toFixed(1)}k`,
-      description: "Available to payout",
+      title: "Issued Balance",
+      value: `$${ibNumber.toLocaleString()}`,
+      description: "Total of all invoices issued",
       color: "#D97C4A",
-      percentage: revenuePercentage,
-    },
-    {
-      title: "In Escrow",
-      value: `$${(escrowNumber / 1000).toFixed(1)}k`,
-      description: "Pending payments.",
-      color: "#3DBA56",
-      percentage: escrowPercentage,
+      percentage: 0,
     },
   ];
 

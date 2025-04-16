@@ -1,4 +1,3 @@
-
 import { useEffect, useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
@@ -8,6 +7,7 @@ import {
   onSnapshot,
   deleteDoc,
   doc,
+  updateDoc,
 } from 'firebase/firestore'
 import { auth, db } from '../../../utils/firebase'
 import { useUserStore } from '../../../utils/userStore'
@@ -16,10 +16,7 @@ import VendorInvoiceTable from '../../../components/Dashboard/Invoices/VendorInv
 import StatsSection from '../../../components/Dashboard/Invoices/StatsSection'
 import Header from '../../../components/Dashboard/Invoices/HeaderProps'
 import CreateNewInvoice from '../../../assets/icons/VendorNewInvoice.svg'
-import {
-  downloadInvoice,
-  downloadMultipleInvoices,
-} from '../../../utils/InvoiceDownloadService'
+import { downloadMultipleInvoices } from '../../../utils/InvoiceDownloadService'
 
 interface InvoiceItem {
   id: number
@@ -27,7 +24,6 @@ interface InvoiceItem {
   quantity: number
   price: number
   tax: number
-  rate?: number
 }
 
 interface VendorInvoice {
@@ -59,7 +55,6 @@ const VendorInvoicesPage = () => {
   const [searchTerm, setSearchTerm] = useState('')
   const [downloadStatus, setDownloadStatus] = useState<string | null>(null)
 
-  // Listen to vendor invoices in real time
   useEffect(() => {
     const unsubscribeAuth = auth.onAuthStateChanged(async (user) => {
       if (user) {
@@ -69,7 +64,8 @@ const VendorInvoicesPage = () => {
             collection(db, 'vendorInvoices'),
             where('vendorId', '==', user.uid)
           )
-          const unsubscribeInvoices = onSnapshot(
+
+          onSnapshot(
             q,
             (snapshot) => {
               const invoiceData = snapshot.docs.map((doc) => ({
@@ -91,21 +87,27 @@ const VendorInvoicesPage = () => {
       }
       setIsLoading(false)
     })
+
     return () => unsubscribeAuth()
   }, [fetchUserInfo, navigate])
 
+  // ------------------
+  // Deleting invoices
+  // ------------------
   const handleDeleteSelected = async () => {
     if (selectedInvoices.length === 0) {
       alert('No invoices selected for deletion')
       return
     }
-    const confirmDelete = window.confirm(`Are you sure you want to delete ${selectedInvoices.length} invoice(s)?`)
-    if (!confirmDelete) return
+    if (!window.confirm(`Delete ${selectedInvoices.length} invoices?`)) return
+
     try {
       for (const invoiceId of selectedInvoices) {
         await deleteDoc(doc(db, 'vendorInvoices', invoiceId))
       }
-      setInvoices((prev) => prev.filter(invoice => !selectedInvoices.includes(invoice.id)))
+      setInvoices((prev) =>
+        prev.filter((invoice) => !selectedInvoices.includes(invoice.id))
+      )
       setSelectedInvoices([])
       alert('Invoice(s) deleted successfully')
     } catch (error) {
@@ -114,22 +116,34 @@ const VendorInvoicesPage = () => {
     }
   }
 
+  // ------------------
+  // Downloading invoices
+  // ------------------
   const handleDownloadAll = async () => {
     if (selectedInvoices.length === 0) {
       alert('No invoices selected for download')
       return
     }
     setDownloadStatus('Preparing downloads...')
+
     try {
-      const selectedInvoiceObjects = invoices.filter(invoice =>
+      const selectedInvoiceObjects = invoices.filter((invoice) =>
         selectedInvoices.includes(invoice.id)
       )
       if (!selectedInvoiceObjects.length) {
         setDownloadStatus('Error: Could not find selected invoices')
         return
       }
-      const success = await downloadMultipleInvoices(selectedInvoiceObjects, 'vendor-invoice')
-      setDownloadStatus(success ? 'Invoices downloaded successfully' : 'Some invoices failed to download')
+
+      const success = await downloadMultipleInvoices(
+        selectedInvoiceObjects,
+        'vendor-invoice'
+      )
+      setDownloadStatus(
+        success
+          ? 'Invoices downloaded successfully'
+          : 'Some invoices failed to download'
+      )
     } catch (error: any) {
       console.error('Error downloading invoices:', error)
       setDownloadStatus(`Error: ${error.message || 'Unexpected error'}`)
@@ -138,6 +152,9 @@ const VendorInvoicesPage = () => {
     }
   }
 
+  // ------------------
+  // Searching
+  // ------------------
   const handleToggleSearch = () => {
     setShowSearch(!showSearch)
     if (!showSearch) setSearchTerm('')
@@ -159,36 +176,45 @@ const VendorInvoicesPage = () => {
     )
   }, [invoices, searchTerm])
 
-  const today = new Date().toISOString().split('T')[0]
-
-  const totalSalesToday = useMemo(() => {
+  // ------------------
+  // Stats Calculation
+  // ------------------
+  // "Balance Outstanding" = sum of all unpaid invoice totals
+  const balanceOutstanding = useMemo(() => {
     return invoices
-      .filter(inv => inv.invoiceData.invoiceDate === today)
-      .reduce((sum, inv) => sum + inv.invoiceData.totals.total, 0)
-  }, [invoices, today])
-
-  const todayRevenue = useMemo(() => {
-    return invoices
-      .filter(inv => inv.invoiceData.invoiceDate === today && inv.status === 'Sent, Paid')
-      .reduce((sum, inv) => sum + inv.invoiceData.totals.total, 0)
-  }, [invoices, today])
-
-  const inEscrow = useMemo(() => {
-    return invoices
-      .filter(inv => inv.status === 'Sent, Unpaid')
+      .filter((inv) => inv.status === 'Unpaid' || inv.status === 'Sent, Unpaid')
       .reduce((sum, inv) => sum + inv.invoiceData.totals.total, 0)
   }, [invoices])
 
-  const tableInvoices = filteredInvoices.map(invoice => ({
+  // "Issued Balance" = sum of all invoices (paid or unpaid)
+  const issuedBalance = useMemo(() => {
+    return invoices.reduce((sum, inv) => sum + inv.invoiceData.totals.total, 0)
+  }, [invoices])
+
+  // Optional: We still transform our data for the table
+  const tableInvoices = filteredInvoices.map((invoice) => ({
     ...invoice,
     invoiceData: {
       ...invoice.invoiceData,
-      items: invoice.invoiceData.items.map(item => ({
+      items: invoice.invoiceData.items.map((item) => ({
         ...item,
-        rate: item.price, // or any other calculation
+        rate: item.price,
       })),
     },
   }))
+
+  // For dropdown updates
+  const handleStatusChange = async (invoiceId: string, newStatus: string) => {
+    try {
+      await updateDoc(doc(db, 'vendorInvoices', invoiceId), {
+        status: newStatus,
+      })
+      console.log(`Invoice ${invoiceId} updated to ${newStatus}`)
+    } catch (error) {
+      console.error('Error updating invoice status:', error)
+      alert('Failed to update invoice status')
+    }
+  }
 
   if (isLoading) {
     return (
@@ -214,6 +240,7 @@ const VendorInvoicesPage = () => {
           />
         </div>
 
+        {/* Create New Invoice button */}
         <div className="ml-5 flex items-start mt-4 mb-5">
           <img
             src={CreateNewInvoice}
@@ -222,14 +249,16 @@ const VendorInvoicesPage = () => {
             onClick={() => navigate('/create-new-invoice')}
           />
           <div className="ml-5 mt-5 text-[20px] text-buttonBg font-nunito">
-            <button onClick={() => navigate('/create-new-invoice')}>Create New Invoice</button>
+            <button onClick={() => navigate('/create-new-invoice')}>
+              Create New Invoice
+            </button>
           </div>
         </div>
 
+        {/* Our new 2-stat display */}
         <StatsSection
-          totalSales={totalSalesToday.toFixed(2)}
-          todayRevenue={todayRevenue.toFixed(2)}
-          inEscrow={inEscrow.toFixed(2)}
+          balanceOutstanding={balanceOutstanding.toFixed(2)}
+          issuedBalance={issuedBalance.toFixed(2)}
         />
 
         {downloadStatus && (
@@ -263,6 +292,7 @@ const VendorInvoicesPage = () => {
           onDownloadAll={handleDownloadAll}
           onDeleteSelected={handleDeleteSelected}
           onSearch={handleToggleSearch}
+          onStatusChange={handleStatusChange}
         />
       </div>
     </BaseLayout>
