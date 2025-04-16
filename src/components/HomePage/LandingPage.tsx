@@ -138,7 +138,7 @@ const LandingPage = () => {
                     </div>
                 </nav>
 
-                <div className="flex w-full min-h-screen items-center">
+                <div className="flex w-full max-w-[1440px] mx-auto min-h-screen items-center">
                     <div className="w-1/2 pt-44 pl-28">
                         <h1 className="font-nunito text-[45px] font-bold leading-tight text-left text-buttonBg whitespace-nowrap">
                             Real-Time Global B2B Procurement Through Chat
@@ -181,13 +181,13 @@ const LandingPage = () => {
                         </div>
                     </div>
 
-                     <div className="w-1/2 flex items-center justify-end pt-24 pr-12">
+                    <div className="w-1/2 flex items-center justify-end pt-24 pr-12">
                         <img
                             src={dashboard}
                             alt="Laptop Display"
-                            className="w-[600px] max-w-full h-[350px] mt-28"
+                            className="w-[700px] h-auto xl:w-[800px] xl:h-auto 2xl:w-[900px] mt-28"
                         />
-                    </div> 
+                    </div>
                 </div>
                 <div className="absolute bottom-[-9px] left-0 w-full h-[10px] bg-white z-10" />
             </section>
