@@ -1,23 +1,22 @@
-import fourCards from '../../assets/img/sectionTwo/four_cards.png'
-import { useNavigate } from 'react-router-dom'
 import fourCardNew from '../../assets/img/sectionTwo/four-card-new.png'
+import { useNavigate } from 'react-router-dom'
 
 const CollaborationSection = () => {
     const navigate = useNavigate()
 
     return (
-        <section className="flex flex-col md:flex-row items-center justify-between px-4 md:px-28 py-0 bg-white">
+        <section className="flex flex-col md:flex-row items-center justify-between px-4 md:px-28 xl:px-20 2xl:px-32 py-0 bg-white">
             {/* Left side: Image */}
             <div className="md:w-1/2 flex justify-center md:justify-start">
                 <img
                     src={fourCardNew}
                     alt="COCOA four-cards composite"
-                    className="max-w-full h-auto rounded-lg"
+                    className="max-w-full h-auto rounded-lg xl:w-[90%] 2xl:w-[85%]"
                 />
             </div>
 
             {/* Right side: Text */}
-            <div className="md:w-1/2 -mt-6 md:-mt-20 text-center md:text-left max-w-xl md:pl-12">
+            <div className="md:w-1/2 -mt-6 md:-mt-18 xl:-mt-10 2xl:-mt-6 text-center md:text-left max-w-xl md:pl-12 xl:pl-8 2xl:pl-4">
                 <h1 className="text-[32px] md:text-[39px] font-bold text-gray-800 leading-[3.2rem] font-nunito">
                     Connect, chat, collaborate and grow with COCOA
                 </h1>

@@ -55,12 +55,12 @@ const HowItWorks = () => {
                 </div>
 
                 {/* Video Section */}
-                <div className="relative max-w-4xl mx-auto group cursor-pointer mb-16">
+                <div className="relative max-w-4xl mx-auto group cursor-pointer mb-28 xl:mb-36 2xl:mb-48 z-10">
                     {/* Video Element (Always Present) */}
                     <video
                         ref={videoRef}
                         src={'cocoavidcomp'}
-                        className="w-full rounded-xl shadow-xl"
+                        className="w-full max-h-[75vh] rounded-xl shadow-xl object-cover"
                         muted={isMuted}
                         onPlay={() => setIsPlaying(true)}
                         onPause={() => setIsPlaying(false)}
@@ -107,10 +107,10 @@ const HowItWorks = () => {
 
             {/* Wave Decoration */}
             <div
-                className="absolute left-0 right-0"
+                className="absolute left-0 right-0 z-0"
                 style={{
-                    bottom: isMobile ? '-20px' : '-30px', // Adjust for mobile
-                    transform: isMobile ? 'scaleX(2.2)' : 'none', // Optional: Scale the curve on mobile
+                    bottom: isMobile ? '-20px' : '-30px',
+                    transform: isMobile ? 'scaleX(2.2)' : 'none',
                 }}
             >
                 <svg
