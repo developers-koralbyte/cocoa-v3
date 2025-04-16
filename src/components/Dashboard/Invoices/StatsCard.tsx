@@ -19,8 +19,12 @@ const StatsCard: React.FC<StatsCardProps> = ({
   color,
   percentage,
 }) => {
-  // We'll convert the percentage (0–100) into degrees for the conic gradient.
-  const degrees = percentage * 3.6; // 100% => 360 degrees
+  // Clamp percentage between [0, 100].
+  const clamped = Math.max(0, Math.min(100, percentage));
+
+  // This circle's radius is 40 in a 100x100 viewBox => circumference ~ 251.2
+  const radius = 40;
+  const circumference = 2 * Math.PI * radius;
 
   return (
     <div className="bg-white shadow-md rounded-xl p-5 border border-gray-200 flex items-center gap-6 w-70">
@@ -31,20 +35,44 @@ const StatsCard: React.FC<StatsCardProps> = ({
         <p className="text-xs text-gray-500">{description}</p>
       </div>
 
-      {/* Right Donut Chart Section */}
-      <div className="relative w-20 h-20">
-        {/* Gray background circle */}
-        <div className="absolute inset-0 rounded-full bg-gray-200" />
+      {/* Right progress ring */}
+      <div className="relative w-20 h-20 flex items-center justify-center">
+        {/* Background circle */}
+        <svg viewBox="0 0 100 100" className="absolute w-full h-full">
+          <circle
+            cx="50"
+            cy="50"
+            r={radius}
+            stroke="#e2e2e2"
+            strokeWidth="10"
+            fill="none"
+          />
+        </svg>
 
-        <div
-          className="absolute inset-0 rounded-full"
-          style={{
-            background: `conic-gradient(${color} ${degrees}deg, transparent 0deg)`,
-          }}
-        />
+        {/* Foreground circle: rotate to start at top (-90deg) */}
+        <svg
+          viewBox="0 0 100 100"
+          className="absolute w-full h-full rotate-[-90deg]"
+        >
+          <circle
+            cx="50"
+            cy="50"
+            r={radius}
+            stroke={color}
+            strokeWidth="10"
+            fill="none"
+            strokeDasharray={circumference}
+            strokeDashoffset={
+              circumference - (circumference * clamped) / 100
+            }
+            strokeLinecap="round"
+          />
+        </svg>
 
-        {/* White circle in the middle to create the donut effect */}
-        <div className="absolute inset-4 rounded-full bg-white" />
+        {/* Text in the center */}
+        <span className="relative text-xs font-semibold">
+          {Math.round(clamped)}%
+        </span>
       </div>
     </div>
   );

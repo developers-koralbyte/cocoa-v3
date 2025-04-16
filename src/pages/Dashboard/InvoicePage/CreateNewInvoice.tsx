@@ -255,7 +255,7 @@ const CreateNewInvoice = () => {
   }
 
   // Handler for saving or sending invoice remains the same...
-  const handleSaveInvoice = async (buyerId: string, isDraft: boolean) => {
+  const handleSaveInvoice = async (buyerId: string, status: 'Draft' | 'Unpaid') => {
     try {
       const storedUser = JSON.parse(localStorage.getItem('user') || '{}')
       const uid = currentUser?.uid || storedUser?.uid
@@ -265,7 +265,7 @@ const CreateNewInvoice = () => {
       const invoiceDoc = {
         vendorId: uid,
         buyerId,
-        status: isDraft ? 'Draft' : 'Sent, Unpaid',
+        status: status, // Use the status directly
         invoiceData: {
           ...invoiceData,
           items,
@@ -276,7 +276,7 @@ const CreateNewInvoice = () => {
         updatedAt: serverTimestamp(),
       }
       const docRef = await addDoc(collection(db, 'vendorInvoices'), invoiceDoc)
-      if (!isDraft) {
+      if (status !== 'Draft') { // Check if it's not Draft
         const buyerInvoiceDoc = {
           ...invoiceDoc,
           status: 'Unpaid',
@@ -286,12 +286,12 @@ const CreateNewInvoice = () => {
         await addDoc(collection(db, 'buyerInvoices'), buyerInvoiceDoc)
       }
       toast.success(
-        isDraft ? 'Invoice saved as draft' : 'Invoice sent successfully'
+        status === 'Draft' ? 'Invoice saved as draft' : 'Invoice sent successfully'
       )
       navigate('/invoices')
     } catch (error) {
       console.error('Error saving invoice:', error)
-      toast.error(isDraft ? 'Failed to save draft' : 'Failed to send invoice')
+      toast.error(status === 'Draft' ? 'Failed to save draft' : 'Failed to send invoice')
     }
   }
 
