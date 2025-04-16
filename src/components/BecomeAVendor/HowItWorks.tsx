@@ -132,14 +132,14 @@ const HowItWorks = () => {
                                         <p className="text-[#6B5BA9] text-sm font-medium whitespace-nowrap font-nunito">
                                             {stat.text}
                                         </p>
-                                        <div className="text-right">
+                                        {/* <div className="text-right">
                                             <span className="font-bold text-black text-base font-nunito">
                                                 {stat.value}
                                             </span>
                                             <span className="text-black text-base ml-1 font-nunito">
                                                 {stat.label}
                                             </span>
-                                        </div>
+                                        </div> */}
                                     </div>
                                 </div>
                             ))}

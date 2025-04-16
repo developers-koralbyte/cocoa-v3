@@ -49,12 +49,9 @@ const HowItWorks = () => {
         <div className="bg-[#6868AC96] from-purple-50 to-purple-100 relative">
             <div className="max-w-6xl mx-auto px-4 py-12 sm:py-24">
                 <div className="text-left mb-12">
-                    <h2 className="text-4xl sm:text-5xl font-nunito font-bold mb-4 bg-gradient-to-r from-white-00 to-purple-800 bg-clip-text text-transparent text-white ">
-                        How Does It Work?
-                    </h2>
-                    <p className="text-lg text-black font-sourceSans font-medium">
+                    <h2 className="text-4xl sm:text-4xl font-nunito font-bold mb-4 bg-gradient-to-r from-white-00 to-purple bg-clip-text text text-white text-center">
                         Interested in COCOA? Here is how we will help you!
-                    </p>
+                    </h2>
                 </div>
 
                 {/* Video Section */}

@@ -9,6 +9,8 @@ import imageTwo from '../../assets/img/SellingPointSection/imageTwo.png'
 
 import bgImageMobile from '../../assets/img/SellingPointSection/bgImageMobile.png'
 
+import newInvoiceImage from '../HomePage/invoiceNewImage.png'
+
 const ProcurementSection = () => {
     return (
         <>
@@ -90,9 +92,9 @@ const ProcurementSection = () => {
                             />
                             {/* Invoice Table - Move it upwards slightly */}
                             <img
-                                src={invoice}
+                                src={newInvoiceImage}
                                 alt="Invoice History List"
-                                className="relative w-auto h-auto ml-10 mt-[-31px]" // <-- Added negative margin
+                                className="relative w-[550px] h-auto"
                             />
                         </div>
 
@@ -101,7 +103,7 @@ const ProcurementSection = () => {
                             {' '}
                             {/* Slight upward adjustment */}
                             <h3 className="text-[24px] font-bold leading-[2.75rem] font-nunito">
-                                Live Document Sharing
+                                Document Sharing
                             </h3>
                             <p className="font-sourceSans text-[20px] max-w-[800px]">
                                 Share and review crucial documents in real time
