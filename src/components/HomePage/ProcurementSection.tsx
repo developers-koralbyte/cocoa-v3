@@ -10,6 +10,7 @@ import imageTwo from '../../assets/img/SellingPointSection/imageTwo.png'
 import bgImageMobile from '../../assets/img/SellingPointSection/bgImageMobile.png'
 
 import newInvoiceImage from '../HomePage/invoiceNewImage.png'
+import aiPowerImg from '../../assets/img/SellingPointSection/aiPowerImg.png'
 
 const ProcurementSection = () => {
     return (
@@ -73,7 +74,7 @@ const ProcurementSection = () => {
                         {/* Right Column: Image */}
                         <div className="flex justify-center md:justify-start">
                             <img
-                                src={imageTwo}
+                                src={aiPowerImg}
                                 alt="Match percentage with suppliers bubble image"
                                 className="max-w-2xl"
                             />

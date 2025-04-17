@@ -18,7 +18,7 @@ function App() {
       <CollaborationSection />
       <ProcurementSection />
       <BusinessFeatures />
-      <TopSuppliers/>
+      {/* <TopSuppliers/> */}
       <UserTestimonial />
       <LatestNews />
       <Pricing/>
