@@ -5,6 +5,7 @@ import cocoaLogo from '../../assets/img/cocoa-logo.png'
 import { useNavigate } from 'react-router-dom'
 import laptopImage from '../../assets/img/MainSection/laptop.png'
 import dashboard from '../../components/HomePage/Dashboard.png'
+import newImage from '../../assets/img/MainSection/newImage.png'
 import { useState } from 'react'
 
 // For Mobile Responsiveness
@@ -181,11 +182,11 @@ const LandingPage = () => {
                         </div>
                     </div>
 
-                    <div className="w-1/2 flex items-center justify-end pt-24 pr-12">
+                    <div className="w-1/2 flex items-center justify-end pt-24 pr-0">
                         <img
-                            src={dashboard}
+                            src={newImage}
                             alt="Laptop Display"
-                            className="w-[700px] h-auto xl:w-[800px] xl:h-auto 2xl:w-[900px] mt-28"
+                            className="w-[700px] h-auto xl:w-[800px] xl:h-auto 2xl:w-[900px] mt-40 translate-x-32"
                         />
                     </div>
                 </div>
