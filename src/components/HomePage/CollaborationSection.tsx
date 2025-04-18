@@ -1,5 +1,6 @@
 import fourCardNew from '../../assets/img/sectionTwo/four-card-new.png'
 import fourCardNewImage from '../../assets/img/sectionTwo/fourCardNewImage.png'
+import threeInPurple from '../../assets/img/sectionTwo/threeInPurple.png'
 import { useNavigate } from 'react-router-dom'
 
 const CollaborationSection = () => {
@@ -10,9 +11,9 @@ const CollaborationSection = () => {
             {/* Left side: Image */}
             <div className="md:w-1/2 flex justify-center md:justify-start">
                 <img
-                    src={fourCardNewImage}
+                    src={threeInPurple}
                     alt="COCOA four-cards composite"
-                    className="max-w-full h-auto rounded-lg xl:w-[90%] 2xl:w-[85%]"
+                    className="max-w-full h-auto rounded-lg xl:w-[80%] 2xl:w-[85%]"
                 />
             </div>
 
