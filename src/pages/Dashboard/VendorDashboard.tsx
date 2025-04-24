@@ -9,6 +9,7 @@ import { useAuth } from '../../utils/AuthContext';
 
 import VendorServices from '../../components/Dashboard/Catalogue/VendorServices';
 import VendorProducts from '../../components/Dashboard/Catalogue/VendorProducts';
+import UserMenu from '../../components/Dashboard/UserMenu';
 
 
 interface Buyer {
@@ -365,96 +366,80 @@ const VendorDashboard: React.FC = () => {
         </div>
 
         {/* Right panel */}
-        <div className="w-96 bg-purple-100 p-8 rounded-l-[3.5rem]">
-          {/* Profile Section */}
-          <div className="flex items-center justify-center gap-x-5 gap-4 mb-8">
-            <div>
-              <h2 className="font-bold font-nunito">
-                {user.firstName || 'Vendor'},
-              </h2>
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-600 font-nunito">Vendor</span>
-              </div>
+        <div className="w-96 bg-purple-100 p-8 pt-32 rounded-l-[3.5rem] relative">
+  {/* User menu */}
+  <div className="absolute top-8 right-8">
+    <UserMenu user={user} />
+  </div>
+
+  {/* Upcoming Appointments */}
+  <section className="bg-white rounded-[2rem] p-6 mb-8">
+    <div className="flex justify-between items-center mb-4">
+      <h3 className="font-bold font-nunito">Upcoming Appointments</h3>
+      <div className="flex gap-2">
+        <button className="text-purple-600">&lt;</button>
+        <button className="text-purple-600">&gt;</button>
+      </div>
+    </div>
+    <div className="space-y-4">
+      {appointments.map((apt, index) => (
+        <div key={index} className="flex items-center gap-4">
+          <div className="w-10 h-10 rounded-full overflow-hidden">
+            <img
+              src={apt.image}
+              alt={apt.name}
+              className="w-full h-full object-cover"
+            />
+          </div>
+          <div className="flex-1">
+            <div className="flex justify-between">
+              <h4 className="font-medium">
+                {apt.name},{' '}
+                <span className="text-purple-600">{apt.company}</span>
+              </h4>
             </div>
-            <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center">
-              {user.avatar ? (
-                <img
-                  src={user.avatar}
-                  alt="User Avatar"
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <User className="text-gray-400 w-6 h-6" />
-              )}
+            <div className="text-sm text-gray-500">
+              {apt.date}, {apt.time}
             </div>
           </div>
-
-          {/* Upcoming Appointments */}
-          <section className="bg-white rounded-[2rem] p-6 mb-8">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="font-bold font-nunito">Upcoming Appointments</h3>
-              <div className="flex gap-2">
-                <button className="text-purple-600">&lt;</button>
-                <button className="text-purple-600">&gt;</button>
-              </div>
-            </div>
-            <div className="space-y-4">
-              {appointments.map((apt, index) => (
-                <div key={index} className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-full overflow-hidden">
-                    <img
-                      src={apt.image}
-                      alt={apt.name}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex justify-between">
-                      <h4 className="font-medium">
-                        {apt.name},{' '}
-                        <span className="text-purple-600">{apt.company}</span>
-                      </h4>
-                    </div>
-                    <div className="text-sm text-gray-500">
-                      {apt.date}, {apt.time}
-                    </div>
-                  </div>
-                  <div
-                    className="cursor-pointer"
-                    onClick={() => alert(`Reminder set for ${apt.name}`)}
-                  >
-                    <Bell className="w-4 h-4 text-purple-600" />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          {/* Potential Buyers from Firestore match (optional) */}
-          <section className="bg-white rounded-[2rem] p-6">
-            <h3 className="font-bold mb-4">Your Potential Buyers</h3>
-            <div className="space-y-4">
-              {potentialBuyers.map((b, idx) => (
-                <div key={idx} className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-full overflow-hidden">
-                    <img
-                      src={b.image || '/path-to-default-avatar.jpg'}
-                      alt={b.name}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <div>
-                    <h4 className="font-medium">{b.name}</h4>
-                    <p className="text-md text-purple-600 font-bold">
-                      {b.company || 'N/A'}
-                    </p>
-                    <p className="text-sm text-gray-600">{b.match}% match</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
+          <div
+            className="cursor-pointer"
+            onClick={() => alert(`Reminder set for ${apt.name}`)}
+          >
+            <Bell className="w-4 h-4 text-purple-600" />
+          </div>
         </div>
+      ))}
+    </div>
+  </section>
+
+  {/* Your Potential Buyers */}
+  <section className="bg-white rounded-[2rem] p-6">
+    <h3 className="font-bold mb-4">Your Potential Buyers</h3>
+    <div className="space-y-4">
+      {potentialBuyers.map((b, idx) => (
+        <div key={idx} className="flex items-center gap-4">
+          <div className="w-10 h-10 rounded-full overflow-hidden">
+            <img
+              src={b.image || '/path-to-default-avatar.jpg'}
+              alt={b.name}
+              className="w-full h-full object-cover"
+            />
+          </div>
+          <div>
+            <h4 className="font-medium">{b.name}</h4>
+            <p className="text-md text-purple-600 font-bold">
+              {b.company || 'N/A'}
+            </p>
+            <p className="text-sm text-gray-600">{b.match}% match</p>
+          </div>
+        </div>
+      ))}
+    </div>
+  </section>
+</div>
+
+
       </div>
 
       {/* Popup for completing profile */}
