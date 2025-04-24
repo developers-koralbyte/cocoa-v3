@@ -1,6 +1,7 @@
 import React from 'react'
 import { HiUserGroup } from 'react-icons/hi'
 import { HiCreditCard, HiRocketLaunch } from 'react-icons/hi2'
+import { useNavigate } from 'react-router-dom'
 
 const features = [
     {
@@ -18,6 +19,7 @@ const features = [
 ]
 
 const ReadyToTransform = () => {
+    const navigate = useNavigate()
     return (
         <div className="bg-white py-16">
             <div className="max-w-7xl mx-auto px-8">
@@ -58,7 +60,9 @@ const ReadyToTransform = () => {
                                 ))}
                             </div>
 
-                            <button className="bg-[#5B4B8A] text-white px-8 py-3 rounded-full font-semibold hover:bg-[#4A3D6E] transition-colors">
+                            <button
+                                onClick={() => navigate('/create-account')}
+                                className="bg-[#5B4B8A] text-white px-8 py-3 rounded-full font-semibold hover:bg-[#4A3D6E] transition-colors">
                                 Get Started Free
                             </button>
                         </div>

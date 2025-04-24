@@ -38,7 +38,7 @@ const steps = [
 
 const HowItWorks = () => {
     return (
-        <div className="bg-white py-16 lg:py-20">
+        <div className="relative z-10 bg-white -mt-[1px] pt-16 lg:pt-20">
             {/* Image Section */}
             <section className="relative w-full hidden lg:flex justify-center items-center mt-10">
                 <img
