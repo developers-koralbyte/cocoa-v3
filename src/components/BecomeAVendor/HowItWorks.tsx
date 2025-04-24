@@ -45,7 +45,7 @@ const HowItWorks = () => {
     ]
 
     return (
-        <div className="bg-white py-16 px-4 sm:px-6 lg:px-8">
+        <div className="relative z-10 bg-white -mt-[1px] pt-16 px-4 sm:px-6 lg:px-8">
             <div className="max-w-7xl mx-auto">
                 <div className="text-center mb-6">
                     <h2 className="text-6xl font-bold text-darkPurple font-nunito text-left">
@@ -132,14 +132,14 @@ const HowItWorks = () => {
                                         <p className="text-[#6B5BA9] text-sm font-medium whitespace-nowrap font-nunito">
                                             {stat.text}
                                         </p>
-                                        <div className="text-right">
+                                        {/* <div className="text-right">
                                             <span className="font-bold text-black text-base font-nunito">
                                                 {stat.value}
                                             </span>
                                             <span className="text-black text-base ml-1 font-nunito">
                                                 {stat.label}
                                             </span>
-                                        </div>
+                                        </div> */}
                                     </div>
                                 </div>
                             ))}

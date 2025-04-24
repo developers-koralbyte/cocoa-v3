@@ -25,7 +25,7 @@ const PricingCard = ({
         <div
             className={`rounded-3xl p-8 transition-all duration-300 ease-in-out transform hover:scale-105 hover:shadow-xl ${
                 isHighlighted
-                    ? 'bg-purple-200 shadow-lg hover:bg-purple-300'
+                    ? 'bg-[#D4CDF4] shadow-lg hover:bg-[#D4CDF4]'
                     : 'bg-white shadow-md hover:bg-gray-100'
             }`}
         >
@@ -76,7 +76,7 @@ const PricingCard = ({
                     className={`w-full py-3 px-6 rounded-full font-semibold transition-all duration-300 text-white mt-4 font-nunito ${
                         isHighlighted
                             ? 'bg-purple-800 hover:bg-purple-900'
-                            : 'bg-purple-600 hover:bg-purple-700'
+                            : 'bg-[#6868AC] hover:bg-purple-700'
                     }`}
                 >
                     {buttonText}
@@ -92,7 +92,7 @@ const Pricing = () => {
             <div className="max-w-7xl mx-auto px-4 py-12 md:py-16">
                 <div className="text-center mb-12">
                     <h1 className="text-4xl md:text-5xl font-bold mb-4 font-nunito">
-                        <span className="text-purple-900 ">
+                        <span className="text-[#6868AC] ">
                             Invest in Your Business,
                         </span>{' '}
                         <span className="text-black">

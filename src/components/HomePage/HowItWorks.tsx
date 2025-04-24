@@ -49,21 +49,18 @@ const HowItWorks = () => {
         <div className="bg-[#6868AC96] from-purple-50 to-purple-100 relative">
             <div className="max-w-6xl mx-auto px-4 py-12 sm:py-24">
                 <div className="text-left mb-12">
-                    <h2 className="text-4xl sm:text-5xl font-nunito font-bold mb-4 bg-gradient-to-r from-white-00 to-purple-800 bg-clip-text text-transparent text-white ">
-                        How Does It Work?
-                    </h2>
-                    <p className="text-lg text-black font-sourceSans font-medium">
+                    <h2 className="text-4xl sm:text-4xl font-nunito font-bold mb-4 bg-gradient-to-r from-white-00 to-purple bg-clip-text text text-white text-center">
                         Interested in COCOA? Here is how we will help you!
-                    </p>
+                    </h2>
                 </div>
 
                 {/* Video Section */}
-                <div className="relative max-w-4xl mx-auto group cursor-pointer mb-16">
+                <div className="relative max-w-4xl mx-auto group cursor-pointer mb-28 xl:mb-36 2xl:mb-48 z-10">
                     {/* Video Element (Always Present) */}
                     <video
                         ref={videoRef}
                         src={'cocoavidcomp'}
-                        className="w-full rounded-xl shadow-xl"
+                        className="w-full max-h-[75vh] rounded-xl shadow-xl object-cover"
                         muted={isMuted}
                         onPlay={() => setIsPlaying(true)}
                         onPause={() => setIsPlaying(false)}
@@ -110,10 +107,10 @@ const HowItWorks = () => {
 
             {/* Wave Decoration */}
             <div
-                className="absolute left-0 right-0"
+                className="absolute left-0 right-0 z-0"
                 style={{
-                    bottom: isMobile ? '-20px' : '-30px', // Adjust for mobile
-                    transform: isMobile ? 'scaleX(2.2)' : 'none', // Optional: Scale the curve on mobile
+                    bottom: isMobile ? '-20px' : '-30px',
+                    transform: isMobile ? 'scaleX(2.2)' : 'none',
                 }}
             >
                 <svg

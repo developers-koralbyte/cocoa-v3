@@ -20,7 +20,9 @@ const ContactUs: React.FC = () => {
                                 COCOA today
                             </h1>
                             <div className="mt-8">
-                                <button className="px-6 py-3 bg-white text-purple-900 rounded-full font-semibold hover:bg-gray-100 transition-colors">
+                                <button 
+                                    onClick={()=>window.location.href="mailto:Connect@koralbyte.com"}
+                                    className="px-6 py-3 bg-white text-purple-900 rounded-full font-semibold hover:bg-gray-100 transition-colors">
                                     Contact Us
                                 </button>
                             </div>

@@ -6,23 +6,18 @@ import { useNavigate } from 'react-router-dom'
 import { useState } from 'react'
 
 const LandingPage = () => {
-    const navigate = useNavigate() // Hook for navigation
+    const navigate = useNavigate()
     const [activeDropdown, setActiveDropdown] = useState(null)
 
     const toggleDropdown = (type) => {
         setActiveDropdown((prev) => (prev === type ? null : type))
     }
+
     return (
         <>
             {/* Laptop Layout */}
-            <section
-                className="relative bg-cover bg-no-repeat min-h-[900px] w-full hidden lg:block"
-                style={{
-                    backgroundImage: `url(${bgWave})`,
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'bottom center',
-                }}
-            >
+            <section className="relative bg-[#d9cffb] min-h-[900px] w-full hidden lg:block overflow-hidden">
+                {/* Navigation */}
                 <nav className="flex justify-between items-center px-16 py-10 w-full absolute top-0 left-0 z-50 bg-transparent">
                     <div>
                         <a href="/">
@@ -33,7 +28,7 @@ const LandingPage = () => {
                             />
                         </a>
                     </div>
-                    <div className="flex space-x-12 font-nunito font-extrabold text-[22px] text-buttonBg">
+                    <div className="flex space-x-12 font-nunito font-extrabold text-[24px] text-buttonBg">
                         {/* Dropdowns */}
                         {[
                             {
@@ -107,7 +102,7 @@ const LandingPage = () => {
                                     {items.map((item, idx) => (
                                         <button
                                             key={idx}
-                                            className="block w-full text-left px-6 py-3 text-sm text-buttonBg hover:text-white hover:bg-buttonBg transition-colors"
+                                            className="block w-full text-left px-6 py-1 text-[16px] text-buttonBg hover:text-white hover:bg-buttonBg transition-colors"
                                             onClick={() => {
                                                 navigate(item.path)
                                                 setActiveDropdown(null)
@@ -130,18 +125,20 @@ const LandingPage = () => {
                     </div>
                 </nav>
 
+                {/* Hero Section */}
                 <div className="flex w-full min-h-screen items-center">
-                    <div className="w-1/2 pt-48 pl-28">
+                    {/* Text Section */}
+                    <div className="w-1/2 pt-20 pl-28">
                         <h1 className="font-nunito text-[60px] font-bold leading-[75px] text-left text-buttonBg">
-                            Become a Vendor
+                            Becoming a Vendor
                         </h1>
                         <div className="font-sourceSans">
-                            <p className="mt-4 text-[18px] text-black leading-relaxed">
+                            <p className="mt-4 text-[20px] text-buttonBg leading-relaxed">
                                 Join Canada's first chat-based procurement
                                 network with active buyers ready to purchase
                                 your products and services.
                             </p>
-                            <p className="mt-6 text-[18px] font-bold text-buttonBg">
+                            <p className="mt-6 text-[22px] font-bold text-buttonBg">
                                 Start selling today!
                             </p>
                         </div>
@@ -149,27 +146,35 @@ const LandingPage = () => {
                         <div className="mt-8 flex flex-col lg:flex-row space-y-4 lg:space-y-0 lg:space-x-6">
                             <button
                                 className="bg-buttonBg text-white font-nunito rounded-full px-10 py-4"
-                                onClick={() => navigate('/login')}
+                                onClick={() => navigate('/create-account')}
                             >
                                 Sign up now
                             </button>
-                            {/* <a
-                                href="#demo"
-                                className="pt-3 text-black underline"
-                            >
-                                Want a free demo?
-                            </a> */}
                         </div>
                     </div>
 
-                    <div className="w-1/2 flex items-center justify-end pt-40">
+                    {/* Right Side Image */}
+                    <div className="w-1/2 flex items-end justify-end pt-20 pr-0">
                         <img
                             src={guyImage}
                             alt="Guy with Laptop Display"
-                            className="h-[550px] w-[2000px] object-contain relative top-60" // Increase width only
+                            className="w-[110%] max-w-none h-auto object-contain translate-x-[5%] xl:translate-x-[0%]"
                         />
                     </div>
                 </div>
+
+                {/* Wave SVG */}
+                <svg
+                    className="absolute bottom-0 left-0 w-full h-auto pointer-events-none"
+                    viewBox="0 0 1440 320"
+                    xmlns="http://www.w3.org/2000/svg"
+                    preserveAspectRatio="none"
+                >
+                    <path
+                        fill="#ffffff"
+                        d="M0,160 C360,320 720,0 1080,160 C1260,240 1440,160 1440,160 L1440,320 L0,320 Z"
+                    />
+                </svg>
             </section>
         </>
     )

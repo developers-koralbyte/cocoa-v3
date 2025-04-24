@@ -20,8 +20,8 @@ const faqData: FAQItem[] = [
         answer: 'COCOA offers freemium version for businesses but with limited features. They can always upgrade to unlock advanced features with subscriptions.',
     },
     {
-        question: 'How can Cocoa benefit vendors and buyers?',
-        answer: 'COCOA revolutionizes the B2B procurement process through instant communication and streamlined processes. For enterprises, our platform enables real-time negotiation with verified providers, comprehensive solution comparison, and efficient implementation management. For solution providers, COCOA offers direct access to qualified corporate clients, streamlined deal management, and automated documentation flow - from quotes to contracts. Our chat-based platform eliminates traditional procurement delays while maintaining complete audit trails and compliance documentation.',
+        question: 'How can COCOA benefit vendors and buyers?',
+        answer: "COCOA streamlines B2B procurement by connecting buyers and vendors through a unified platform. Buyers save time with AI- powered vendor matching and real-time analytics, while vendors reduce costs by accessing pre-qualified buyers and gaining market insights. The platform's direct communication tools and centralized features eliminate the typical frustrations of fragmented procurement processes.",
     },
 ]
 
