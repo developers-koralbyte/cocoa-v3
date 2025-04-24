@@ -586,27 +586,26 @@ const BuyerCalendarPage: React.FC = () => {
             <div>
               <h2 className="font-bold">
                 {authUser?.firstName || 'Buyer'},{' '}
-                {authUser?.businessName || 'MyCompany'}
+                {/* {authUser?.businessName || 'MyCompany'} */}
               </h2>
               <div className="flex items-center gap-2">
                 <span className="text-sm text-gray-600">
                   {authUser?.role || 'Buyer'}
                 </span>
-                <span className="text-xs bg-purple-200 px-2 py-1 rounded-full">
-                  Premium Account
-                </span>
+               
               </div>
             </div>
-            <div className="w-12 h-12 rounded-full overflow-hidden">
+            <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center">
+            {authUser?.avatar ? (
               <img
-                src={
-                  authUser?.avatar ||
-                  'https://via.placeholder.com/150?text=No+Image'
-                }
+                src={authUser.avatar}
                 alt="User Avatar"
                 className="w-full h-full object-cover"
               />
-            </div>
+            ) : (
+              <User className="w-6 h-6 text-gray-400" />
+            )}
+          </div>
           </div>
         </div>
 

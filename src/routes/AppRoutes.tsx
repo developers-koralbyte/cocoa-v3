@@ -3,6 +3,7 @@ import { Routes, Route } from 'react-router-dom';
 import BuyerCalendarPage from '../pages/Dashboard/BuyerCalendarPage';
 import ProtectedRoute from "../utils/ProtectedRoute";
 import BecomingABuyer from '../components/BecomingABuyer/BecomingABuyer';
+// import ProfilePage from '../pages/ManageProfilePage';
 
 // Lazy load all the components
 const HomePage = React.lazy(() => import('../pages/HomePage'));
@@ -23,6 +24,8 @@ const InboxPage = React.lazy(() => import('../pages/Dashboard/InboxPage'));
 const AccountingSoftware = React.lazy(() => import('../pages/Dashboard/AccountingSoftware'));
 const BecomingAVendor = React.lazy(() => import('../components/BecomeAVendor/BecomingAVendor'));
 const VendorPricingVerification = React.lazy(() => import('../components/VendorPricing&Verification/VendorPricing&Verification'));
+const ManageProfilePage = React.lazy(() => import('../pages/ManageProfilePage'));
+
 const CataloguePage = React.lazy(() => import('../pages/Dashboard/Catalogue/CataloguePage'));
 const ServiceDetailPage = React.lazy(() => import('../pages/Dashboard/Catalogue/ServiceDetailPage'));
 const ProductDetailPage = React.lazy(() => import('../pages/Dashboard/Catalogue/ProductDetailPage'));
@@ -53,6 +56,10 @@ const AppRoutes: React.FC = () => {
                 <Route path="/new-password" element={<NewPasswordPage />} />
                 <Route path="/verification" element={<VerificationPage />} />
                 <Route path="/product/:productId" element={<ProductDetailPage />} />
+
+                <Route element={<ProtectedRoute allowedRoles={['vendor','buyer']} />}>
+                 <Route path="/settings" element={<ManageProfilePage />} />
+               </Route>
 
                 {/* Protected Routes for Vendors */}
                 <Route element={<ProtectedRoute allowedRoles={['vendor']} />}>
