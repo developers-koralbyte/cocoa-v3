@@ -45,7 +45,7 @@ const HowItWorks = () => {
     ]
 
     return (
-        <div className="bg-white py-16 px-4 sm:px-6 lg:px-8">
+        <div className="relative z-10 bg-white -mt-[1px] pt-16 px-4 sm:px-6 lg:px-8">
             <div className="max-w-7xl mx-auto">
                 <div className="text-center mb-6">
                     <h2 className="text-6xl font-bold text-darkPurple font-nunito text-left">
