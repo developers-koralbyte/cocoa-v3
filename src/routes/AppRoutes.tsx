@@ -31,7 +31,7 @@ const CorporateSolutions = React.lazy(() => import('../components/CorporateSolut
 const SaaSandERP = React.lazy(() => import('../components/SasSAndERP/SaaSAndERP'));
 const CommercialEquipment = React.lazy(() => import('../components/CommericalEquipment/CommericalEquipment'));
 const FandBSuppliers = React.lazy(() => import('../components/FandBSupplier/FandBSupplier'));
-
+const ServiceProductsPage = React.lazy(() => import('../pages/Dashboard/ServiceProductPage'));
 const AppRoutes: React.FC = () => {
     
     return (
@@ -88,6 +88,7 @@ const AppRoutes: React.FC = () => {
                     <Route path="/buyer-invoices" element={<BuyerInvoicePage />} />
                     <Route path="/buyer-inbox" element={<InboxPage />} />
                 </Route>
+                <Route path="/search" element={<ServiceProductsPage />} />
 
                 {/* Becoming a Vendor*/}
                 <Route path="/become-a-vendor" element={<BecomingAVendor />} />

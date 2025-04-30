@@ -81,7 +81,7 @@ interface InvoiceActionsProps {
 }
 
 // Floating Alert Component
-const SelectBuyerAlert = ({ show, onDismiss }) => {
+const SelectBuyerAlert: React.FC<{ show: boolean; onDismiss: () => void }> = ({ show, onDismiss }) => {
     if (!show) return null;
     
     return (
