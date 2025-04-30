@@ -20,6 +20,7 @@ import upload from '../../utils/upload'
 import { format } from 'timeago.js'
 import Header from '../../components/Dashboard/Invoices/HeaderProps'
 import AddBuyerChat from '../../components/chat/AddBuyerChat'
+import { useLocation } from 'react-router-dom';
 
 // Import available icons
 import sendIcon from '../../assets/chat/send.png'
@@ -34,6 +35,12 @@ import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useAuth } from '../../utils/AuthContext'
 
+import {
+    findOrCreateChat,
+    fetchUserBasic,
+    sendSystemMessage
+  } from '../../utils/chatHelpers';
+  
 
 const InboxPage = () => {
     // States
@@ -52,6 +59,8 @@ const InboxPage = () => {
     // Appointment states 
     const [showAppointmentModal, setShowAppointmentModal] = useState(false)
     
+
+    const location = useLocation();
 
     // Use store hooks
     const { currentUser, fetchUserInfo } = useUserStore()
@@ -75,8 +84,36 @@ const InboxPage = () => {
     //   ]
 
       // Fetch availability from Firestore (using the correct collection based on role)
-
-
+      useEffect(() => {
+        const { vendorId, context } = location.state || {};
+        if (!vendorId) return;                               // opened Inbox normally
+      
+        const currentUserId = getCurrentUserId();
+        if (!currentUserId) return;                          // still loading auth?
+      
+        (async () => {
+          const activeChatId = await findOrCreateChat(currentUserId, vendorId);
+          const vendorProfile = await fetchUserBasic(vendorId);
+          changeChat(activeChatId, vendorProfile);           // updates sidebar + pane
+      
+          if (context?.productId) {
+            await sendSystemMessage(
+              activeChatId,
+              `[Product] Buyer is asking about “${context.productName}”`
+            );
+          } else if (context?.serviceId) {
+            await sendSystemMessage(
+              activeChatId,
+              `[Service] Buyer is asking about “${context.serviceName}”`
+            );
+          }
+        })();
+        
+        // we only want this to run once when the component mounts with that state
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+      }, [location.state]);
+      
+      
      
     // Handle window resize for responsive design
     useEffect(() => {
