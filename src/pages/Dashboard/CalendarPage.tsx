@@ -600,7 +600,7 @@ const CalendarPage: React.FC = () => {
             <div>
               <h2 className="font-bold">
                 {authUser?.firstName || 'User'},{' '}
-                {authUser?.businessName || 'Company'}
+                {/* {authUser?.businessName || 'Company'} */}
               </h2>
               <div className="flex items-center gap-2">
                 <span className="text-sm text-gray-600">

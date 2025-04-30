@@ -12,6 +12,8 @@ interface PricingCardProps {
     features: string[]
     buttonText: string
     isHighlighted?: boolean
+    buttonLink?: string
+    onClick?: () => void
 }
 
 const PricingCard: React.FC<PricingCardProps> = ({
@@ -20,7 +22,19 @@ const PricingCard: React.FC<PricingCardProps> = ({
     buttonText,
     isHighlighted = false,
     planType,
+    buttonLink,
+    onClick,
 }) => {
+    const navigate = useNavigate()
+
+    const handleClick = () => {
+        if (buttonLink) {
+            navigate(buttonLink)
+        } else if (onClick) {
+            onClick()
+        }
+    }
+
     return (
         <div
             className={`rounded-3xl p-8 transition-all duration-300 ease-in-out transform hover:scale-105 relative ${
@@ -76,6 +90,7 @@ const PricingCard: React.FC<PricingCardProps> = ({
                 </div>
 
                 <button
+                    onClick={handleClick}
                     className={`w-full py-3 px-6 rounded-full font-semibold transition-all duration-300 ${
                         isHighlighted
                             ? 'bg-white text-[#6B5BA9] hover:bg-gray-100'
@@ -110,7 +125,7 @@ const PricingAndVerification: React.FC = () => {
                         />
                     </a>
                 </div>
-                <div className="flex space-x-12 font-nunito font-extrabold text-[22px] text-buttonBg">
+                <div className="flex space-x-12 font-nunito font-extrabold text-[24px] text-buttonBg">
                     {/* Dropdowns */}
                     {[
                         {
@@ -183,7 +198,7 @@ const PricingAndVerification: React.FC = () => {
                                 {items.map((item, idx) => (
                                     <button
                                         key={idx}
-                                        className="block w-full text-left px-6 py-2 text-sm text-buttonBg hover:text-white hover:bg-buttonBg transition-colors"
+                                        className="block w-full text-left px-6 py-1 text-[16px] text-buttonBg hover:text-white hover:bg-buttonBg transition-colors"
                                         onClick={() => {
                                             navigate(item.path)
                                             setActiveDropdown(null)
@@ -242,6 +257,7 @@ const PricingAndVerification: React.FC = () => {
                             'Explore limited access to the Business Directory across Ontario',
                         ]}
                         buttonText="Sign up now"
+                        buttonLink="/create-account"
                     />
 
                     <PricingCard
@@ -254,6 +270,7 @@ const PricingAndVerification: React.FC = () => {
                             'Upgrade Option: Get featured as a preferred vendor',
                         ]}
                         buttonText="Sign up now"
+                        buttonLink="/create-account"
                         isHighlighted={true}
                     />
 
@@ -267,6 +284,10 @@ const PricingAndVerification: React.FC = () => {
                             'Dedicated account manager',
                         ]}
                         buttonText="Contact us"
+                        onClick={() =>
+                            (window.location.href =
+                                'mailto:Connect@koralbyte.com')
+                        }
                     />
                 </div>
             </div>
