@@ -333,35 +333,8 @@ const VendorDashboard: React.FC = () => {
             </>
           )}
 
-          {/* Potential Buyers (static example) */}
-          <section className="mb-12">
-            <h2 className="text-2xl font-bold mb-6 font-nunito text-purple-400">
-              Your Potential Buyers
-            </h2>
-            <p className="text-gray-600 mb-6 font-nunito">
-              These buyer's interests match your services; you can reach them with a one-time message.
-            </p>
-            <div className="grid grid-cols-4 gap-6">
-              {staticBuyers.slice(0, 4).map((buyer, index) => (
-                <div key={index} className="text-center">
-                  <div className="w-full aspect-square mb-4 overflow-hidden rounded-full shadow-sm hover:shadow-md transition-shadow bg-gray-100 flex items-center justify-center">
-                    {buyer.image ? (
-                      <img
-                        src={buyer.image}
-                        alt={buyer.name}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <User className="text-gray-400 w-12 h-12" />
-                    )}
-                  </div>
-                  <h3 className="text-sm font-medium">{buyer.name}</h3>
-                  <p className="text-sm text-gray-600">{buyer.company}</p>
-                  <p className="text-sm text-purple-600 mt-1">{buyer.match}% match</p>
-                </div>
-              ))}
-            </div>
-          </section>
+                    
+          
         </div>
 
         {/* Right panel */}

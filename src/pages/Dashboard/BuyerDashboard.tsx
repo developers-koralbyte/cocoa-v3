@@ -297,38 +297,8 @@ const BuyerDashboard: React.FC = () => {
                         )}
                     </section>
 
-                    {/* -------- Potential Vendors -------- */}
-                    <section className="mb-12">
-                        <h2 className="text-2xl font-bold mb-2 text-purple-400 font-nunito">
-                            Your Potential Vendors
-                        </h2>
-                        <p className="text-gray-600 mb-6 font-nunito">
-                            These buyers' interests match your services. Reach
-                            them with a one-time message.
-                        </p>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
-                            {buyers.slice(0, 4).map((b) => (
-                                <div key={b.name} className="text-center">
-                                    <div className="w-full aspect-square mb-4 overflow-hidden rounded-full shadow-sm hover:shadow-md">
-                                        <img
-                                            src={b.image}
-                                            alt={b.name}
-                                            className="w-full h-full object-cover"
-                                        />
-                                    </div>
-                                    <h3 className="text-sm font-medium">
-                                        {b.name}
-                                    </h3>
-                                    <p className="text-sm text-gray-600">
-                                        {b.company}
-                                    </p>
-                                    <p className="text-sm text-purple-600 mt-1">
-                                        {b.match}% match
-                                    </p>
-                                </div>
-                            ))}
-                        </div>
-                    </section>
+                    
+                    
                 </main>
 
                 {/* ------------ RIGHT SIDEBAR ------------ */}
