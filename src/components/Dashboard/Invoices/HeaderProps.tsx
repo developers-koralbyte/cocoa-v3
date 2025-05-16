@@ -1,11 +1,12 @@
 import React from "react";
 import { useUserStore } from "../../../utils/userStore";
+import DefaultAvatar from "./DefaultAvatar";
 
 interface HeaderProps {
   defaultAvatar?: string;
-  userName: string;
-  userRole: string;
-  userImage: string;
+  userName?: string;
+  userRole?: string;
+  userImage?: string;
 }
 
 const Header: React.FC<HeaderProps> = ({
@@ -13,14 +14,12 @@ const Header: React.FC<HeaderProps> = ({
 }) => {
   const { currentUser } = useUserStore();
 
-  // Don’t render header at all if there’s no user yet
+  // Don't render header at all if there's no user yet
   if (!currentUser) return null;
 
   const displayName =
     currentUser.firstName || currentUser.username || "User";
   const formattedRole = currentUser.role?.toUpperCase() || "GUEST";
-  const avatarSrc =
-    currentUser.avatar?.trim() !== "" ? currentUser.avatar : defaultAvatar;
 
   return (
     <div className="flex items-center space-x-3">
@@ -32,10 +31,11 @@ const Header: React.FC<HeaderProps> = ({
           {formattedRole}
         </div>
       </div>
-      <img
-        src={avatarSrc}
-        alt="User Avatar"
-        className="w-10 h-10 md:w-12 md:h-12 rounded-full object-cover"
+      
+      <DefaultAvatar 
+        user={currentUser}
+        size="lg"
+        defaultImage={defaultAvatar}
       />
     </div>
   );

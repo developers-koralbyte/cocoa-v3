@@ -5,7 +5,7 @@ import more from '../../../assets/img/chatImages/more.png'
 import { auth } from '../../../utils/firebase'
 import { useChatStore } from '../../../utils/chatStore'
 import { toast } from 'react-toastify'
-
+import DefaultAvatar from '../../Dashboard/Invoices/DefaultAvatar'
 const Userinfo = ({ currentUser }) => {
     const { resetChat } = useChatStore()
 
@@ -41,9 +41,13 @@ const Userinfo = ({ currentUser }) => {
     return (
         <div className="userInfo">
             <div className="user">
-                <img src={currentUser?.avatar || avatar} alt="profile" />
-                <h2>{currentUser?.firstName}</h2>
-            </div>
+    <DefaultAvatar
+        user={currentUser}
+        size="md"
+        defaultImage={avatar}
+    />
+    <h2>{currentUser?.firstName}</h2>
+</div>
 
             {/* <div className="options-menu" ref={menuRef}>
                 <div className="icons" onClick={handleToggle}>
