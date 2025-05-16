@@ -14,7 +14,7 @@ import {
 } from 'firebase/firestore'
 import { db } from '../../utils/firebase'
 import { useUserStore } from '../../utils/userStore'
-
+import DefaultAvatar from "../Dashboard/Invoices/DefaultAvatar"
 const AddBuyerChat = ({ onClose, onBuyerSelect, userRole, searchRole }) => {
     const [users, setUsers] = useState([])
     const [filteredUsers, setFilteredUsers] = useState([])
@@ -233,15 +233,12 @@ const AddBuyerChat = ({ onClose, onBuyerSelect, userRole, searchRole }) => {
                             className="p-3 hover:bg-gray-100 cursor-pointer rounded-md flex items-center"
                             onClick={() => handleUserSelect(user)}
                         >
-                            <img
-                                src={user.avatar || './avatar.png'}
-                                alt={
-                                    roleToSearch === 'vendor'
-                                        ? 'Vendor'
-                                        : 'Buyer'
-                                }
-                                className="w-10 h-10 rounded-full mr-3 object-cover"
-                            />
+                            <DefaultAvatar
+    user={user}
+    size="md"
+    className="mr-3"
+    defaultImage="./avatar.png"
+/>
                             <div>
                                 <div className="font-medium">
                                     {user.businessName ||

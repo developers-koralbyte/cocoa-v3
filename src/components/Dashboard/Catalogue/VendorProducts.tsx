@@ -139,7 +139,7 @@ const VendorProducts: React.FC = () => {
   return (
     <div className="mb-12">
       {/* Card container */}
-      <div className="bg-white rounded-[1.5rem] shadow-md p-4">
+<div className="bg-gray-100 rounded-[1.5rem] shadow-md p-4">
         <h2 className="text-xl font-bold mb-4">My Products</h2>
 
         {/* Error message */}
