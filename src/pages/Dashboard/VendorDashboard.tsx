@@ -87,6 +87,9 @@ const VendorDashboard: React.FC = () => {
   // For checking if the user has completed their vendor doc
   const [showPopup, setShowPopup] = useState(false);
   const [loadingDocCheck, setLoadingDocCheck] = useState(true);
+  
+  // Store vendor details from Firestore
+  const [vendorData, setVendorData] = useState<any>({});
 
   // Basic vendor form data for the popup
   const [formData, setFormData] = useState({
@@ -146,6 +149,8 @@ const VendorDashboard: React.FC = () => {
         }
 
         const data = snap.data() || {};
+        setVendorData(data); // Store vendor data
+        
         const { businessName, countryRegion, industry, categories, services } = data;
         if (!businessName || !countryRegion || !industry || !categories || !services) {
           setFormData({
@@ -156,6 +161,14 @@ const VendorDashboard: React.FC = () => {
             services: services || '',
           });
           setShowPopup(true);
+        } else {
+          setFormData({
+            businessName: businessName || '',
+            countryRegion: countryRegion || '',
+            industry: industry || '',
+            categories: categories || '',
+            services: services || '',
+          });
         }
       } catch (error) {
         console.error('Error checking vendor doc:', error);
@@ -270,6 +283,16 @@ const VendorDashboard: React.FC = () => {
       );
       alert('Vendor details updated!');
       setShowPopup(false);
+      
+      // Update our vendorData state with the new information
+      setVendorData(prev => ({
+        ...prev,
+        businessName: formData.businessName,
+        countryRegion: formData.countryRegion,
+        industry: formData.industry,
+        categories: formData.categories,
+        services: formData.services,
+      }));
     } catch (err) {
       console.error('Error updating vendor doc:', err);
     }
@@ -288,6 +311,12 @@ const VendorDashboard: React.FC = () => {
 
   // 9) Decide if we show a single "plus" if no services and no products
   const noServicesOrProducts = services.length === 0 && products.length === 0;
+  
+  // Create an enhanced user object that includes the business name
+  const enhancedUser = {
+    ...user,
+    businessName: vendorData?.businessName || formData.businessName || '',
+  };
 
   return (
     <BaseLayout>
@@ -333,87 +362,55 @@ const VendorDashboard: React.FC = () => {
               </div>
             </>
           )}
-
-                    
-          
         </div>
 
         {/* Right panel */}
         <div className="w-96 bg-purple-100 p-8 pt-32 rounded-l-[3.5rem] relative">
-  {/* User menu */}
-  <div className="absolute top-8 right-8">
-    <UserMenu user={user} />
-  </div>
-
-  {/* Upcoming Appointments */}
-  <section className="bg-white rounded-[2rem] p-6 mb-8">
-    <div className="flex justify-between items-center mb-4">
-      <h3 className="font-bold font-nunito">Upcoming Appointments</h3>
-      <div className="flex gap-2">
-        <button className="text-purple-600">&lt;</button>
-        <button className="text-purple-600">&gt;</button>
-      </div>
-    </div>
-    <div className="space-y-4">
-      {appointments.map((apt, index) => (
-        <div key={index} className="flex items-center gap-4">
-          <div className="w-10 h-10 rounded-full overflow-hidden">
-            <img
-              src={apt.image}
-              alt={apt.name}
-              className="w-full h-full object-cover"
-            />
+          {/* User menu */}
+          <div className="absolute top-8 right-8">
+            <UserMenu user={enhancedUser} />
           </div>
-          <div className="flex-1">
-            <div className="flex justify-between">
-              <h4 className="font-medium">
-                {apt.name},{' '}
-                <span className="text-purple-600">{apt.company}</span>
-              </h4>
+
+          {/* Upcoming Appointments */}
+          <section className="bg-white rounded-[2rem] p-6 mb-8">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="font-bold font-nunito">Upcoming Appointments</h3>
+              <div className="flex gap-2">
+                <button className="text-purple-600">&lt;</button>
+                <button className="text-purple-600">&gt;</button>
+              </div>
             </div>
-            <div className="text-sm text-gray-500">
-              {apt.date}, {apt.time}
+            <div className="space-y-4">
+              {appointments.map((apt, index) => (
+                <div key={index} className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-full overflow-hidden">
+                    <img
+                      src={apt.image}
+                      alt={apt.name}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex justify-between">
+                      <h4 className="font-medium">
+                        {apt.name},{' '}
+                        <span className="text-purple-600">{apt.company}</span>
+                      </h4>
+                    </div>
+                    <div className="text-sm text-gray-500">
+                      {apt.date}, {apt.time}
+                    </div>
+                  </div>
+                  <div
+                    className="cursor-pointer"
+                    onClick={() => alert(`Reminder set for ${apt.name}`)}
+                  >
+                    <Bell className="w-4 h-4 text-purple-600" />
+                  </div>
+                </div>
+              ))}
             </div>
-          </div>
-          <div
-            className="cursor-pointer"
-            onClick={() => alert(`Reminder set for ${apt.name}`)}
-          >
-            <Bell className="w-4 h-4 text-purple-600" />
-          </div>
-        </div>
-      ))}
-    </div>
-  </section>
-
-  {/* Your Potential Buyers */}
-  <section className="bg-white rounded-[2rem] p-6">
-    <h3 className="font-bold mb-4">Your Potential Buyers</h3>
-    <div className="space-y-4">
-      {potentialBuyers.map((b, idx) => (
-        <div key={idx} className="flex items-center gap-4">
-          <div className="w-10 h-10 rounded-full overflow-hidden">
-            <img
-              src={b.image || '/path-to-default-avatar.jpg'}
-              alt={b.name}
-              className="w-full h-full object-cover"
-            />
-          </div>
-          <div>
-            <h4 className="font-medium">{b.name}</h4>
-            <p className="text-md text-purple-600 font-bold">
-              {b.company || 'N/A'}
-            </p>
-            <p className="text-sm text-gray-600">{b.match}% match</p>
-          </div>
-        </div>
-      ))}
-    </div>
-  </section>
-</div>
-
-
-      </div>
+          </section>
 
       {/* Popup for completing profile */}
       {showPopup && (

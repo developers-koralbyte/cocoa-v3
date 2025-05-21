@@ -5,8 +5,10 @@ import { useNavigate } from 'react-router-dom'
 
 export interface User {
   firstName?: string
+  businessName?: string
   avatar?: string
   role?: string
+  isPremium?: boolean
 }
 
 interface UserMenuProps {
@@ -15,68 +17,41 @@ interface UserMenuProps {
 
 export default function UserMenu({ user }: UserMenuProps) {
   const navigate = useNavigate()
-  const name = user.firstName ?? 'Vendor'
-  const role = user.role ?? 'Vendor'
+  const firstName = user.firstName ?? 'Vendor'
+  const businessName = user.businessName ?? ''
+  const role = user.role ?? 'vendor'
+  const isPremium = user.isPremium ?? false
 
   return (
-    <Menu as="div" className="relative inline-block text-left">
-      <Menu.Button className="flex items-center gap-3 p-2 rounded">
-        <div className="flex flex-col justify-center leading-tight">
-          <h2 className="font-bold font-nunito text-sm">{name}</h2>
-          <span className="text-xs text-gray-600 font-nunito">{role}</span>
+    <div className="flex items-center">
+      {/* Left side text */}
+      <div className="flex flex-col mr-3">
+        <h2 className="text-3xl font-bold">
+          {firstName}{businessName ? `, ${businessName}` : ''}
+        </h2>
+        <div className="flex flex-col">
+          <span className="text-xl text-gray-600 capitalize">{role}</span>
+          {isPremium && (
+            <div className="flex items-center text-purple-600 text-xl mt-1">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 mr-2">
+                <path fillRule="evenodd" d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.007 5.404.433c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.433 2.082-5.006z" clipRule="evenodd" />
+              </svg>
+              <span className="italic">Premium Account</span>
+            </div>
+          )}
         </div>
-        <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center">
-          {user.avatar
-            ? <img src={user.avatar} alt="Avatar" className="w-full h-full object-cover" />
-            : <UserIcon className="text-gray-400 w-6 h-6" />
-          }
-        </div>
-      </Menu.Button>
+      </div>
 
-      <Transition
-        as={Fragment}
-        enter="transition ease-out duration-100"
-        enterFrom="transform opacity-0 scale-95"
-        enterTo="transform opacity-100 scale-100"
-        leave="transition ease-in duration-75"
-        leaveFrom="transform opacity-100 scale-100"
-        leaveTo="transform opacity-0 scale-95"
-      >
-        <Menu.Items className="absolute right-0 mt-2 w-44 bg-white shadow-lg ring-1 ring-black/5 rounded-md">
-          <div className="py-1">
-            {/* Manage Profile */}
-            <Menu.Item>
-              {({ active }) => (
-                <button
-                  onClick={() => navigate('/settings')}
-                  style={{ color: 'hsla(240,29%,54%,1)' }}
-                  className={`flex items-center w-full px-4 py-2 text-sm ${
-                    active ? 'bg-gray-100' : ''
-                  }`}
-                >
-                  <UserIcon className="w-5 h-5 mr-2" />
-                  Manage Profile
-                </button>
-              )}
-            </Menu.Item>
-
-            {/* Settings */}
-            <Menu.Item>
-              {({ active }) => (
-                <button
-                  onClick={() => navigate('/settings')}
-                  className={`flex items-center w-full px-4 py-2 text-sm ${
-                    active ? 'bg-gray-100' : ''
-                  }`}
-                >
-                  <SettingsIcon className="w-5 h-5 mr-2" />
-                  Settings
-                </button>
-              )}
-            </Menu.Item>
+      {/* Right side avatar */}
+      <div className="w-16 h-16 rounded-full overflow-hidden flex items-center justify-center">
+        {user.avatar ? (
+          <img src={user.avatar} alt="Avatar" className="w-full h-full object-cover" />
+        ) : (
+          <div className="w-full h-full bg-black flex items-center justify-center">
+            <UserIcon className="text-white w-10 h-10" />
           </div>
-        </Menu.Items>
-      </Transition>
-    </Menu>
+        )}
+      </div>
+    </div>
   )
 }
