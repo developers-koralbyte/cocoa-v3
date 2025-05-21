@@ -1,16 +1,14 @@
 import React, { useState, useEffect, ChangeEvent, FormEvent } from 'react';
-import { Search, RotateCcw, Plus, Bell, User } from 'lucide-react';
+import { Search, RotateCcw, Plus, Bell } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import BaseLayout from '../../components/Dashboard/BaseLayout';
 import { db } from '../../utils/firebase';
-import { doc, getDoc, setDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { doc, getDoc, setDoc, collection, query, where, getDocs, DocumentData } from 'firebase/firestore';
 import { useAuth } from '../../utils/AuthContext';
-
 
 import VendorServices from '../../components/Dashboard/Catalogue/VendorServices';
 import VendorProducts from '../../components/Dashboard/Catalogue/VendorProducts';
 import UserMenu from '../../components/Dashboard/UserMenu';
-
 
 interface Buyer {
   name: string;
@@ -226,20 +224,31 @@ const VendorDashboard: React.FC = () => {
             where('categories', 'array-contains-any', vendorInterests)
           );
           const snapshot = await getDocs(buyersQ);
-          const fetchedBuyers: Buyer[] = snapshot.docs.map((doc) => ({
+          const fetchedBuyers: Buyer[] = snapshot.docs.map((docSnap) => {
+            const docData = docSnap.data();
             // Adjust to your actual data structure
-            name: doc.data().firstName || 'Unknown',
-            company: doc.data().businessName || 'Unknown',
-            match: 0, // placeholder
-            image: doc.data().avatar || '',
-          }));
+            return {
+              name: docData.firstName || 'Unknown',
+              company: docData.businessName || 'Unknown',
+              match: 0, // placeholder
+              image: docData.avatar || '',
+            };
+          });
 
           // Calculate match
           const matched = fetchedBuyers.map((b) => {
             // Suppose 'categories' is an array on each buyer
             // This is just a quick example:
-            const buyerCats = (doc.data().categories || []).map((c: string) => c.toLowerCase());
-            const common = vendorInterests.filter((v) => buyerCats.includes(v));
+            const buyerDoc = snapshot.docs.find(doc => 
+              doc.data().firstName === b.name || 
+              doc.data().businessName === b.company
+            );
+            
+            if (!buyerDoc) return b;
+            
+            const buyerData = buyerDoc.data();
+            const buyerCats = (buyerData.categories || []).map((c: string) => c.toLowerCase());
+            const common = vendorInterests.filter((v: string) => buyerCats.includes(v));
             const match = vendorInterests.length
               ? Math.floor((common.length / vendorInterests.length) * 100)
               : 0;
@@ -285,7 +294,7 @@ const VendorDashboard: React.FC = () => {
       setShowPopup(false);
       
       // Update our vendorData state with the new information
-      setVendorData(prev => ({
+      setVendorData((prev: any) => ({
         ...prev,
         businessName: formData.businessName,
         countryRegion: formData.countryRegion,
@@ -354,9 +363,7 @@ const VendorDashboard: React.FC = () => {
             </div>
           ) : (
             <>
-             
               <div className="space-y-8 md:space-y-12">
-               
                 <VendorServices />
                 <VendorProducts />
               </div>
@@ -411,6 +418,8 @@ const VendorDashboard: React.FC = () => {
               ))}
             </div>
           </section>
+        </div>
+      </div>
 
       {/* Popup for completing profile */}
       {showPopup && (
