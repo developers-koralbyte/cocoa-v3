@@ -3,11 +3,22 @@ import { useAuth } from '../../utils/AuthContext'
 import { Search, RotateCcw, Bell, User } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import BaseLayout from '../../components/Dashboard/BaseLayout'
-import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore'
+import {
+    doc,
+    getDoc,
+    setDoc,
+    collection,
+    query,
+    where,
+    getDocs,
+    onSnapshot,
+  } from 'firebase/firestore';
 import { db, auth } from '../../utils/firebase'
 import { serviceImageMap } from '../../utils/serviceImages'
+import moment from 'moment'
 
 const defaultAvatar = '/path-to-default-avatar.jpg'
+
 
 // ---------------- DUMMY DATA ----------------
 const appointments = [
@@ -33,6 +44,15 @@ const appointments = [
         image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=150&h=150',
     },
 ]
+
+interface Appointment {
+    id: string;
+    name: string;
+    company: string;
+    date: string;
+    time: string;
+    image: string;
+  }
 
 const buyers = [
     {
@@ -66,6 +86,12 @@ const BuyerDashboard: React.FC = () => {
     const navigate = useNavigate()
     const { user } = useAuth()
 
+    const buyerId = user?.uid;
+    if (!buyerId && !isLoading) {
+      navigate('/login');
+      return null;
+    }
+
     /* ---------------- LOCAL STATE ---------------- */
     const [services, setServices] = useState<string[]>([])
     const [searchTerm, setSearchTerm] = useState('')
@@ -78,6 +104,8 @@ const BuyerDashboard: React.FC = () => {
         categories: '',
         services: '',
     })
+    const [appointments, setAppointments] = useState<Appointment[]>([]);
+    const [upcomingIndex, setUpcomingIndex] = useState(0);
     
     // Track premium status
     const [isPremium, setIsPremium] = useState(false)
@@ -104,6 +132,58 @@ const BuyerDashboard: React.FC = () => {
         }
         load()
     }, [])
+
+
+    useEffect(() => {
+        if (!buyerId) return;
+        const fetchAppointments = async () => {
+          const apptQ = query(
+            collection(db,'appointments'),
+            where('buyerId','==',buyerId)
+          );
+          const snap = await getDocs(apptQ);
+          const items: Appointment[] = await Promise.all(
+            snap.docs.map(async ds => {
+              const d = ds.data();
+              const vid = d.vendorId as string;
+              // vendor user doc
+              const usnap = await getDoc(doc(db,'users',vid));
+              const u = usnap.exists() ? usnap.data() : {};
+              // vendor business doc
+              const vsnap = await getDoc(doc(db,'Vendors',vid));
+              const v = vsnap.exists() ? vsnap.data() : {};
+              // parse date/time
+              const raw = d.selectedDate?.toDate
+                ? d.selectedDate.toDate()
+                : new Date(d.selectedDate);
+              const start = moment(raw);
+              if (d.selectedTime) {
+                const tm = moment(d.selectedTime,'h:mm A');
+                start.hours(tm.hours()).minutes(tm.minutes());
+              }
+              const end = start.clone().add(30,'minutes');
+              return {
+                id: ds.id,
+                name: u.firstName || 'Unknown',
+                company: v.businessName || '',
+                image: u.avatar || '',
+                date: start.format('ddd D'),
+                time: `${start.format('h:mm A')} - ${end.format('h:mm A')}`,
+              };
+            })
+          );
+          items.sort((a,b)=> {
+            const aM = moment(a.date + ' ' + a.time.split(' - ')[0],'ddd D h:mm A');
+            const bM = moment(b.date + ' ' + b.time.split(' - ')[0],'ddd D h:mm A');
+            return aM.valueOf() - bM.valueOf();
+          });
+          setAppointments(items);
+          setUpcomingIndex(0);
+        };
+        fetchAppointments();
+      }, [buyerId]);
+
+    
 
     /* ---------- profile completeness check ---------- */
     useEffect(() => {
@@ -180,6 +260,11 @@ const BuyerDashboard: React.FC = () => {
             navigate(`/search?query=${encodeURIComponent(searchTerm.trim())}`)
         }
     }
+
+    const handlePrevUpcoming = () =>
+    setUpcomingIndex(i => Math.max(i-1,0));
+  const handleNextUpcoming = () =>
+    setUpcomingIndex(i => Math.min(i+1, appointments.length-1));
 
     const handleFormChange = (e: ChangeEvent<HTMLInputElement>) => {
         setFormData((p) => ({ ...p, [e.target.name]: e.target.value }))
@@ -343,51 +428,56 @@ const BuyerDashboard: React.FC = () => {
                     </div>
 
                     {/* Upcoming Appointments */}
-                    <section className="bg-white rounded-[2rem] p-6 flex-1">
-                        <div className="flex justify-between items-center mb-4">
-                            <h3 className="font-bold font-nunito">
-                                Upcoming Appointments
-                            </h3>
-                            <div className="flex gap-2 text-purple-600 select-none">
-                                <button>&lt;</button>
-                                <button>&gt;</button>
-                            </div>
-                        </div>
-                        <div className="space-y-4 overflow-y-auto max-h-60 pr-2">
-                            {appointments.map((apt) => (
-                                <div
-                                    key={apt.name}
-                                    className="flex items-center gap-4"
-                                >
-                                    <img
-                                        src={apt.image}
-                                        alt={apt.name}
-                                        className="w-10 h-10 rounded-full object-cover"
-                                    />
-                                    <div className="flex-1">
-                                        <h4 className="font-medium">
-                                            {apt.name}{' '}
-                                            <span className="text-purple-600">
-                                                {apt.company}
-                                            </span>
-                                        </h4>
-                                        <div className="text-sm text-gray-500">
-                                            {apt.date}, {apt.time}
-                                        </div>
-                                    </div>
-                                    <button
-                                        onClick={() =>
-                                            alert(
-                                                `Reminder set for ${apt.name}`
-                                            )
-                                        }
-                                    >
-                                        <Bell className="w-4 h-4 text-purple-600" />
-                                    </button>
-                                </div>
-                            ))}
-                        </div>
-                    </section>
+                            {/* Upcoming Appointment */}
+          <section className="bg-white rounded-[2rem] p-6 flex-1">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="font-bold font-nunito">Upcoming Appointment</h3>
+              <div className="flex gap-2 text-purple-600 select-none">
+                <button
+                  onClick={handlePrevUpcoming}
+                  disabled={upcomingIndex===0}
+                  className="disabled:opacity-50"
+                >&lt;</button>
+                <button
+                  onClick={handleNextUpcoming}
+                  disabled={upcomingIndex===appointments.length-1}
+                  className="disabled:opacity-50"
+                >&gt;</button>
+              </div>
+            </div>
+
+            {appointments.length ? (
+              (() => {
+                const appt = appointments[upcomingIndex];
+                return (
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200">
+                      {appt.image ? (
+                        <img src={appt.image} alt={appt.name} className="object-cover w-full h-full"/>
+                      ) : (
+                        <User className="text-gray-400 w-6 h-6 m-2"/>
+                      )}
+                    </div>
+                    <div className="flex-1 space-y-1">
+                      <div className="font-medium">{appt.name}</div>
+                      <div className="text-purple-600">
+                        {appt.company || 'No company info'}
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        {appt.date}, {appt.time}
+                      </div>
+                    </div>
+                    <Bell
+                      className="w-4 h-4 text-purple-600 cursor-pointer"
+                      onClick={()=>alert(`Reminder set for ${appt.name}`)}
+                    />
+                  </div>
+                );
+              })()
+            ) : (
+              <p className="text-gray-500">No upcoming appointments.</p>
+            )}
+          </section>
 
                     {/* Your Buyers */}
                     <section className="bg-white rounded-[2rem] p-6">
