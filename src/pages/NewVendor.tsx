@@ -1,4 +1,3 @@
-// src/pages/NewVendor.tsx
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import cocoaLogo from "../assets/img/cocoa-logo-white.png";
@@ -10,29 +9,13 @@ import upload from "../utils/upload";
 import { doc, setDoc } from "firebase/firestore";
 import { toast } from "react-toastify";
 
-// Define service options - you can modify this list as needed
-const SERVICE_OPTIONS = [
-  "F&B",
-  "Retail",
-  "Ecommerce",
-  "Consulting",
-  "Software Development",
-  "Marketing",
-  "Design",
-  "Education",
-  "Healthcare",
-  "Finance",
-  "Transportation",
-  "Real Estate",
-];
-
 type FormData = {
   email: string;
   password: string;
   firstName: string;
   lastName: string;
   businessName: string;
-  companyAddress: string;
+  companyAddress: string;  // new field
   countryRegion: string;
   industry: string;
   categories: string;
@@ -52,12 +35,12 @@ const NewVendor = () => {
     firstName: "",
     lastName: "",
     businessName: "",
-    companyAddress: "",
+    companyAddress: "", // initializes to empty
     countryRegion: "",
     industry: "",
     categories: "",
     services: "",
-    role,
+    role, // default to "Vendor"
   });
 
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
@@ -81,11 +64,6 @@ const NewVendor = () => {
     e.preventDefault();
     console.log("Submitting form:", formData);
 
-    if (!agreed) {
-      toast.error("You must agree to the Terms and Conditions to sign up.");
-      return;
-    }
-
     try {
       // 1) Create user in Firebase Auth
       const userCredentials = await createUserWithEmailAndPassword(
@@ -105,7 +83,7 @@ const NewVendor = () => {
         avatarUrl = (await upload(avatarFile)) as string;
       }
 
-      // 4) Store user's basic info in the "users" collection
+      // 4) Store user’s basic info in the "users" collection
       await setDoc(doc(db, "users", user.uid), {
         id: user.uid,
         email: formData.email,
@@ -127,9 +105,7 @@ const NewVendor = () => {
         avatar: avatarUrl,
         blocked: [],
         createdAt: new Date(),
-        categories: formData.categories
-          .split(",")
-          .map((cat) => cat.trim().toLowerCase()),
+        categories: formData.categories.split(",").map((cat) => cat.trim().toLowerCase()),
         documentUploaded: false,
       });
 
@@ -152,44 +128,6 @@ const NewVendor = () => {
 
   return (
     <div className="h-screen w-screen flex">
-      {/* TERMS & CONDITIONS Modal */}
-      {showTermsModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg max-w-2xl max-h-[80vh] overflow-y-auto relative">
-            <button
-              onClick={() => setShowTermsModal(false)}
-              className="absolute top-3 right-3 text-gray-600 hover:text-gray-900 text-xl"
-              aria-label="Close"
-            >
-              &times;
-            </button>
-            <h2 className="text-2xl font-semibold mb-4">Terms and Conditions</h2>
-            <div className="space-y-4 text-sm leading-relaxed text-gray-700">
-              {/* Insert your full terms text below */}
-              <p>
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor
-                incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud
-                exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
-              </p>
-              <p>
-                Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu
-                fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in
-                culpa qui officia deserunt mollit anim id est laborum.
-              </p>
-              {/* ... */}
-            </div>
-            <div className="mt-6 text-right">
-              <button
-                onClick={() => setShowTermsModal(false)}
-                className="px-4 py-2 bg-[#7C77C1] text-white rounded hover:bg-[#5F5A9F]"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Left Panel */}
       <div className="w-2/5 bg-[#7C77C1] p-8 flex flex-col justify-between">
         <div>
@@ -455,7 +393,7 @@ const NewVendor = () => {
             </div>
           </div>
 
-          {/* Services dropdown + submit */}
+          {/* Services + submit */}
           <div className="col-span-2">
             <div className="flex flex-row gap-4 items-end">
               <div className="relative group flex-1">
@@ -465,23 +403,17 @@ const NewVendor = () => {
                 >
                   Services
                   <span className="absolute left-0 bottom-full mb-1 w-56 p-2 text-xs text-white bg-gray-800 rounded-md shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 ease-in-out">
-                    Select the primary service type for your business.
+                    Enter services relevant to your business (F&B, Retail, Ecommerce).
                   </span>
                 </label>
-                <select
+                <input
+                  type="text"
                   id="services"
                   name="services"
                   value={formData.services}
                   onChange={handleInputChange}
                   className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#7C77C1] focus:outline-none transition"
-                >
-                  <option value="">Select a service</option>
-                  {SERVICE_OPTIONS.map((service) => (
-                    <option key={service} value={service}>
-                      {service}
-                    </option>
-                  ))}
-                </select>
+                />
               </div>
 
               <button
@@ -491,27 +423,6 @@ const NewVendor = () => {
                 Submit
               </button>
             </div>
-          </div>
-
-          {/* Terms & Conditions */}
-          <div className="col-span-2 flex items-center space-x-2">
-            <input
-              id="terms"
-              type="checkbox"
-              checked={agreed}
-              onChange={(e) => setAgreed(e.target.checked)}
-              className="h-4 w-4"
-            />
-            <label htmlFor="terms" className="text-sm text-gray-700">
-              I agree to the{" "}
-              <button
-                type="button"
-                onClick={() => setShowTermsModal(true)}
-                className="text-blue-600 underline"
-              >
-                Terms and Conditions
-              </button>
-            </label>
           </div>
         </form>
       </div>
