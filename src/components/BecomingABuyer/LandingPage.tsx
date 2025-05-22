@@ -45,7 +45,7 @@ const LandingPage = () => {
                                     //     label: "Vendor's Blog",
                                     //     path: '/vendors-blog',
                                     // },
-                                    { label: 'Prices', path: '/vendor-prices' },
+                                    // { label: 'Prices', path: '/vendor-prices' },
                                 ],
                             },
                             {

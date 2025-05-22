@@ -21,7 +21,7 @@ function App() {
       {/* <TopSuppliers/> */}
       <UserTestimonial />
       <LatestNews />
-      <Pricing/>
+      {/* <Pricing/> */}
       <HowItWorks />
       <FAQ />
       <footer>
