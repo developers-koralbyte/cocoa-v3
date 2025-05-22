@@ -7,7 +7,7 @@ import { useUserStore } from '../../../utils/userStore'
 import { useChatStore } from '../../../utils/chatStore'
 import AddUser from './addUser/addUser' // if you have a "plus" button to add new contacts
 import searchIcon from '../../../assets/img/chatImages/search.png'
-
+import DefaultAvatar from '../../Dashboard/Invoices/DefaultAvatar'
 const ChatList = () => {
   const [chats, setChats] = useState([])
   const [addMode, setAddMode] = useState(false)
@@ -105,11 +105,12 @@ const ChatList = () => {
             onClick={() => handleSelect(chat)}
           >
             <div className="w-1/4">
-              <img
-                src={chat.user?.avatar || './avatar.png'}
-                className="object-cover h-12 w-12 rounded-full"
-                alt=""
-              />
+             <DefaultAvatar
+    user={chat.user}
+    size="lg"
+    className="h-12 w-12"
+    defaultImage="./avatar.png"
+/>
             </div>
             <div className="w-full">
               <div className="text-lg font-semibold">

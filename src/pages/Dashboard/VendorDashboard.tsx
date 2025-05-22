@@ -1,16 +1,14 @@
 import React, { useState, useEffect, ChangeEvent, FormEvent } from 'react';
-import { Search, RotateCcw, Plus, Bell, User } from 'lucide-react';
+import { Search, RotateCcw, Plus, Bell } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import BaseLayout from '../../components/Dashboard/BaseLayout';
 import { db } from '../../utils/firebase';
-import { doc, getDoc, setDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { doc, getDoc, setDoc, collection, query, where, getDocs, DocumentData } from 'firebase/firestore';
 import { useAuth } from '../../utils/AuthContext';
-
 
 import VendorServices from '../../components/Dashboard/Catalogue/VendorServices';
 import VendorProducts from '../../components/Dashboard/Catalogue/VendorProducts';
 import UserMenu from '../../components/Dashboard/UserMenu';
-
 
 interface Buyer {
   name: string;
@@ -87,6 +85,9 @@ const VendorDashboard: React.FC = () => {
   // For checking if the user has completed their vendor doc
   const [showPopup, setShowPopup] = useState(false);
   const [loadingDocCheck, setLoadingDocCheck] = useState(true);
+  
+  // Store vendor details from Firestore
+  const [vendorData, setVendorData] = useState<any>({});
 
   // Basic vendor form data for the popup
   const [formData, setFormData] = useState({
@@ -146,6 +147,8 @@ const VendorDashboard: React.FC = () => {
         }
 
         const data = snap.data() || {};
+        setVendorData(data); // Store vendor data
+        
         const { businessName, countryRegion, industry, categories, services } = data;
         if (!businessName || !countryRegion || !industry || !categories || !services) {
           setFormData({
@@ -156,6 +159,14 @@ const VendorDashboard: React.FC = () => {
             services: services || '',
           });
           setShowPopup(true);
+        } else {
+          setFormData({
+            businessName: businessName || '',
+            countryRegion: countryRegion || '',
+            industry: industry || '',
+            categories: categories || '',
+            services: services || '',
+          });
         }
       } catch (error) {
         console.error('Error checking vendor doc:', error);
@@ -213,20 +224,31 @@ const VendorDashboard: React.FC = () => {
             where('categories', 'array-contains-any', vendorInterests)
           );
           const snapshot = await getDocs(buyersQ);
-          const fetchedBuyers: Buyer[] = snapshot.docs.map((doc) => ({
+          const fetchedBuyers: Buyer[] = snapshot.docs.map((docSnap) => {
+            const docData = docSnap.data();
             // Adjust to your actual data structure
-            name: doc.data().firstName || 'Unknown',
-            company: doc.data().businessName || 'Unknown',
-            match: 0, // placeholder
-            image: doc.data().avatar || '',
-          }));
+            return {
+              name: docData.firstName || 'Unknown',
+              company: docData.businessName || 'Unknown',
+              match: 0, // placeholder
+              image: docData.avatar || '',
+            };
+          });
 
           // Calculate match
           const matched = fetchedBuyers.map((b) => {
             // Suppose 'categories' is an array on each buyer
             // This is just a quick example:
-            const buyerCats = (doc.data().categories || []).map((c: string) => c.toLowerCase());
-            const common = vendorInterests.filter((v) => buyerCats.includes(v));
+            const buyerDoc = snapshot.docs.find(doc => 
+              doc.data().firstName === b.name || 
+              doc.data().businessName === b.company
+            );
+            
+            if (!buyerDoc) return b;
+            
+            const buyerData = buyerDoc.data();
+            const buyerCats = (buyerData.categories || []).map((c: string) => c.toLowerCase());
+            const common = vendorInterests.filter((v: string) => buyerCats.includes(v));
             const match = vendorInterests.length
               ? Math.floor((common.length / vendorInterests.length) * 100)
               : 0;
@@ -270,6 +292,16 @@ const VendorDashboard: React.FC = () => {
       );
       alert('Vendor details updated!');
       setShowPopup(false);
+      
+      // Update our vendorData state with the new information
+      setVendorData((prev: any) => ({
+        ...prev,
+        businessName: formData.businessName,
+        countryRegion: formData.countryRegion,
+        industry: formData.industry,
+        categories: formData.categories,
+        services: formData.services,
+      }));
     } catch (err) {
       console.error('Error updating vendor doc:', err);
     }
@@ -288,6 +320,12 @@ const VendorDashboard: React.FC = () => {
 
   // 9) Decide if we show a single "plus" if no services and no products
   const noServicesOrProducts = services.length === 0 && products.length === 0;
+  
+  // Create an enhanced user object that includes the business name
+  const enhancedUser = {
+    ...user,
+    businessName: vendorData?.businessName || formData.businessName || '',
+  };
 
   return (
     <BaseLayout>
@@ -325,121 +363,62 @@ const VendorDashboard: React.FC = () => {
             </div>
           ) : (
             <>
-             
               <div className="space-y-8 md:space-y-12">
-               
                 <VendorServices />
                 <VendorProducts />
               </div>
             </>
           )}
+        </div>
 
-          {/* Potential Buyers (static example) */}
-          <section className="mb-12">
-            <h2 className="text-2xl font-bold mb-6 font-nunito text-purple-400">
-              Your Potential Buyers
-            </h2>
-            <p className="text-gray-600 mb-6 font-nunito">
-              These buyer's interests match your services; you can reach them with a one-time message.
-            </p>
-            <div className="grid grid-cols-4 gap-6">
-              {staticBuyers.slice(0, 4).map((buyer, index) => (
-                <div key={index} className="text-center">
-                  <div className="w-full aspect-square mb-4 overflow-hidden rounded-full shadow-sm hover:shadow-md transition-shadow bg-gray-100 flex items-center justify-center">
-                    {buyer.image ? (
-                      <img
-                        src={buyer.image}
-                        alt={buyer.name}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <User className="text-gray-400 w-12 h-12" />
-                    )}
+        {/* Right panel */}
+        <div className="w-96 bg-purple-100 p-8 pt-32 rounded-l-[3.5rem] relative">
+          {/* User menu */}
+          <div className="absolute top-8 right-8">
+            <UserMenu user={enhancedUser} />
+          </div>
+
+          {/* Upcoming Appointments */}
+          <section className="bg-white rounded-[2rem] p-6 mb-8">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="font-bold font-nunito">Upcoming Appointments</h3>
+              <div className="flex gap-2">
+                <button className="text-purple-600">&lt;</button>
+                <button className="text-purple-600">&gt;</button>
+              </div>
+            </div>
+            <div className="space-y-4">
+              {appointments.map((apt, index) => (
+                <div key={index} className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-full overflow-hidden">
+                    <img
+                      src={apt.image}
+                      alt={apt.name}
+                      className="w-full h-full object-cover"
+                    />
                   </div>
-                  <h3 className="text-sm font-medium">{buyer.name}</h3>
-                  <p className="text-sm text-gray-600">{buyer.company}</p>
-                  <p className="text-sm text-purple-600 mt-1">{buyer.match}% match</p>
+                  <div className="flex-1">
+                    <div className="flex justify-between">
+                      <h4 className="font-medium">
+                        {apt.name},{' '}
+                        <span className="text-purple-600">{apt.company}</span>
+                      </h4>
+                    </div>
+                    <div className="text-sm text-gray-500">
+                      {apt.date}, {apt.time}
+                    </div>
+                  </div>
+                  <div
+                    className="cursor-pointer"
+                    onClick={() => alert(`Reminder set for ${apt.name}`)}
+                  >
+                    <Bell className="w-4 h-4 text-purple-600" />
+                  </div>
                 </div>
               ))}
             </div>
           </section>
         </div>
-
-        {/* Right panel */}
-        <div className="w-96 bg-purple-100 p-8 pt-32 rounded-l-[3.5rem] relative">
-  {/* User menu */}
-  <div className="absolute top-8 right-8">
-    <UserMenu user={user} />
-  </div>
-
-  {/* Upcoming Appointments */}
-  <section className="bg-white rounded-[2rem] p-6 mb-8">
-    <div className="flex justify-between items-center mb-4">
-      <h3 className="font-bold font-nunito">Upcoming Appointments</h3>
-      <div className="flex gap-2">
-        <button className="text-purple-600">&lt;</button>
-        <button className="text-purple-600">&gt;</button>
-      </div>
-    </div>
-    <div className="space-y-4">
-      {appointments.map((apt, index) => (
-        <div key={index} className="flex items-center gap-4">
-          <div className="w-10 h-10 rounded-full overflow-hidden">
-            <img
-              src={apt.image}
-              alt={apt.name}
-              className="w-full h-full object-cover"
-            />
-          </div>
-          <div className="flex-1">
-            <div className="flex justify-between">
-              <h4 className="font-medium">
-                {apt.name},{' '}
-                <span className="text-purple-600">{apt.company}</span>
-              </h4>
-            </div>
-            <div className="text-sm text-gray-500">
-              {apt.date}, {apt.time}
-            </div>
-          </div>
-          <div
-            className="cursor-pointer"
-            onClick={() => alert(`Reminder set for ${apt.name}`)}
-          >
-            <Bell className="w-4 h-4 text-purple-600" />
-          </div>
-        </div>
-      ))}
-    </div>
-  </section>
-
-  {/* Your Potential Buyers */}
-  <section className="bg-white rounded-[2rem] p-6">
-    <h3 className="font-bold mb-4">Your Potential Buyers</h3>
-    <div className="space-y-4">
-      {potentialBuyers.map((b, idx) => (
-        <div key={idx} className="flex items-center gap-4">
-          <div className="w-10 h-10 rounded-full overflow-hidden">
-            <img
-              src={b.image || '/path-to-default-avatar.jpg'}
-              alt={b.name}
-              className="w-full h-full object-cover"
-            />
-          </div>
-          <div>
-            <h4 className="font-medium">{b.name}</h4>
-            <p className="text-md text-purple-600 font-bold">
-              {b.company || 'N/A'}
-            </p>
-            <p className="text-sm text-gray-600">{b.match}% match</p>
-          </div>
-        </div>
-      ))}
-    </div>
-  </section>
-</div>
-
-
       </div>
 
       {/* Popup for completing profile */}

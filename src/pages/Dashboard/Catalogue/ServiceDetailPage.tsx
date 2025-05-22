@@ -146,10 +146,19 @@ const ServiceDetailPage: React.FC = () => {
     }
   };
 
-  // Handle contact provider click
-  const handleContactProvider = () => {
-    console.log('Contact provider for service:', serviceId);
-  };
+  const handleChatWithVendor = () => {
+    if (!service || !service.vendorId) return
+    // Navigate to chat or create a new chat with the vendor
+    navigate('/buyer-inbox', {
+        state: {
+          vendorId: service.vendorId,     // <— who we want to chat with
+          context: {                      // optional: service context for the vendor
+            serviceId,
+            serviceName: service.name
+          }
+        }
+      });
+};
 
   // Handle edit button click
   const handleEditClick = () => {
@@ -262,15 +271,15 @@ const ServiceDetailPage: React.FC = () => {
         <div className="md:hidden">
           {/* Mobile header with logo and user icon */}
           <div className="flex items-center justify-between p-4">
-  <div className="flex items-center">
-    <button 
-      onClick={() => navigate(-1)} 
-      className="text-[#8B85C1] mr-4"
-    >
-      <ArrowLeft className="w-6 h-6" />
-    </button>
-    </div>
-</div>
+            <div className="flex items-center">
+              <button 
+                onClick={() => navigate(-1)} 
+                className="text-[#8B85C1] mr-4"
+              >
+                <ArrowLeft className="w-6 h-6" />
+              </button>
+            </div>
+          </div>
           
           {/* Loading indicator */}
           {isLoading && (
@@ -291,9 +300,22 @@ const ServiceDetailPage: React.FC = () => {
           {!isLoading && !error && service && (
             <div>
               {/* Service title */}
-              <h1 className="text-3xl font-bold px-4 mb-4">
+              <h1 className="text-3xl font-bold px-4 mb-2">
                 {service.name}
               </h1>
+              
+              {/* Chat with Vendor button - MOBILE */}
+              {!isOwner && (
+                <div className="px-4 mb-4">
+                  <button 
+                    onClick={handleChatWithVendor}
+                    className="flex items-center text-sm bg-purple-100 text-purple-700 px-4 py-2 rounded-full hover:bg-purple-200 transition-colors"
+                  >
+                    <MessageCircle className="w-4 h-4 mr-2" />
+                    Chat with Vendor
+                  </button>
+                </div>
+              )}
               
               {/* Purple background with white card - MOBILE */}
               <div className="bg-[#9082C6] p-4 rounded-t-3xl">
@@ -488,25 +510,35 @@ const ServiceDetailPage: React.FC = () => {
                 <div className="flex-1">
                   <h1 className="text-3xl md:text-5xl font-bold ml-5 mt-10">{service.name}</h1>
                   
-                  {/* Vendor Actions */}
-                  {isOwner && (
-                    <div className="flex mt-4 ml-5 space-x-3">
+                  {/* Action Buttons - For vendor or buyer */}
+                  <div className="flex mt-4 ml-5 space-x-3">
+                    {isOwner ? (
+                      <>
+                        <button 
+                          onClick={handleEditClick}
+                          className="flex items-center bg-purple-100 text-purple-700 px-4 py-2 rounded-md hover:bg-purple-200 transition-colors"
+                        >
+                          <Edit className="w-4 h-4 mr-2" />
+                          Edit Service
+                        </button>
+                        <button 
+                          onClick={handleDeleteClick}
+                          className="flex items-center bg-red-100 text-red-700 px-4 py-2 rounded-md hover:bg-red-200 transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4 mr-2" />
+                          Delete Service
+                        </button>
+                      </>
+                    ) : (
                       <button 
-                        onClick={handleEditClick}
-                        className="flex items-center bg-purple-100 text-purple-700 px-4 py-2 rounded-md hover:bg-purple-200 transition-colors"
+                        onClick={handleChatWithVendor}
+                        className="flex items-center bg-purple-600 text-white px-5 py-2 rounded-md hover:bg-purple-700 transition-colors"
                       >
-                        <Edit className="w-4 h-4 mr-2" />
-                        Edit Service
+                        <MessageCircle className="w-5 h-5 mr-2" />
+                        Chat with Vendor
                       </button>
-                      <button 
-                        onClick={handleDeleteClick}
-                        className="flex items-center bg-red-100 text-red-700 px-4 py-2 rounded-md hover:bg-red-200 transition-colors"
-                      >
-                        <Trash2 className="w-4 h-4 mr-2" />
-                        Delete Service
-                      </button>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
               </div>
               
@@ -748,16 +780,7 @@ const ServiceDetailPage: React.FC = () => {
                 </div>
                 
                 {/* Leave Review Button - for buyers only */}
-                {isBuyer && !hasReviewed && (
-                  <div className="mt-8">
-                    <button 
-                      onClick={handleLeaveReview}
-                      className="bg-purple-600 text-white px-6 py-3 rounded-md hover:bg-purple-700 transition-colors"
-                    >
-                      Leave a Review
-                    </button>
-                  </div>
-                )}
+                
               </div>
             </div>
           )}

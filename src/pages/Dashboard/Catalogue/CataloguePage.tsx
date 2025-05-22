@@ -10,7 +10,7 @@ const CataloguePage: React.FC = () => {
       <div className="p-4 md:p-6 lg:p-8">
         {/* Header Section */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 sm:mb-8 gap-4">
-          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-[60px] font-bold font-nunito">
+          <h1 className="text-3xl sm:text-4xl md:text-2xl lg:text-[60px] font-bold font-nunito">
             Catalogue
           </h1>
         </div>

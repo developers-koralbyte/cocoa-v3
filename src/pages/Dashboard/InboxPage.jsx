@@ -20,7 +20,9 @@ import upload from '../../utils/upload'
 import { format } from 'timeago.js'
 import Header from '../../components/Dashboard/Invoices/HeaderProps'
 import AddBuyerChat from '../../components/chat/AddBuyerChat'
-
+import { useLocation } from 'react-router-dom';
+import DefaultAvatar from '../../components/Dashboard/Invoices/DefaultAvatar'
+import defaultimg from "../../assets/chat/default.png"
 // Import available icons
 import sendIcon from '../../assets/chat/send.png'
 import curriculumIcon from '../../assets/chat/curriculum.png'
@@ -34,6 +36,12 @@ import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useAuth } from '../../utils/AuthContext'
 
+import {
+    findOrCreateChat,
+    fetchUserBasic,
+    sendSystemMessage
+  } from '../../utils/chatHelpers';
+  
 
 const InboxPage = () => {
     // States
@@ -52,6 +60,8 @@ const InboxPage = () => {
     // Appointment states 
     const [showAppointmentModal, setShowAppointmentModal] = useState(false)
     
+
+    const location = useLocation();
 
     // Use store hooks
     const { currentUser, fetchUserInfo } = useUserStore()
@@ -75,8 +85,36 @@ const InboxPage = () => {
     //   ]
 
       // Fetch availability from Firestore (using the correct collection based on role)
-
-
+      useEffect(() => {
+        const { vendorId, context } = location.state || {};
+        if (!vendorId) return;                               // opened Inbox normally
+      
+        const currentUserId = getCurrentUserId();
+        if (!currentUserId) return;                          // still loading auth?
+      
+        (async () => {
+          const activeChatId = await findOrCreateChat(currentUserId, vendorId);
+          const vendorProfile = await fetchUserBasic(vendorId);
+          changeChat(activeChatId, vendorProfile);           // updates sidebar + pane
+      
+          if (context?.productId) {
+            await sendSystemMessage(
+              activeChatId,
+              `[Product] Buyer is asking about “${context.productName}”`
+            );
+          } else if (context?.serviceId) {
+            await sendSystemMessage(
+              activeChatId,
+              `[Service] Buyer is asking about “${context.serviceName}”`
+            );
+          }
+        })();
+        
+        // we only want this to run once when the component mounts with that state
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+      }, [location.state]);
+      
+      
      
     // Handle window resize for responsive design
     useEffect(() => {
@@ -721,7 +759,7 @@ const InboxPage = () => {
             <div className="flex flex-col h-screen">
                 <div className="flex justify-between items-center px-3 sm:px-6 pt-3 sm:pt-6 pb-2 sm:pb-4">
                     <div className="flex items-center">
-                        <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-[60px] font-bold font-nunito">
+                        <h1 className="mt-4 text-3xl sm:text-4xl md:text-2xl lg:text-[60px] font-bold font-nunito">
                             Inbox
                         </h1>
                     </div>
@@ -795,14 +833,12 @@ const InboxPage = () => {
                                                     overflow: 'hidden',
                                                 }}
                                             >
-                                                <img
-                                                    src={
-                                                        chat.user?.avatar ||
-                                                        './avatar.png'
-                                                    }
-                                                    alt=""
-                                                    className="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover mr-2 sm:mr-3"
-                                                />
+                                               <DefaultAvatar     
+  user={chat.user}     
+  size="md"     
+  className="flex-shrink-0 mr-2 sm:mr-3"     
+  defaultImage={defaultimg} 
+/>
                                                 <div
                                                     className="overflow-hidden"
                                                     style={{

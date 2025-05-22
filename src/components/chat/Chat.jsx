@@ -13,6 +13,7 @@ import { useUserStore } from '../../utils/userStore'
 import upload from '../../utils/upload'
 import CaptureAudio from '../captureAudio/CaptureAudio'
 import whiteCross from '../../assets/img/chatImages/whiteCross.png'
+import DefaultAvatar from '../Dashboard/Invoices/DefaultAvatar'
 
 import { format } from 'timeago.js'
 import send from '../../assets/img/chatImages/send.png'
@@ -764,10 +765,11 @@ const Chat = ({ onBackClick }) => {
                                 onClick={onBackClick}
                             />
                         )}
-                        <img
+                        <DefaultAvatar
+                            user={user}
                             className="user-avatar"
-                            src={user?.avatar || './avatar.png'}
-                            alt=""
+                            size="md"
+                            defaultImage="./avatar.png"
                         />
 
                         <div
@@ -829,13 +831,14 @@ const Chat = ({ onBackClick }) => {
                                         : 'justify-start'
                                 }`}
                             >
-                                {!isCurrentUser && (
-                                    <img
-                                        src={user?.avatar || './avatar.png'}
-                                        alt=""
-                                        className="flex-shrink-0 w-6 h-6 sm:w-8 sm:h-8 rounded-full mr-2 sm:mr-3 self-start mt-1"
-                                    />
-                                )}
+                               {!isCurrentUser && (
+    <DefaultAvatar
+        user={user}
+        size="sm"
+        className="flex-shrink-0 mr-2 sm:mr-3 self-start mt-1"
+        defaultImage="./avatar.png"
+    />
+)}
                                 <div
                                     className={`w-auto max-w-[75%] sm:max-w-xs md:max-w-md px-3 sm:px-4 py-2 sm:py-3 ${
                                         isCurrentUser
