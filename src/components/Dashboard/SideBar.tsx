@@ -1,8 +1,8 @@
-import { Inbox, FileText, Calendar, LogOut, Grid, BookOpen } from 'lucide-react';
+import { Inbox, FileText, Calendar, LogOut, Grid, BookOpen, User } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import logo from '../../assets/img/Dashboard/CocoaLogo.png';
 import { ComponentType, RefAttributes, ForwardRefExoticComponent } from 'react';
-import { useUserStore } from '../../utils/userStore'; // Import userStore
+import { useUserStore } from '../../utils/userStore';
 import Catalogue from "../../assets/icons/catalogue.svg";
 import { useAuth } from "../../utils/AuthContext";
 
@@ -41,11 +41,8 @@ interface UserStoreState {
 const SideBar = ({ isOpen, toggleSidebar }: SideBarProps) => {
     const navigate = useNavigate();
     const location = useLocation();
-    // Cast the useUserStore hook to the correct type
-    // const { currentUser, isLoading } = useUserStore() as UserStoreState;
     const { user, isLoading } = useAuth();
     
-    // Wait for user data to load
     if (isLoading) {
         return (
             <div className="fixed top-0 left-0 z-50 h-screen w-64 bg-[#9082C6] flex items-center justify-center">
@@ -58,20 +55,22 @@ const SideBar = ({ isOpen, toggleSidebar }: SideBarProps) => {
         console.error("User not found!");
         navigate("/login");
         return null;
-      }
+    }
     
-      const userRole = user.role;
-      if (!userRole) {
+    const userRole = user.role;
+    if (!userRole) {
         console.error("User role not found!");
         return null;
-      }
-    // Define menu items for both roles
+    }
+
+    // Define menu items for both roles, including Profile
     const menuItems: MenuItem[] = [
         { icon: Grid, label: 'Dashboard', vendorPath: '/vendor-dashboard', buyerPath: '/buyer-dashboard' },
         { icon: Inbox, label: 'Inbox', vendorPath: '/inbox', buyerPath: '/buyer-inbox' },
         { icon: BookOpen, label: 'Catalogue', vendorPath: '/catalogue' },
         { icon: FileText, label: 'Invoices', vendorPath: '/invoices', buyerPath: '/buyer-invoices' },
         { icon: Calendar, label: 'Calendar', vendorPath: '/calendar', buyerPath: '/buyer-calendar' },
+        { icon: User, label: 'Profile', vendorPath: '/settings', buyerPath: '/settings' },
     ];
 
     const handleNavigation = (vendorPath?: string, buyerPath?: string) => {
@@ -79,7 +78,7 @@ const SideBar = ({ isOpen, toggleSidebar }: SideBarProps) => {
         if (path) {
             navigate(path);
             if (window.innerWidth < 768) {
-                toggleSidebar(); // Close sidebar only on mobile
+                toggleSidebar();
             }
         }
     };
@@ -130,7 +129,6 @@ const SideBar = ({ isOpen, toggleSidebar }: SideBarProps) => {
                 <div
                     onClick={() => {
                         localStorage.removeItem("user");
-                        // Reset the userStore state as well
                         useUserStore.setState({ currentUser: null });
                         navigate("/login");
                     }}

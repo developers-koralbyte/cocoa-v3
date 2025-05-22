@@ -1,5 +1,5 @@
 import React, { useState, useEffect, ChangeEvent, FormEvent } from 'react';
-import { Search, RotateCcw, Plus, Bell } from 'lucide-react';
+import { Search, RotateCcw, Plus, Bell, User } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import BaseLayout from '../../components/Dashboard/BaseLayout';
 import { db } from '../../utils/firebase';
@@ -9,6 +9,8 @@ import { useAuth } from '../../utils/AuthContext';
 import VendorServices from '../../components/Dashboard/Catalogue/VendorServices';
 import VendorProducts from '../../components/Dashboard/Catalogue/VendorProducts';
 import UserMenu from '../../components/Dashboard/UserMenu';
+import moment from 'moment';
+
 
 interface Buyer {
   name: string;
@@ -18,36 +20,15 @@ interface Buyer {
 }
 
 interface Appointment {
+  id: string;
   name: string;
   company: string;
-  time: string;
   date: string;
+  time: string;
   image: string;
 }
 
-const appointments: Appointment[] = [
-  {
-    name: 'Gustavo',
-    company: 'Creative Hive',
-    time: '9:00am - 9:30am',
-    date: 'Wed 22',
-    image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=150&h=150',
-  },
-  {
-    name: 'Diana',
-    company: 'TechNest',
-    time: '1:00pm - 1:30pm',
-    date: 'Fri 24',
-    image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=150&h=150',
-  },
-  {
-    name: 'Amrit',
-    company: 'Startup Hub',
-    time: '10:00am - 10:30am',
-    date: 'Mon 27',
-    image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=150&h=150',
-  },
-];
+
 
 const staticBuyers: Buyer[] = [
   {
@@ -82,12 +63,21 @@ const VendorDashboard: React.FC = () => {
   // 1) Pull user from AuthContext
   const { user, isLoading } = useAuth();
 
+  const vendorId = user?.uid;
+if (!vendorId) {
+  navigate('/login');
+  return null;
+}
+
   // For checking if the user has completed their vendor doc
   const [showPopup, setShowPopup] = useState(false);
   const [loadingDocCheck, setLoadingDocCheck] = useState(true);
   
   // Store vendor details from Firestore
   const [vendorData, setVendorData] = useState<any>({});
+
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+const [upcomingIndex, setUpcomingIndex] = useState(0);
 
   // Basic vendor form data for the popup
   const [formData, setFormData] = useState({
@@ -104,6 +94,82 @@ const VendorDashboard: React.FC = () => {
 
   // Potential buyers from Firestore (if you implement a real matching system)
   const [potentialBuyers, setPotentialBuyers] = useState<Buyer[]>([]);
+
+  useEffect(() => {
+    if (!vendorId) return;
+  
+    const fetchAppointments = async () => {
+      try {
+        console.log('Fetching appointments for vendor:', vendorId);
+        // 1) Query all appointments for this vendor
+        const apptQ = query(
+          collection(db, 'appointments'),
+          where('vendorId', '==', vendorId)
+        );
+        const apptSnap = await getDocs(apptQ);
+        console.log('Appointment docs found:', apptSnap.size);
+  
+        // 2) Build Appointment[] with buyer info
+        const items: Appointment[] = await Promise.all(
+          apptSnap.docs.map(async (docSnap) => {
+            const data = docSnap.data();
+            // Fetch buyer profile
+            let name = 'Unknown', company = '', image = '';
+            if (data.buyerId) {
+              const buyerRef = doc(db, 'users', data.buyerId);
+              const buyerSnap = await getDoc(buyerRef);
+              if (buyerSnap.exists()) {
+                const bd = buyerSnap.data();
+                name = bd.firstName || 'Unknown';
+                company = bd.businessName || '';
+                image = bd.avatar || '';
+              }
+            }
+            // Parse and format date/time
+            const raw = data.selectedDate?.toDate
+              ? data.selectedDate.toDate()
+              : new Date(data.selectedDate);
+            const start = moment(raw);
+            if (data.selectedTime) {
+              const tm = moment(data.selectedTime, 'h:mm A');
+              start.hours(tm.hours()).minutes(tm.minutes());
+            }
+            const end = start.clone().add(30, 'minutes');
+  
+            return {
+              id: docSnap.id,
+              name,
+              company,
+              image,
+              date: start.format('ddd D'),
+              time: `${start.format('h:mm A')} - ${end.format('h:mm A')}`,
+            };
+          })
+        );
+  
+        // 3) Sort by start time
+        items.sort((a, b) => {
+          const aM = moment(a.date + ' ' + a.time.split(' - ')[0], 'ddd D h:mm A');
+          const bM = moment(b.date + ' ' + b.time.split(' - ')[0], 'ddd D h:mm A');
+          return aM.valueOf() - bM.valueOf();
+        });
+  
+        setAppointments(items);
+        setUpcomingIndex(0);
+      } catch (err) {
+        console.error('Error fetching appointments:', err);
+      }
+    };
+  
+    fetchAppointments();
+  }, [vendorId]);
+  const handlePrevUpcoming = () =>
+  setUpcomingIndex(i => Math.max(i - 1, 0));
+
+const handleNextUpcoming = () =>
+  setUpcomingIndex(i => Math.min(i + 1, appointments.length - 1));
+  
+  
 
   useEffect(() => {
     console.log('VendorDashboard => user changed:', user);
@@ -379,45 +445,62 @@ const VendorDashboard: React.FC = () => {
           </div>
 
           {/* Upcoming Appointments */}
-          <section className="bg-white rounded-[2rem] p-6 mb-8">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="font-bold font-nunito">Upcoming Appointments</h3>
-              <div className="flex gap-2">
-                <button className="text-purple-600">&lt;</button>
-                <button className="text-purple-600">&gt;</button>
-              </div>
-            </div>
-            <div className="space-y-4">
-              {appointments.map((apt, index) => (
-                <div key={index} className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-full overflow-hidden">
-                    <img
-                      src={apt.image}
-                      alt={apt.name}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex justify-between">
-                      <h4 className="font-medium">
-                        {apt.name},{' '}
-                        <span className="text-purple-600">{apt.company}</span>
-                      </h4>
-                    </div>
-                    <div className="text-sm text-gray-500">
-                      {apt.date}, {apt.time}
-                    </div>
-                  </div>
-                  <div
-                    className="cursor-pointer"
-                    onClick={() => alert(`Reminder set for ${apt.name}`)}
-                  >
-                    <Bell className="w-4 h-4 text-purple-600" />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
+          <section className="bg-white rounded-2xl p-6 mb-8">
+  <div className="flex justify-between items-center mb-4">
+    <h3 className="font-bold">Upcoming Appointment</h3>
+    <div className="flex gap-2">
+      <button
+        onClick={handlePrevUpcoming}
+        disabled={upcomingIndex === 0}
+        className="text-purple-600 disabled:opacity-50"
+      >
+        &lt;
+      </button>
+      <button
+        onClick={handleNextUpcoming}
+        disabled={upcomingIndex === appointments.length - 1}
+        className="text-purple-600 disabled:opacity-50"
+      >
+        &gt;
+      </button>
+    </div>
+  </div>
+
+  {appointments.length ? (
+    (() => {
+      const appt = appointments[upcomingIndex];
+      return (
+        <div className="flex items-center gap-4">
+          <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200">
+            {appt.image ? (
+              <img
+                src={appt.image}
+                alt={appt.name}
+                className="object-cover w-full h-full"
+              />
+            ) : (
+              <User className="text-gray-400 w-6 h-6 m-2" />
+            )}
+          </div>
+          <div className="flex-1">
+            <h4 className="font-medium">
+              {appt.name}, <span className="text-purple-600">{appt.company}</span>
+            </h4>
+            <p className="text-sm text-gray-500">
+              {appt.date}, {appt.time}
+            </p>
+          </div>
+          <Bell
+            className="w-4 h-4 text-purple-600 cursor-pointer"
+            onClick={() => alert(`Reminder set for ${appt.name}`)}
+          />
+        </div>
+      );
+    })()
+  ) : (
+    <p className="text-gray-500">No upcoming appointments.</p>
+  )}
+</section>
         </div>
       </div>
 
