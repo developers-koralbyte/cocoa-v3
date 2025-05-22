@@ -482,14 +482,19 @@ const handleNextUpcoming = () =>
               <User className="text-gray-400 w-6 h-6 m-2" />
             )}
           </div>
-          <div className="flex-1">
-            <h4 className="font-medium">
-              {appt.name}, <span className="text-purple-600">{appt.company}</span>
-            </h4>
-            <p className="text-sm text-gray-500">
+
+          {/* UPDATED BLOCK START */}
+          <div className="flex-1 space-y-1">
+            <div className="font-medium">{appt.name}</div>
+            <div className="text-purple-600">
+              {appt.company || 'No company info'}
+            </div>
+            <div className="text-sm text-gray-500">
               {appt.date}, {appt.time}
-            </p>
+            </div>
           </div>
+          {/* UPDATED BLOCK END */}
+
           <Bell
             className="w-4 h-4 text-purple-600 cursor-pointer"
             onClick={() => alert(`Reminder set for ${appt.name}`)}
@@ -501,6 +506,7 @@ const handleNextUpcoming = () =>
     <p className="text-gray-500">No upcoming appointments.</p>
   )}
 </section>
+
         </div>
       </div>
 
