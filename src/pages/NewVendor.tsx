@@ -1,3 +1,4 @@
+// src/pages/NewVendor.tsx
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import cocoaLogo from "../assets/img/cocoa-logo-white.png";
@@ -80,6 +81,11 @@ const NewVendor = () => {
     e.preventDefault();
     console.log("Submitting form:", formData);
 
+    if (!agreed) {
+      toast.error("You must agree to the Terms and Conditions to sign up.");
+      return;
+    }
+
     try {
       // 1) Create user in Firebase Auth
       const userCredentials = await createUserWithEmailAndPassword(
@@ -121,7 +127,9 @@ const NewVendor = () => {
         avatar: avatarUrl,
         blocked: [],
         createdAt: new Date(),
-        categories: formData.categories.split(",").map((cat) => cat.trim().toLowerCase()),
+        categories: formData.categories
+          .split(",")
+          .map((cat) => cat.trim().toLowerCase()),
         documentUploaded: false,
       });
 
@@ -144,6 +152,44 @@ const NewVendor = () => {
 
   return (
     <div className="h-screen w-screen flex">
+      {/* TERMS & CONDITIONS Modal */}
+      {showTermsModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg max-w-2xl max-h-[80vh] overflow-y-auto relative">
+            <button
+              onClick={() => setShowTermsModal(false)}
+              className="absolute top-3 right-3 text-gray-600 hover:text-gray-900 text-xl"
+              aria-label="Close"
+            >
+              &times;
+            </button>
+            <h2 className="text-2xl font-semibold mb-4">Terms and Conditions</h2>
+            <div className="space-y-4 text-sm leading-relaxed text-gray-700">
+              {/* Insert your full terms text below */}
+              <p>
+                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor
+                incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud
+                exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+              </p>
+              <p>
+                Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu
+                fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in
+                culpa qui officia deserunt mollit anim id est laborum.
+              </p>
+              {/* ... */}
+            </div>
+            <div className="mt-6 text-right">
+              <button
+                onClick={() => setShowTermsModal(false)}
+                className="px-4 py-2 bg-[#7C77C1] text-white rounded hover:bg-[#5F5A9F]"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Left Panel */}
       <div className="w-2/5 bg-[#7C77C1] p-8 flex flex-col justify-between">
         <div>
@@ -445,6 +491,27 @@ const NewVendor = () => {
                 Submit
               </button>
             </div>
+          </div>
+
+          {/* Terms & Conditions */}
+          <div className="col-span-2 flex items-center space-x-2">
+            <input
+              id="terms"
+              type="checkbox"
+              checked={agreed}
+              onChange={(e) => setAgreed(e.target.checked)}
+              className="h-4 w-4"
+            />
+            <label htmlFor="terms" className="text-sm text-gray-700">
+              I agree to the{" "}
+              <button
+                type="button"
+                onClick={() => setShowTermsModal(true)}
+                className="text-blue-600 underline"
+              >
+                Terms and Conditions
+              </button>
+            </label>
           </div>
         </form>
       </div>
