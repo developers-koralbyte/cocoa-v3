@@ -240,6 +240,9 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
     onClose()
   }
 
+  const tileDisabled = ({ date }: { date: Date }) =>
+  date < moment().startOf('day').toDate()
+
   // -----------------------------
   // Custom calendar styling.
   // -----------------------------
@@ -297,7 +300,9 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
       background: #584B8B !important;
       color: #fff !important;
     }
+    
   `
+  
 
   return (
     <div className="fixed inset-0 z-50 bg-black bg-opacity-40 flex items-center justify-center">
@@ -320,19 +325,20 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
           <div className="w-full md:w-1/2 p-6 border-r border-gray-200 overflow-auto">
             <h3 className="text-lg font-semibold mb-3 text-gray-700">Select Date</h3>
             <div className="rounded-lg shadow-sm p-2 bg-white">
-              <Calendar
-                onChange={(date: Date) => {
-                  setSelectedDate(date)
-                  setSelectedTime('')
-                }}
-                value={selectedDate}
-                minDetail="month"
-                next2Label={null}
-                prev2Label={null}
-                prevLabel={<span>&lt;</span>}
-                nextLabel={<span>&gt;</span>}
-                className="rounded-lg border-0"
-              />
+            <Calendar
+              onChange={(date: Date) => {
+                setSelectedDate(date)
+                setSelectedTime('')
+              }}
+              value={selectedDate}
+              minDate={new Date()}
+              tileDisabled={tileDisabled}
+              className="rounded-lg border-0"
+              next2Label={null}
+              prev2Label={null}
+              prevLabel={<span>&lt;</span>}
+              nextLabel={<span>&gt;</span>}
+            />
             </div>
 
             {/* Meeting Details Summary */}
@@ -450,6 +456,8 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
               />
             </div>
           </div>
+		  
+
         </div>
 
         {/* Footer */}

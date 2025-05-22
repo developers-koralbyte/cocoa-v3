@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import moment from 'moment';
@@ -20,114 +21,107 @@ import {
   updateDoc,
   arrayUnion,
   runTransaction,
-} from 'firebase/firestore'
-import BaseLayout from '../../components/Dashboard/BaseLayout'
-import chatImage from '../../assets/img/Dashboard/chatImage.png'
-import { db } from '../../utils/firebase'
-import { useAuth } from '../../utils/AuthContext'
-import 'react-big-calendar/lib/css/react-big-calendar.css'
-import AvailabilityFormModal from '../../components/calendar/AvailibilityFormModal'
-import AppointmentModal from '../../components/chat/AppointmentModal'
-import MeetingDetailsModal from '../../components/calendar/MeetingDetailsModal'
-import { toast, ToastContainer } from 'react-toastify'
-import 'react-toastify/dist/ReactToastify.css'
+} from 'firebase/firestore';
+import BaseLayout from '../../components/Dashboard/BaseLayout';
+import chatImage from '../../assets/img/Dashboard/chatImage.png';
+import { db } from '../../utils/firebase';
+import { useAuth } from '../../utils/AuthContext';
+import 'react-big-calendar/lib/css/react-big-calendar.css';
+import AvailabilityFormModal from '../../components/calendar/AvailibilityFormModal';
+import AppointmentModal from '../../components/chat/AppointmentModal';
+import MeetingDetailsModal from '../../components/calendar/MeetingDetailsModal';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
-const localizer = momentLocalizer(moment)
+const localizer = momentLocalizer(moment);
 
 const calendarOverrides = `
-
 .rbc-off-range-bg {
-   
-  background-color:#e9d8fd  !important; /* Replace with your desired lighter accent color */
+  background-color:#e9d8fd  !important;
 }
-  /* Calendar & React Calendar CSS overrides */
-  .rbc-event,
-  .rbc-day-slot .rbc-background-event {
-    color: #fff !important;
-    border: none !important;
-    border-radius: 0.375rem;
-    padding: 2px 6px;
-    font-size: 0.85rem;
-  }
-  .rbc-event.rbc-selected,
-  .rbc-day-slot .rbc-selected.rbc-background-event {
-    opacity: 0.8;
-  }
-  .rbc-today {
-    background-color: #e9d8fd22 !important;
-  }
-  .rbc-toolbar {
-    margin-bottom: 1rem;
-    font-family: 'Nunito Sans', sans-serif;
-  }
-  .rbc-toolbar-button {
-    border: none !important;
-  }
-  .rbc-time-content > * + * > * {
-    min-height: 1.5rem;
-  }
-  .react-calendar {
-    border: none;
-    background: transparent;
-  }
-  .react-calendar__navigation {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 0.5rem;
-    font-weight: 600;
-  }
-  .react-calendar__navigation__label {
-    font-size: 1rem;
-  }
-  .react-calendar__navigation__prev2-button,
-  .react-calendar__navigation__next2-button {
-    display: none;
-  }
-  .react-calendar__navigation button {
-    background: transparent;
-    border: none;
-    color: #5F4B8B;
-    font-size: 1.2rem;
-    cursor: pointer;
-  }
-  .react-calendar__tile {
-    text-align: center;
-    padding: 0.6rem 0;
-    margin: 0.2rem;
-    border-radius: 50%;
-    transition: background-color 0.2s;
-  }
-  .react-calendar__tile:hover {
-    background-color: #f3f0fa;
-  }
-  .react-calendar__tile--now {
-    background-color: #e9d8fd;
-    border-radius: 50%;
-  }
-  .react-calendar__tile--active {
-    background-color: #5F4B8B;
-    color: #fff;
-  }
-  .react-calendar__tile--active:enabled:hover {
-    background-color: #5F4B8B;
-  }
-  
-`
-function MyToolbar(props: any) {
-  const goToBack = () => props.onNavigate('PREV')
-  const goToNext = () => props.onNavigate('NEXT')
+.rbc-event,
+.rbc-day-slot .rbc-background-event {
+  color: #fff !important;
+  border: none !important;
+  border-radius: 0.375rem;
+  padding: 2px 6px;
+  font-size: 0.85rem;
+}
+.rbc-event.rbc-selected,
+.rbc-day-slot .rbc-selected.rbc-background-event {
+  opacity: 0.8;
+}
+.rbc-today {
+  background-color: #e9d8fd22 !important;
+}
+.rbc-toolbar {
+  margin-bottom: 1rem;
+  font-family: 'Nunito Sans', sans-serif;
+}
+.rbc-toolbar-button {
+  border: none !important;
+}
+.rbc-time-content > * + * > * {
+  min-height: 1.5rem;
+}
+.react-calendar {
+  border: none;
+  background: transparent;
+}
+.react-calendar__navigation {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+.react-calendar__navigation__label {
+  font-size: 1rem;
+}
+.react-calendar__navigation__prev2-button,
+.react-calendar__navigation__next2-button {
+  display: none;
+}
+.react-calendar__navigation button {
+  background: transparent;
+  border: none;
+  color: #5F4B8B;
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+.react-calendar__tile {
+  text-align: center;
+  padding: 0.6rem 0;
+  margin: 0.2rem;
+  border-radius: 50%;
+  transition: background-color 0.2s;
+}
+.react-calendar__tile:hover {
+  background-color: #f3f0fa;
+}
+.react-calendar__tile--now {
+  background-color: #e9d8fd;
+  border-radius: 50%;
+}
+.react-calendar__tile--active {
+  background-color: #5F4B8B;
+  color: #fff;
+}
+.react-calendar__tile--active:enabled:hover {
+  background-color: #5F4B8B;
+}
+`;
 
-  // Switch BigCalendar's view: 'month' | 'week' | 'day'
+function MyToolbar(props: any) {
+  const goToBack = () => props.onNavigate('PREV');
+  const goToNext = () => props.onNavigate('NEXT');
+
   const handleViewChange = (view: string) => {
-    props.onView(view)
-  }
+    props.onView(view);
+  };
 
   return (
-    <div className="flex items-center justify-between mb-4 font-nunito p-4 
-                    bg-gradient-to-r from-[#936ab7] to-[#9082c6] 
-                    text-white rounded-lg shadow-lg">
-      {/* Left side: Label + Week/Month/Day */}
+    <div className="flex items-center justify-between mb-4 font-nunito p-4 bg-gradient-to-r from-[#936ab7] to-[#9082c6] text-white rounded-lg shadow-lg">
       <div className="flex items-center gap-3">
         <span className="font-medium select-none">Calendar View</span>
         <button
@@ -162,118 +156,112 @@ function MyToolbar(props: any) {
         </button>
       </div>
 
-      {/* Right side: Month-Year Navigation */}
       <div className="flex items-center gap-3">
         <button
           onClick={goToBack}
-          className="px-3 py-1 text-sm font-medium bg-transparent rounded 
-                     transition-colors hover:bg-[#936ab7]/70 hover:text-white"
+          className="px-3 py-1 text-sm font-medium bg-transparent rounded transition-colors hover:bg-[#936ab7]/70 hover:text-white"
         >
           &lt;
         </button>
         <span className="text-lg font-bold select-none">{props.label}</span>
         <button
           onClick={goToNext}
-          className="px-3 py-1 text-sm font-medium bg-transparent rounded 
-                     transition-colors hover:bg-[#936ab7]/70 hover:text-white"
+          className="px-3 py-1 text-sm font-medium bg-transparent rounded transition-colors hover:bg-[#936ab7]/70 hover:text-white"
         >
           &gt;
         </button>
       </div>
     </div>
-  )
+  );
 }
-
-
 
 interface AppointmentDoc {
-  buyerId: string
-  vendorId: string
-  category?: string
-  createdAt?: any
-  description?: string
-  selectedDate?: any
-  selectedTime?: string
-  title?: string
-  guests?: string[]      
-  meetingLink?: string   
+  buyerId: string;
+  vendorId: string;
+  category?: string;
+  createdAt?: any;
+  description?: string;
+  selectedDate?: any;
+  selectedTime?: string;
+  title?: string;
+  guests?: string[];
+  meetingLink?: string;
 }
 
-
 export interface AppointmentEvent extends RBCEvent {
-  id: string | number
-  title: string
-  start: Date
-  end: Date
-  desc?: string
-  buyerId?: string
-  vendorId?: string
-  category?: string
-  guests?: string[]      
-  meetingLink?: string 
+  id: string | number;
+  title: string;
+  start: Date;
+  end: Date;
+  desc?: string;
+  buyerId?: string;
+  vendorId?: string;
+  category?: string;
+  guests?: string[];
+  meetingLink?: string;
 }
 
 interface UserInfo {
-  avatar?: string
-  firstName?: string
-  lastName?: string
-  role?: string
-  id?: string
-  businessName?: string
+  avatar?: string;
+  firstName?: string;
+  lastName?: string;
+  role?: string;
+  id?: string;
+  businessName?: string;
 }
 
 export function parseTimestampToDate(value: any): Date | null {
-  if (!value) return null
-  if (typeof value === 'string') return new Date(value)
-  if (value.toDate) return value.toDate()
-  if (value.seconds) return new Date(value.seconds * 1000)
-  return null
+  if (!value) return null;
+  if (typeof value === 'string') return new Date(value);
+  if (value.toDate) return value.toDate();
+  if (value.seconds) return new Date(value.seconds * 1000);
+  return null;
 }
 
 function hashStringToColor(str: string): string {
-  let hash = 0
+  let hash = 0;
   for (let i = 0; i < str.length; i++) {
-    hash = str.charCodeAt(i) + ((hash << 5) - hash)
-    hash |= 0
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    hash |= 0;
   }
-  let color = '#'
+  let color = '#';
   for (let i = 0; i < 3; i++) {
-    const value = (hash >> (i * 8)) & 0xff
-    color += ('00' + value.toString(16)).slice(-2)
+    const value = (hash >> (i * 8)) & 0xff;
+    color += ('00' + value.toString(16)).slice(-2);
   }
-  return color
+  return color;
 }
 
 function darkenColor(hexColor: string, factor = 0.7): string {
-  hexColor = hexColor.replace('#', '')
-  let r = parseInt(hexColor.substring(0, 2), 16)
-  let g = parseInt(hexColor.substring(2, 4), 16)
-  let b = parseInt(hexColor.substring(4, 6), 16)
-  r = Math.floor(r * factor)
-  g = Math.floor(g * factor)
-  b = Math.floor(b * factor)
+  hexColor = hexColor.replace('#', '');
+  let r = parseInt(hexColor.substring(0, 2), 16);
+  let g = parseInt(hexColor.substring(2, 4), 16);
+  let b = parseInt(hexColor.substring(4, 6), 16);
+  r = Math.floor(r * factor);
+  g = Math.floor(g * factor);
+  b = Math.floor(b * factor);
   return (
     '#' +
     [r, g, b]
       .map((x) => ('0' + x.toString(16)).slice(-2))
       .join('')
-  )
+  );
 }
 
 function getContrastingTextColor(hexColor: string): string {
-  hexColor = hexColor.replace('#', '')
-  const r = parseInt(hexColor.substring(0, 2), 16)
-  const g = parseInt(hexColor.substring(2, 4), 16)
-  const b = parseInt(hexColor.substring(4, 6), 16)
-  const brightness = (r * 299 + g * 587 + b * 114) / 1000
-  return brightness < 128 ? '#ffffff' : '#000000'
+  hexColor = hexColor.replace('#', '');
+  const r = parseInt(hexColor.substring(0, 2), 16);
+  const g = parseInt(hexColor.substring(2, 4), 16);
+  const b = parseInt(hexColor.substring(4, 6), 16);
+  const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+  return brightness < 128 ? '#ffffff' : '#000000';
 }
 
 function eventStyleGetter(event: AppointmentEvent) {
-  const colorKey = event.buyerId || event.vendorId || event.id
-  const rawColor = hashStringToColor(colorKey.toString())
-  const backgroundColor = darkenColor(rawColor, 0.7)
-  const textColor = getContrastingTextColor(backgroundColor)
+  const colorKey = event.buyerId || event.vendorId || event.id;
+  const rawColor = hashStringToColor(colorKey.toString());
+  const backgroundColor = darkenColor(rawColor, 0.7);
+  const textColor = getContrastingTextColor(backgroundColor);
   return {
     style: {
       backgroundColor,
@@ -282,72 +270,67 @@ function eventStyleGetter(event: AppointmentEvent) {
       border: 'none',
       padding: '2px 6px',
     },
-  }
+  };
 }
 
-
 function combineDateAndTime(date: Date, timeString: string): Date {
-  const dateMoment = moment(date).startOf('day')
-  const timeMoment = moment(timeString, 'h:mm A')
-  dateMoment.hours(timeMoment.hours())
-  dateMoment.minutes(timeMoment.minutes())
-  return dateMoment.toDate()
+  const dateMoment = moment(date).startOf('day');
+  const timeMoment = moment(timeString, 'h:mm A');
+  dateMoment.hours(timeMoment.hours());
+  dateMoment.minutes(timeMoment.minutes());
+  return dateMoment.toDate();
 }
 
 const CalendarPage: React.FC = () => {
-  const navigate = useNavigate()
-  const { user: authUser } = useAuth()
+  const navigate = useNavigate();
+  const { user: authUser } = useAuth();
 
-  const [events, setEvents] = useState<AppointmentEvent[]>([])
-  const [selectedMeeting, setSelectedMeeting] = useState<any | null>(null)
-  const [showMeetingModal, setShowMeetingModal] = useState(false)
+  const [events, setEvents] = useState<AppointmentEvent[]>([]);
+  const [selectedMeeting, setSelectedMeeting] = useState<any | null>(null);
+  const [showMeetingModal, setShowMeetingModal] = useState(false);
 
-  const [view, setView] = useState<View>('month')
-  const [oppositeUsers, setOppositeUsers] = useState<Record<string, UserInfo>>({})
+  const [view, setView] = useState<View>('month');
+  const [oppositeUsers, setOppositeUsers] = useState<Record<string, UserInfo>>({});
 
-  const [availability, setAvailability] = useState<any[]>([])
-  const [showAvailabilityForm, setShowAvailabilityForm] = useState(false)
+  const [availability, setAvailability] = useState<any[]>([]);
+  const [showAvailabilityForm, setShowAvailabilityForm] = useState(false);
 
-  // Scheduling states
-  const [opponentUsers, setOpponentUsers] = useState<UserInfo[]>([])
-  const [selectedOpponent, setSelectedOpponent] = useState<string>('')  
-  const [opponentRole, setOpponentRole] = useState<string>('')
+  const [opponentUsers, setOpponentUsers] = useState<UserInfo[]>([]);
+  const [selectedOpponent, setSelectedOpponent] = useState<string>('');
+  const [opponentRole, setOpponentRole] = useState<string>('');
 
-  // Appointment modal
-  const [showAppointmentModal, setShowAppointmentModal] = useState(false)
-
-  // Upcoming Appointment navigation
-  const [upcomingIndex, setUpcomingIndex] = useState(0)
+  const [showAppointmentModal, setShowAppointmentModal] = useState(false);
+  const [upcomingIndex, setUpcomingIndex] = useState(0);
 
   // ============= FETCH APPOINTMENTS =============
   const fetchAppointmentsData = async () => {
-    if (!authUser) return
+    if (!authUser) return;
     try {
       const q = query(
         collection(db, 'appointments'),
         where('vendorId', '==', authUser.uid)
-      )
-      const querySnapshot = await getDocs(q)
-      const fetchedEvents: AppointmentEvent[] = []
-      const userIdsToFetch = new Set<string>()
-  
+      );
+      const querySnapshot = await getDocs(q);
+      const fetchedEvents: AppointmentEvent[] = [];
+      const userIdsToFetch = new Set<string>();
+
       querySnapshot.forEach((docSnap) => {
-        const data = docSnap.data() as AppointmentDoc
-        const docId = docSnap.id
+        const data = docSnap.data() as AppointmentDoc;
+        const docId = docSnap.id;
         if (data.buyerId) {
-          userIdsToFetch.add(data.buyerId)
+          userIdsToFetch.add(data.buyerId);
         }
-        let startDate = new Date()
-        const rawDate = parseTimestampToDate(data.selectedDate)
+        let startDate = new Date();
+        const rawDate = parseTimestampToDate(data.selectedDate);
         if (rawDate) {
-          startDate = rawDate
+          startDate = rawDate;
           if (data.selectedTime) {
-            const timeMoment = moment(data.selectedTime, 'h:mm A')
-            startDate.setHours(timeMoment.hours())
-            startDate.setMinutes(timeMoment.minutes())
+            const timeMoment = moment(data.selectedTime, 'h:mm A');
+            startDate.setHours(timeMoment.hours());
+            startDate.setMinutes(timeMoment.minutes());
           }
         }
-        const endDate = new Date(startDate.getTime() + 60 * 60 * 1000)
+        const endDate = new Date(startDate.getTime() + 60 * 60 * 1000);
         fetchedEvents.push({
           id: docId,
           title: data.title || '',
@@ -357,17 +340,17 @@ const CalendarPage: React.FC = () => {
           buyerId: data.buyerId,
           vendorId: data.vendorId,
           category: data.category,
-          guests: data.guests || [],           
-          meetingLink: data.meetingLink || ''    
-        })
-      })
-  
-      const userMap: Record<string, UserInfo> = {}
+          guests: data.guests || [],
+          meetingLink: data.meetingLink || '',
+        });
+      });
+
+      const userMap: Record<string, UserInfo> = {};
       for (const buyerId of userIdsToFetch) {
-        const userRef = doc(db, 'users', buyerId)
-        const userSnap = await getDoc(userRef)
+        const userRef = doc(db, 'users', buyerId);
+        const userSnap = await getDoc(userRef);
         if (userSnap.exists()) {
-          const uData = userSnap.data()
+          const uData = userSnap.data();
           userMap[buyerId] = {
             avatar: uData.avatar || '',
             firstName: uData.firstName || 'Unknown',
@@ -375,7 +358,7 @@ const CalendarPage: React.FC = () => {
             role: uData.role || '',
             id: buyerId,
             businessName: uData.businessName || 'Koralbyte Inc',
-          }
+          };
         } else {
           userMap[buyerId] = {
             avatar: '',
@@ -384,69 +367,101 @@ const CalendarPage: React.FC = () => {
             role: '',
             id: buyerId,
             businessName: 'Koralbyte Inc',
-          }
+          };
         }
       }
-  
-      const updatedEvents = fetchedEvents.map((event) => {
+
+      let updatedEvents = fetchedEvents.map((event) => {
         if (!event.title.trim()) {
           if (event.buyerId && userMap[event.buyerId]) {
-            const buyer = userMap[event.buyerId]
-            const buyerName = `${buyer.firstName || ''} ${buyer.lastName || ''}`.trim()
-            return { ...event, title: buyerName || 'Unknown Buyer' }
+            const buyer = userMap[event.buyerId];
+            const buyerName = `${buyer.firstName || ''} ${buyer.lastName || ''}`.trim();
+            return { ...event, title: buyerName || 'Unknown Buyer' };
           } else {
-            return { ...event, title: 'Unknown Buyer' }
+            return { ...event, title: 'Unknown Buyer' };
           }
         }
-        return event
-      })
-  
-      updatedEvents.sort((a, b) => a.start.getTime() - b.start.getTime())
-      setEvents(updatedEvents)
-      setOppositeUsers(userMap)
-      setUpcomingIndex(0)
+        return event;
+      });
+
+      updatedEvents.sort((a, b) => a.start.getTime() - b.start.getTime());
+
+      // filter out past events
+      const now = new Date();
+      const futureEvents = updatedEvents.filter(evt => evt.end >= now);
+
+      setEvents(futureEvents);
+      setOppositeUsers(userMap);
+      setUpcomingIndex(0);
     } catch (error) {
-      console.error('Error fetching appointments:', error)
+      console.error('Error fetching appointments:', error);
     }
-  }
+  };
 
-  
-  
-
- 
+  // ============= ROLLING WEEKLY AVAILABILITY =============
   useEffect(() => {
-    if (!authUser) return
-    async function fetchVendorAvailability() {
-      const vendorDocRef = doc(db, 'Vendors', authUser.uid)
-      const vendorDocSnap = await getDoc(vendorDocRef)
-      if (vendorDocSnap.exists()) {
-        const data = vendorDocSnap.data()
-        if (data.availability) {
-          setAvailability(data.availability)
+    if (!authUser) return;
+    const vendorDocRef = doc(db, 'Vendors', authUser.uid);
+
+    const fetchAndRollAvailability = async () => {
+      const snap = await getDoc(vendorDocRef);
+      if (!snap.exists()) return;
+
+      const allAvail: any[] = snap.data().availability || [];
+      const today = moment();
+
+      // keep only this week's slots
+      const thisWeek = allAvail.filter(slot => {
+        const d = moment(slot.date);
+        return d.isoWeek() === today.isoWeek() && d.year() === today.year();
+      });
+
+      if (thisWeek.length > 0) {
+        setAvailability(thisWeek);
+      } else if (allAvail.length > 0) {
+        const carry = window.confirm(
+          'Your availability is from a past week. Carry it over to this week?'
+        );
+        if (carry) {
+          const newAvail = allAvail.map(slot => {
+            const old = moment(slot.date);
+            const rolled = moment().isoWeekday(old.isoWeekday()).startOf('day');
+            return {
+              ...slot,
+              date: rolled.toISOString(),
+              startTime: slot.startTime,
+              endTime: slot.endTime,
+              duration: slot.duration,
+            };
+          });
+          await updateDoc(vendorDocRef, { availability: newAvail });
+          setAvailability(newAvail);
+        } else {
+          await updateDoc(vendorDocRef, { availability: [] });
+          setAvailability([]);
         }
       }
-    }
-    fetchVendorAvailability()
-  }, [authUser])
+    };
 
-  
-  useEffect(() => {
-    fetchAppointmentsData()
-  }, [authUser])
+    fetchAndRollAvailability();
+  }, [authUser]);
 
- 
   useEffect(() => {
-    if (!authUser?.role) return
-    const roleNeeded = authUser.role === 'buyer' ? 'vendor' : 'buyer'
-    setOpponentRole(roleNeeded)
+    fetchAppointmentsData();
+  }, [authUser]);
+
+  useEffect(() => {
+    if (!authUser?.role) return;
+    const roleNeeded = authUser.role === 'buyer' ? 'vendor' : 'buyer';
+    setOpponentRole(roleNeeded);
 
     const fetchOpponents = async () => {
       try {
-        const q = query(collection(db, 'users'), where('role', '==', roleNeeded))
-        const querySnapshot = await getDocs(q)
-        const arr: UserInfo[] = []
+        const q = query(collection(db, 'users'), where('role', '==', roleNeeded));
+        const querySnapshot = await getDocs(q);
+        const arr: UserInfo[] = [];
         querySnapshot.forEach((docSnap) => {
-          const d = docSnap.data()
+          const d = docSnap.data();
           arr.push({
             id: docSnap.id,
             firstName: d.firstName || 'Unknown',
@@ -454,119 +469,116 @@ const CalendarPage: React.FC = () => {
             role: d.role || '',
             businessName: d.businessName || '',
             avatar: d.avatar || '',
-          })
-        })
-        setOpponentUsers(arr)
+          });
+        });
+        setOpponentUsers(arr);
       } catch (err) {
-        console.error('Error fetching opponents:', err)
+        console.error('Error fetching opponents:', err);
       }
-    }
-    fetchOpponents()
-  }, [authUser])
+    };
+    fetchOpponents();
+  }, [authUser]);
 
- 
   const upcomingAppointments = [...events].sort(
     (a, b) => a.start.getTime() - b.start.getTime()
-  )
-  const displayedAppointment = upcomingAppointments[upcomingIndex] || null
+  );
+  const displayedAppointment = upcomingAppointments[upcomingIndex] || null;
 
   const handlePrevUpcoming = () => {
     if (upcomingIndex > 0) {
-      setUpcomingIndex(upcomingIndex - 1)
+      setUpcomingIndex(upcomingIndex - 1);
     }
-  }
+  };
 
   const handleNextUpcoming = () => {
     if (upcomingIndex < upcomingAppointments.length - 1) {
-      setUpcomingIndex(upcomingIndex + 1)
+      setUpcomingIndex(upcomingIndex + 1);
     }
-  }
+  };
 
- 
   const handleOpenAppointmentModal = () => {
     if (!selectedOpponent) {
-      alert(`Please select a ${opponentRole} to schedule an appointment.`)
-      return
+      alert(`Please select a ${opponentRole} to schedule an appointment.`);
+      return;
     }
-    setShowAppointmentModal(true)
-  }
+    setShowAppointmentModal(true);
+  };
 
   const saveAppointment = async (appointmentData: any) => {
     try {
-      const vendorId = authUser?.role === 'vendor' ? authUser.uid : selectedOpponent
-      const buyerId = authUser?.role === 'buyer' ? authUser.uid : selectedOpponent
-
-      if (!buyerId || !vendorId) {
-        throw new Error('Buyer or Vendor info missing!')
-      }
-
+      // prevent past scheduling
       const combinedDateTime = combineDateAndTime(
         appointmentData.selectedDate,
         appointmentData.selectedTime
-      )
+      );
+      if (combinedDateTime < new Date()) {
+        toast.error('Cannot schedule appointment in the past.');
+        return;
+      }
 
-      const appointmentId = new Date().getTime().toString()
+      const vendorId = authUser?.role === 'vendor' ? authUser.uid : selectedOpponent;
+      const buyerId = authUser?.role === 'buyer' ? authUser.uid : selectedOpponent;
+      if (!buyerId || !vendorId) {
+        throw new Error('Buyer or Vendor info missing!');
+      }
+
+      const appointmentId = new Date().getTime().toString();
       const safeData = {
         ...appointmentData,
         buyerId,
         vendorId,
         createdAt: new Date(),
         selectedDate: combinedDateTime,
-      }
+      };
 
       await runTransaction(db, async (transaction) => {
-        const startOfDay = moment(combinedDateTime).startOf('day').toDate()
-        const endOfDay = moment(combinedDateTime).endOf('day').toDate()
-        const appointmentsRef = collection(db, 'appointments')
+        const startOfDay = moment(combinedDateTime).startOf('day').toDate();
+        const endOfDay = moment(combinedDateTime).endOf('day').toDate();
+        const appointmentsRef = collection(db, 'appointments');
         const qCheck = query(
           appointmentsRef,
           where('vendorId', '==', vendorId),
           where('selectedDate', '>=', startOfDay),
           where('selectedDate', '<=', endOfDay)
-        )
-        const querySnapshot = await getDocs(qCheck)
+        );
+        const querySnapshot = await getDocs(qCheck);
 
-        let conflict = false
+        let conflict = false;
         querySnapshot.forEach((docSnap) => {
-          const data = docSnap.data() as any
+          const data = docSnap.data() as any;
           if (data.selectedTime === appointmentData.selectedTime) {
-            conflict = true
+            conflict = true;
           }
-        })
+        });
         if (conflict) {
-          throw new Error('This time slot is already booked.')
+          throw new Error('This time slot is already booked.');
         }
 
-        const appointmentDocRef = doc(db, 'appointments', appointmentId)
-        transaction.set(appointmentDocRef, safeData)
-      })
+        const appointmentDocRef = doc(db, 'appointments', appointmentId);
+        transaction.set(appointmentDocRef, safeData);
+      });
 
-      toast.success('Appointment scheduled successfully!')
+      toast.success('Appointment scheduled successfully!');
       setTimeout(() => {
-        fetchAppointmentsData()
-      }, 1000)
+        fetchAppointmentsData();
+      }, 1000);
     } catch (error: any) {
-      console.error('Error scheduling appointment:', error)
-      toast.error(error.message || 'Failed to schedule appointment.')
+      console.error('Error scheduling appointment:', error);
+      toast.error(error.message || 'Failed to schedule appointment.');
     }
-  }
+  };
 
   const handleSaveAppointment = (appointmentData: any) => {
-    saveAppointment(appointmentData)
-    setShowAppointmentModal(false)
-  }
+    saveAppointment(appointmentData);
+    setShowAppointmentModal(false);
+  };
 
-  
   function handleSelectEvent(event: AppointmentEvent) {
-    const buyer = oppositeUsers[event.buyerId || '']
+    const buyer = oppositeUsers[event.buyerId || ''];
     const buyerName = buyer
       ? `${buyer.firstName || ''} ${buyer.lastName || ''}`.trim()
-      : 'Unknown Buyer'
-    
-   
-    const opponentRole = 'buyer'
-    const opponentId = event.buyerId || ''
-    
+      : 'Unknown Buyer';
+
     setSelectedMeeting({
       appointmentId: event.id,
       title: event.title,
@@ -576,31 +588,27 @@ const CalendarPage: React.FC = () => {
       category: event.category,
       withUserName: buyerName,
       withUserAvatar: buyer?.avatar || '',
-      opponentRole: opponentRole,
-      opponentId: opponentId,
+      opponentRole: 'buyer',
+      opponentId: event.buyerId || '',
       selectedTime: event.selectedTime,
       durationMinutes: event.duration || 30,
-      guests: event.guests,         
-      meetingLink: event.meetingLink  
-    })
-    setShowMeetingModal(true)
+      guests: event.guests,
+      meetingLink: event.meetingLink,
+    });
+    setShowMeetingModal(true);
   }
-  
 
   return (
     <BaseLayout>
       <ToastContainer />
       <style dangerouslySetInnerHTML={{ __html: calendarOverrides }} />
       <div className="p-6 font-nunito">
-        {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-4xl font-bold text-gray-800">Calendar</h1>
-          {/* Example top-right user info */}
           <div className="flex items-center gap-x-5 gap-4">
             <div>
               <h2 className="font-bold">
                 {authUser?.firstName || 'User'},{' '}
-                {/* {authUser?.businessName || 'Company'} */}
               </h2>
               <div className="flex items-center gap-2">
                 <span className="text-sm text-gray-600">
@@ -628,7 +636,6 @@ const CalendarPage: React.FC = () => {
         </div>
 
         <div className="flex gap-0">
-          {/* LEFT SIDE: BigCalendar */}
           <div className="flex-1 border-4 border-[#6868AC] rounded-l-[3.5rem] bg-white p-6">
             <div className="shadow rounded-lg p-4 h-full">
               <BigCalendar
@@ -653,21 +660,7 @@ const CalendarPage: React.FC = () => {
             </div>
           </div>
 
-          {/* RIGHT SIDE: SMALL CAL & UPCOMING */}
           <div className="w-80 border-4 border-[#6868AC] border-l-0 rounded-r-[3.5rem] bg-white p-6 space-y-6">
-            {/* Mini Calendar */}
-            <div className="bg-white shadow rounded-lg p-4">
-              <ReactCalendar
-                defaultValue={new Date()}
-                next2Label={null}
-                prev2Label={null}
-                minDetail="month"
-                maxDetail="month"
-                formatMonthYear={(_, date) => moment(date).format('MMMM YYYY')}
-              />
-            </div>
-
-            {/* Upcoming Appointment */}
             <div className="bg-white rounded-[2rem] p-6 shadow transition-all duration-500">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="font-bold">Upcoming Appointment</h3>
@@ -684,7 +677,7 @@ const CalendarPage: React.FC = () => {
                 <div className="flex items-center gap-4">
                   <div className="w-10 h-10 rounded-full overflow-hidden">
                     {(() => {
-                      const buyer = oppositeUsers[displayedAppointment.buyerId || '']
+                      const buyer = oppositeUsers[displayedAppointment.buyerId || ''];
                       if (buyer && buyer.avatar) {
                         return (
                           <img
@@ -692,9 +685,9 @@ const CalendarPage: React.FC = () => {
                             alt="Opposite user avatar"
                             className="w-full h-full object-cover"
                           />
-                        )
+                        );
                       } else {
-                        return <User className="text-gray-400 w-6 h-6" />
+                        return <User className="text-gray-400 w-6 h-6" />;
                       }
                     })()}
                   </div>
@@ -727,13 +720,12 @@ const CalendarPage: React.FC = () => {
               )}
             </div>
 
-            {/* "Schedule Appointment" side panel */}
             <div className="bg-white rounded-[2rem] p-6 shadow">
               <h3 className="font-bold mb-4">Schedule Appointment</h3>
               <div className="flex items-center mb-3">
                 <div className="w-10 h-10 mr-3">
                   {(() => {
-                    const opponent = opponentUsers.find((op) => op.id === selectedOpponent)
+                    const opponent = opponentUsers.find((op) => op.id === selectedOpponent);
                     if (opponent && opponent.avatar) {
                       return (
                         <img
@@ -741,9 +733,9 @@ const CalendarPage: React.FC = () => {
                           alt="Opponent avatar"
                           className="w-full h-full rounded-full object-cover"
                         />
-                      )
+                      );
                     } else {
-                      return <User className="w-10 h-10 text-gray-400" />
+                      return <User className="w-10 h-10 text-gray-400" />;
                     }
                   })()}
                 </div>
@@ -755,8 +747,7 @@ const CalendarPage: React.FC = () => {
                     className="border border-gray-300 rounded px-2 py-1 w-full"
                     value={selectedOpponent}
                     onChange={(e) => {
-                      console.log('Selected partner id:', e.target.value)
-                      setSelectedOpponent(e.target.value)
+                      setSelectedOpponent(e.target.value);
                     }}
                   >
                     <option value="">Select</option>
@@ -777,7 +768,6 @@ const CalendarPage: React.FC = () => {
               </button>
             </div>
 
-            {/* My Availability */}
             <div className="bg-white shadow rounded-lg p-4">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-md font-semibold text-gray-700">My Availability</h3>
@@ -792,11 +782,11 @@ const CalendarPage: React.FC = () => {
                 {availability.map((slot, idx) => {
                   const formattedStart = slot.startTime
                     ? moment(slot.startTime, 'HH:mm').format('h:mm A')
-                    : ''
+                    : '';
                   const formattedEnd = slot.endTime
                     ? moment(slot.endTime, 'HH:mm').format('h:mm A')
-                    : ''
-                  const formattedDay = slot.date ? moment(slot.date).format('ddd') : ''
+                    : '';
+                  const formattedDay = slot.date ? moment(slot.date).format('ddd') : '';
                   return (
                     <li key={idx} className="flex justify-between">
                       <span className="font-medium text-gray-700">{formattedDay}</span>
@@ -806,98 +796,89 @@ const CalendarPage: React.FC = () => {
                           : ''}
                       </span>
                     </li>
-                  )
+                  );
                 })}
               </ul>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Chat icon in the corner */}
-      <div
-        className="fixed bottom-3 right-10 cursor-pointer z-50"
-        onClick={() => navigate('/inbox')}
-      >
-        <img
-          src={chatImage}
-          alt="Chat"
-          className="hover:opacity-90 transition-opacity w-14 h-14"
-        />
-      </div>
+        <div
+          className="fixed bottom-3 right-10 cursor-pointer z-50"
+          onClick={() => navigate('/inbox')}
+        >
+          <img
+            src={chatImage}
+            alt="Chat"
+            className="hover:opacity-90 transition-opacity w-14 h-14"
+          />
+        </div>
 
-      {/* Add Availability Modal */}
-      {showAvailabilityForm && (
-        <AvailabilityFormModal
-          onClose={() => setShowAvailabilityForm(false)}
-          onSave={(availabilityData) => {
-            const vendorDocRef = doc(db, 'Vendors', authUser?.uid || '')
-            const newAvail = {
-              date: availabilityData.selectedDate.toISOString(),
-              startTime: availabilityData.startTime,
-              endTime: availabilityData.endTime,
-              duration: availabilityData.duration,
-            }
-            updateDoc(vendorDocRef, {
-              availability: arrayUnion(newAvail),
-            })
-              .then(() => {
-                console.log('Availability updated:', newAvail)
-                setAvailability((prev) => [...prev, newAvail])
+        {showAvailabilityForm && (
+          <AvailabilityFormModal
+            onClose={() => setShowAvailabilityForm(false)}
+            onSave={(availabilityData) => {
+              const vendorDocRef = doc(db, 'Vendors', authUser?.uid || '');
+              const newAvail = {
+                date: availabilityData.selectedDate.toISOString(),
+                startTime: availabilityData.startTime,
+                endTime: availabilityData.endTime,
+                duration: availabilityData.duration,
+              };
+              updateDoc(vendorDocRef, {
+                availability: arrayUnion(newAvail),
               })
-              .catch((err) => {
-                console.error('Error saving availability:', err)
-                alert('Failed to save availability.')
-              })
-            setShowAvailabilityForm(false)
-          }}
-        />
-      )}
+                .then(() => {
+                  setAvailability((prev) => [...prev, newAvail]);
+                })
+                .catch((err) => {
+                  console.error('Error saving availability:', err);
+                  alert('Failed to save availability.');
+                });
+              setShowAvailabilityForm(false);
+            }}
+          />
+        )}
 
-   
-      {showAppointmentModal && (
-        <AppointmentModal
-          onClose={() => setShowAppointmentModal(false)}
-          onSchedule={handleSaveAppointment}
-          selectedPartner={selectedOpponent}
-        />
-      )}
+        {showAppointmentModal && (
+          <AppointmentModal
+            onClose={() => setShowAppointmentModal(false)}
+            onSchedule={handleSaveAppointment}
+            selectedPartner={selectedOpponent}
+          />
+        )}
 
-     
-      {showMeetingModal && selectedMeeting && (
-  <MeetingDetailsModal
-    isOpen={showMeetingModal}
-    onClose={() => setShowMeetingModal(false)}
-    appointmentId={selectedMeeting.appointmentId}
-    title={selectedMeeting.title}
-    description={selectedMeeting.description}
-    start={selectedMeeting.start}
-    end={selectedMeeting.end}
-    category={selectedMeeting.category}
-    withUserName={selectedMeeting.withUserName}
-    withUserAvatar={selectedMeeting.withUserAvatar}
-    opponentRole={selectedMeeting.opponentRole}
-    opponentId={selectedMeeting.opponentId}
-    selectedTime={selectedMeeting.selectedTime}
-    durationMinutes={selectedMeeting.durationMinutes || 30}
-    guests={selectedMeeting.guests}
-    meetingLink={selectedMeeting.meetingLink}
-    onRescheduleSuccess={(newStart, newSlot) => {
-     
-      setSelectedMeeting((prev: any) => {
-        if (!prev) return prev
-        return {
-          ...prev,
-          start: newStart,
-          selectedTime: newSlot
-        }
-      })
-
-
-    }}
-  />
-)}
-
+        {showMeetingModal && selectedMeeting && (
+          <MeetingDetailsModal
+            isOpen={showMeetingModal}
+            onClose={() => setShowMeetingModal(false)}
+            appointmentId={selectedMeeting.appointmentId}
+            title={selectedMeeting.title}
+            description={selectedMeeting.description}
+            start={selectedMeeting.start}
+            end={selectedMeeting.end}
+            category={selectedMeeting.category}
+            withUserName={selectedMeeting.withUserName}
+            withUserAvatar={selectedMeeting.withUserAvatar}
+            opponentRole={selectedMeeting.opponentRole}
+            opponentId={selectedMeeting.opponentId}
+            selectedTime={selectedMeeting.selectedTime}
+            durationMinutes={selectedMeeting.durationMinutes || 30}
+            guests={selectedMeeting.guests}
+            meetingLink={selectedMeeting.meetingLink}
+            onRescheduleSuccess={(newStart, newSlot) => {
+              setSelectedMeeting((prev: any) => {
+                if (!prev) return prev;
+                return {
+                  ...prev,
+                  start: newStart,
+                  selectedTime: newSlot,
+                };
+              });
+            }}
+          />
+        )}
+      </div>
     </BaseLayout>
   );
 };

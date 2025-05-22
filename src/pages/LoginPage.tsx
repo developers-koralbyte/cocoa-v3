@@ -1,19 +1,35 @@
+
 import React from "react";
 import image1 from "../assets/img/login/Cocoa Login .png";
 import LoginForm from "../components/LoginPage/LoginForm";
 import logo from "../assets/img/login/cocoaLoginLogo.png";
+import { ArrowLeft } from 'lucide-react';
+import { useNavigate } from "react-router-dom";
+
 
 const LoginPage: React.FC = () => {
+
+  const navigate = useNavigate();
+
+  
   return (
     <div className="min-h-full flex">
       {/* Left Section with the Image */}
-      <div className="hidden lg:flex lg:w-1/2 ">
-        <img
-          src={image1}
-          alt="Welcome Back Illustration"
-          className="w-full h-screen object-fit"
-        />
-      </div>
+      <div className="hidden lg:flex lg:w-1/2 relative">
+  {/* Arrow positioned over the image */}
+  <ArrowLeft 
+  className="w-6 h-6 text-white absolute top-5 left-5 z-10 cursor-pointer"
+  onClick={() => navigate('/')} 
+  />
+
+  {/* Background image */}
+  <img
+    src={image1}
+    alt="Welcome Back Illustration"
+    className="w-full h-screen object-cover"
+  />
+</div>
+
 
       {/* Right Section */}
       <div className="lg:w-1/2 w-full h-screen flex items-center justify-center">
@@ -40,3 +56,4 @@ const LoginPage: React.FC = () => {
 };
 
 export default LoginPage;
+
