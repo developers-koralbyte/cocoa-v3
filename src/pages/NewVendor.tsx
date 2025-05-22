@@ -9,13 +9,29 @@ import upload from "../utils/upload";
 import { doc, setDoc } from "firebase/firestore";
 import { toast } from "react-toastify";
 
+// Define service options - you can modify this list as needed
+const SERVICE_OPTIONS = [
+  "F&B",
+  "Retail",
+  "Ecommerce",
+  "Consulting",
+  "Software Development",
+  "Marketing",
+  "Design",
+  "Education",
+  "Healthcare",
+  "Finance",
+  "Transportation",
+  "Real Estate",
+];
+
 type FormData = {
   email: string;
   password: string;
   firstName: string;
   lastName: string;
   businessName: string;
-  companyAddress: string;  // new field
+  companyAddress: string;
   countryRegion: string;
   industry: string;
   categories: string;
@@ -35,19 +51,19 @@ const NewVendor = () => {
     firstName: "",
     lastName: "",
     businessName: "",
-    companyAddress: "", // initializes to empty
+    companyAddress: "",
     countryRegion: "",
     industry: "",
     categories: "",
     services: "",
-    role, // default to "Vendor"
+    role,
   });
 
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string>("");
   const [isSubmitted, setIsSubmitted] = useState(false);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
@@ -83,7 +99,7 @@ const NewVendor = () => {
         avatarUrl = (await upload(avatarFile)) as string;
       }
 
-      // 4) Store user’s basic info in the "users" collection
+      // 4) Store user's basic info in the "users" collection
       await setDoc(doc(db, "users", user.uid), {
         id: user.uid,
         email: formData.email,
@@ -393,7 +409,7 @@ const NewVendor = () => {
             </div>
           </div>
 
-          {/* Services + submit */}
+          {/* Services dropdown + submit */}
           <div className="col-span-2">
             <div className="flex flex-row gap-4 items-end">
               <div className="relative group flex-1">
@@ -403,17 +419,23 @@ const NewVendor = () => {
                 >
                   Services
                   <span className="absolute left-0 bottom-full mb-1 w-56 p-2 text-xs text-white bg-gray-800 rounded-md shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 ease-in-out">
-                    Enter services relevant to your business (F&B, Retail, Ecommerce).
+                    Select the primary service type for your business.
                   </span>
                 </label>
-                <input
-                  type="text"
+                <select
                   id="services"
                   name="services"
                   value={formData.services}
                   onChange={handleInputChange}
                   className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#7C77C1] focus:outline-none transition"
-                />
+                >
+                  <option value="">Select a service</option>
+                  {SERVICE_OPTIONS.map((service) => (
+                    <option key={service} value={service}>
+                      {service}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <button

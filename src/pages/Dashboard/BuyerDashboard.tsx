@@ -78,6 +78,10 @@ const BuyerDashboard: React.FC = () => {
         categories: '',
         services: '',
     })
+    
+    // Track premium status
+    const [isPremium, setIsPremium] = useState(false)
+    const [businessName, setBusinessName] = useState('')
 
     // New state for recent vendors
     const [recentVendors, setRecentVendors] = useState<
@@ -93,6 +97,9 @@ const BuyerDashboard: React.FC = () => {
             if (snap.exists()) {
                 const data = snap.data()
                 if (Array.isArray(data.services)) setServices(data.services)
+                // Set premium status and business name
+                setIsPremium(data.isPremium || false)
+                setBusinessName(data.businessName || '')
             }
         }
         load()
@@ -296,31 +303,42 @@ const BuyerDashboard: React.FC = () => {
                             <p className="text-gray-500">No recent vendors.</p>
                         )}
                     </section>
-
-                    
-                    
                 </main>
 
                 {/* ------------ RIGHT SIDEBAR ------------ */}
                 <aside className="w-96 bg-purple-100 p-8 rounded-r-[3.5rem] flex flex-col gap-8">
-                    {/* Profile */}
-                    <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center">
-                            {user?.avatar ? (
-                                <img
-                                    src={user.avatar}
-                                    alt="Avatar"
-                                    className="w-full h-full object-cover"
-                                />
-                            ) : (
-                                <User className="text-gray-400 w-6 h-6" />
-                            )}
-                        </div>
-                        <div>
-                            <h2 className="font-bold font-nunito">
-                                {user?.firstName || 'Buyer'},
-                            </h2>
-                            <span className="text-sm text-gray-600">Buyer</span>
+                    {/* Updated Profile Section - Premium Style */}
+                    <div className="flex flex-col">
+                        <div className="flex items-center justify-between mb-1">
+                            <div className="flex flex-col">
+                                <h2 className="text-2xl font-bold">
+                                    {user?.firstName || 'Buyer'}{businessName ? `, ${businessName}` : ''}
+                                </h2>
+                                <div className="flex flex-col">
+                                    <span className="text-xl text-gray-600 capitalize">Buyer</span>
+                                    {isPremium && (
+                                        <div className="flex items-center text-purple-600 text-xl mt-1">
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 mr-2">
+                                                <path fillRule="evenodd" d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.007 5.404.433c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.433 2.082-5.006z" clipRule="evenodd" />
+                                            </svg>
+                                            <span className="italic">Premium Account</span>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                            <div className="w-16 h-16 rounded-full overflow-hidden">
+                                {user?.avatar ? (
+                                    <img
+                                        src={user.avatar}
+                                        alt="Avatar"
+                                        className="w-full h-full object-cover"
+                                    />
+                                ) : (
+                                    <div className="w-full h-full bg-black flex items-center justify-center">
+                                        <User className="text-white w-8 h-8" />
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </div>
 
