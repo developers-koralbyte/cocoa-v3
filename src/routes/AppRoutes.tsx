@@ -25,6 +25,7 @@ const AccountingSoftware = React.lazy(() => import('../pages/Dashboard/Accountin
 const BecomingAVendor = React.lazy(() => import('../components/BecomeAVendor/BecomingAVendor'));
 const VendorPricingVerification = React.lazy(() => import('../components/VendorPricing&Verification/VendorPricing&Verification'));
 const ManageProfilePage = React.lazy(() => import('../pages/ManageProfilePage'));
+const AboutUs = React.lazy(() => import('../pages/AboutUs'));
 
 const CataloguePage = React.lazy(() => import('../pages/Dashboard/Catalogue/CataloguePage'));
 const ServiceDetailPage = React.lazy(() => import('../pages/Dashboard/Catalogue/ServiceDetailPage'));
@@ -103,6 +104,9 @@ const AppRoutes: React.FC = () => {
                 <Route path="/vendor-prices" element={<VendorPricingVerification />} />
                 {/* Becoming a Buyer*/}
                 <Route path="/become-a-buyer" element={<BecomingABuyer />} />
+                {/* About us*/}
+             
+                <Route path="/about-us" element={<AboutUs />} />
 
                 {/* Corporate Solutions*/}
                 <Route path='/corporate-solutions' element={<CorporateSolutions />} />
