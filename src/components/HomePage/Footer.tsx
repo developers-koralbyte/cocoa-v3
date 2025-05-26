@@ -18,12 +18,12 @@ const Footer = () => {
             { name: 'Marketplace', href: '/corporate-solutions' },
         ],
         cocoa: [
-            { name: 'Pricing', href: 'vendor-pricing-verification' },
+            // { name: 'Pricing', href: 'vendor-pricing-verification' },
             { name: 'Demo', href: 'demo' },
             { name: 'Log in', href: '/login' },
         ],
         about: [
-            { name: 'About us', href: 'about-us' },
+            { name: 'About us', href: '/about-us' },
             { name: 'News', href: 'news' },
         ],
     }
