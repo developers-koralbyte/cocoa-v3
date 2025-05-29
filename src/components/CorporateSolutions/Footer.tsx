@@ -74,7 +74,7 @@ const Footer = () => {
                                 Malaysia, Canada
                             </p>
                             <p>+60152122714</p>
-                            <p>ctb@cocoa-app.com</p>
+                            <p>info@cocoa-app.com</p>
                         </div>
                     </div>
 
@@ -237,7 +237,7 @@ const Footer = () => {
                                             className="flex items-center gap-2 hover:text-white"
                                         >
                                             <MdEmail />
-                                            <span>Connect@koralbyte.com</span>
+                                            <span>info@cocoa-app.com</span>
                                         </a>
                                     </div>
                                 </div>

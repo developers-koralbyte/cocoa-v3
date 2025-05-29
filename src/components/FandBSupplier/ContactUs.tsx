@@ -23,7 +23,7 @@ const ContactUs: React.FC = () => {
                                 <button
                                     onClick={() =>
                                         (window.location.href =
-                                            'mailto:Connect@koralbyte.com')
+                                            'mailto:info@cocoa-app.com')
                                     }
                                     className="px-6 py-3 bg-white text-purple-900 rounded-full font-semibold hover:bg-gray-100 transition-colors"
                                 >
