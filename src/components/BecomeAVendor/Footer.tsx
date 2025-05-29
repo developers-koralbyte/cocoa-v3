@@ -21,7 +21,7 @@ const Footer = () => {
         ],
         about: [
             { name: 'About us', href: 'about-us' },
-            { name: 'News', href: 'news' },
+            { name: 'News', href: '/news' },
         ],
     }
 
