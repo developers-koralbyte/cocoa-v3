@@ -74,7 +74,7 @@ const Footer = () => {
                                 Malaysia, Canada
                             </p>
                             <p>+60152122714</p>
-                            <p>ctb@cocoa-app.com</p>
+                            <p>info@cocoa-app.com</p>
                         </div>
                     </div>
 

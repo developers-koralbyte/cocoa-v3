@@ -237,7 +237,7 @@ const Footer = () => {
                                             className="flex items-center gap-2 hover:text-white"
                                         >
                                             <MdEmail />
-                                            <span>Connect@koralbyte.com</span>
+                                            <span>info@cocoa-app.com</span>
                                         </a>
                                     </div>
                                 </div>

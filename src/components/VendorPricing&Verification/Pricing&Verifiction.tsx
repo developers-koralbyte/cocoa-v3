@@ -286,7 +286,7 @@ const PricingAndVerification: React.FC = () => {
                         buttonText="Contact us"
                         onClick={() =>
                             (window.location.href =
-                                'mailto:Connect@koralbyte.com')
+                                'mailto:info@cocoa-app.com')
                         }
                     />
                 </div>
