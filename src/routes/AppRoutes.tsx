@@ -26,7 +26,7 @@ const BecomingAVendor = React.lazy(() => import('../components/BecomeAVendor/Bec
 const VendorPricingVerification = React.lazy(() => import('../components/VendorPricing&Verification/VendorPricing&Verification'));
 const ManageProfilePage = React.lazy(() => import('../pages/ManageProfilePage'));
 const AboutUs = React.lazy(() => import('../pages/AboutUs'));
-
+const News= React.lazy(() => import('../components/News/NewsPage'));
 const CataloguePage = React.lazy(() => import('../pages/Dashboard/Catalogue/CataloguePage'));
 const ServiceDetailPage = React.lazy(() => import('../pages/Dashboard/Catalogue/ServiceDetailPage'));
 const ProductDetailPage = React.lazy(() => import('../pages/Dashboard/Catalogue/ProductDetailPage'));
@@ -107,7 +107,7 @@ const AppRoutes: React.FC = () => {
                 {/* About us*/}
              
                 <Route path="/about-us" element={<AboutUs />} />
-
+                <Route path="/news" element={<News />} />
                 {/* Corporate Solutions*/}
                 <Route path='/corporate-solutions' element={<CorporateSolutions />} />
                 {/* SaaS and ERP*/}
