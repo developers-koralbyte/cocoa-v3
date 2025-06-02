@@ -69,11 +69,7 @@ const Footer = () => {
                     <div className="mb-12">
                         <h3 className="text-xl font-bold mb-4">CONTACT US</h3>
                         <div className="space-y-3 text-base">
-                            <p className="flex items-center justify-center gap-2">
-                                <IoLocationSharp className="w-5 h-5" />
-                                Malaysia, Canada
-                            </p>
-                            <p>+60152122714</p>
+                            
                             <p>info@cocoa-app.com</p>
                         </div>
                     </div>
@@ -208,32 +204,10 @@ const Footer = () => {
                             <div className="mb-8">
                                 <h3 className="font-medium mb-7">CONTACT US</h3>
                                 <div className="space-y-3 text-white/90">
+                                    
                                     <div className="flex items-center gap-2">
                                         <a
-                                            href="https://www.google.com/maps?q=111+Peter+St,+Toronto,+ON+M5V+2H1,+Canada"
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="flex items-center gap-2 hover:text-white"
-                                        >
-                                            <FaLocationDot />
-                                            <span>
-                                                111 Peter St, Toronto, ON M5V
-                                                2H1 Canada
-                                            </span>
-                                        </a>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <a
-                                            href="tel:+16475189514"
-                                            className="flex items-center gap-2 hover:text-white"
-                                        >
-                                            <FiPhoneCall />
-                                            <span>+1 647 518 9514</span>
-                                        </a>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <a
-                                            href="mailto:Connect@koralbyte.com"
+                                            href="mailto:info@cocoa-app.com"
                                             className="flex items-center gap-2 hover:text-white"
                                         >
                                             <MdEmail />
