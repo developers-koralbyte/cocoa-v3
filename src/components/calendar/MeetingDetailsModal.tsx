@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react'
-import moment from 'moment'
-import Calendar from 'react-calendar'
-import 'react-calendar/dist/Calendar.css'
+// src/components/calendar/MeetingDetailsModal.tsx
+import React, { useEffect, useState } from 'react';
+import moment from 'moment';
+import Calendar from 'react-calendar';
+import 'react-calendar/dist/Calendar.css';
 import {
   doc,
   getDoc,
@@ -11,11 +12,11 @@ import {
   getDocs,
   updateDoc,
   runTransaction,
-} from 'firebase/firestore'
-import { db } from '../../utils/firebase'
-import { Pencil, Check, X, Clock, User as UserIcon } from 'lucide-react'
+} from 'firebase/firestore';
+import { db } from '../../utils/firebase';
+import { Pencil, Check, X, Clock, User as UserIcon } from 'lucide-react';
 
-type OpponentRole = 'vendor' | 'buyer'
+type OpponentRole = 'vendor' | 'buyer';
 
 const calendarStyle = `
   .react-calendar {
@@ -71,66 +72,64 @@ const calendarStyle = `
     background: #584B8B !important;
     color: #fff !important;
   }
-`
+`;
 
 export interface AvailabilitySlot {
-  date: string
-  startTime: string
-  endTime: string
-  duration?: number
+  date: string;
+  startTime: string;
+  endTime: string;
+  duration?: number;
 }
 
 function generateTimeSlotsFromRange(startTime: string, endTime: string, slotDuration = 30) {
-  const out: string[] = []
-  let current = moment(startTime, 'HH:mm')
-  const finish = moment(endTime, 'HH:mm')
+  const out: string[] = [];
+  let current = moment(startTime, 'HH:mm');
+  const finish = moment(endTime, 'HH:mm');
   while (current < finish) {
-    out.push(current.format('h:mm A'))
-    current.add(slotDuration, 'minutes')
+    out.push(current.format('h:mm A'));
+    current.add(slotDuration, 'minutes');
   }
-  return out
+  return out;
 }
 
 function buildGoogleCalUrl(title: string, start: Date, end: Date, description?: string) {
-  const startStr = moment(start).utc().format('YYYYMMDDTHHmmss[Z]')
-  const endStr = moment(end).utc().format('YYYYMMDDTHHmmss[Z]')
-  const calURL = new URL('https://calendar.google.com/calendar/render')
-  calURL.searchParams.set('action', 'TEMPLATE')
-  calURL.searchParams.set('text', title || 'Meeting')
-  calURL.searchParams.set('dates', `${startStr}/${endStr}`)
+  const startStr = moment(start).utc().format('YYYYMMDDTHHmmss[Z]');
+  const endStr = moment(end).utc().format('YYYYMMDDTHHmmss[Z]');
+  const calURL = new URL('https://calendar.google.com/calendar/render');
+  calURL.searchParams.set('action', 'TEMPLATE');
+  calURL.searchParams.set('text', title || 'Meeting');
+  calURL.searchParams.set('dates', `${startStr}/${endStr}`);
   if (description) {
-    calURL.searchParams.set('details', description)
+    calURL.searchParams.set('details', description);
   }
-  return calURL.toString()
+  return calURL.toString();
 }
 
 function combineDateAndTime(date: Date, timeStr: string): Date {
-  const dateMoment = moment(date).startOf('day')
-  const timeMoment = moment(timeStr, 'h:mm A')
-  dateMoment.hours(timeMoment.hours()).minutes(timeMoment.minutes())
-  return dateMoment.toDate()
+  const dateMoment = moment(date).startOf('day');
+  const timeMoment = moment(timeStr, 'h:mm A');
+  dateMoment.hours(timeMoment.hours()).minutes(timeMoment.minutes());
+  return dateMoment.toDate();
 }
 
 export interface MeetingDetailsModalProps {
-  isOpen: boolean
-  onClose: () => void
-  appointmentId: string
-  title: string
-  description?: string
-  start: Date
-  end: Date
-  category?: string
-  withUserName: string
-  withUserAvatar?: string
-  opponentRole: OpponentRole
-  opponentId: string
-  selectedTime?: string
-  durationMinutes?: number
-  guests?: string[]
-  meetingLink?: string
-
-  
-  onRescheduleSuccess?: (newStart: Date, newSlot: string) => void
+  isOpen: boolean;
+  onClose: () => void;
+  appointmentId: string;
+  title: string;
+  description?: string;
+  start: Date;
+  end: Date;
+  category?: string;
+  withUserName: string;
+  withUserAvatar?: string;
+  opponentRole: OpponentRole;
+  opponentId: string;
+  selectedTime?: string;
+  durationMinutes?: number;
+  guests?: string[];
+  meetingLink?: string;
+  onRescheduleSuccess?: (newStart: Date, newSlot: string) => void;
 }
 
 const MeetingDetailsModal: React.FC<MeetingDetailsModalProps> = ({
@@ -152,151 +151,174 @@ const MeetingDetailsModal: React.FC<MeetingDetailsModalProps> = ({
   meetingLink = '',
   onRescheduleSuccess,
 }) => {
-  const [isEditingDetails, setIsEditingDetails] = useState(false)
-  const [tempDesc, setTempDesc] = useState('')
-  const [tempGuests, setTempGuests] = useState('')
-  const [tempMeetingLink, setTempMeetingLink] = useState('')
-  const [isRescheduling, setIsRescheduling] = useState(false)
-  const [newDate, setNewDate] = useState<Date>(start)
-  const [selectedSlot, setSelectedSlot] = useState<string>('')
+  const [isEditingDetails, setIsEditingDetails] = useState(false);
+  const [tempDesc, setTempDesc] = useState('');
+  const [tempGuests, setTempGuests] = useState('');
+  const [tempMeetingLink, setTempMeetingLink] = useState('');
+  const [isRescheduling, setIsRescheduling] = useState(false);
+  const [newDate, setNewDate] = useState<Date>(start);
+  const [selectedSlot, setSelectedSlot] = useState<string>('');
+  const [conflictError, setConflictError] = useState('');
+  const [opponentAvailability, setOpponentAvailability] = useState<AvailabilitySlot[]>([]);
+  const [timeSlots, setTimeSlots] = useState<string[]>([]);
+  const [currentDesc, setCurrentDesc] = useState(description || '');
+  const [currentGuests, setCurrentGuests] = useState<string[]>(guests);
+  const [currentMeetingLink, setCurrentMeetingLink] = useState(meetingLink);
+  const [localStart, setLocalStart] = useState(start);
 
-  const [conflictError, setConflictError] = useState('')
-  const [opponentAvailability, setOpponentAvailability] = useState<AvailabilitySlot[]>([])
-  const [timeSlots, setTimeSlots] = useState<string[]>([])
-
-  const [currentDesc, setCurrentDesc] = useState(description || '')
-  const [currentGuests, setCurrentGuests] = useState<string[]>(guests)
-  const [currentMeetingLink, setCurrentMeetingLink] = useState(meetingLink)
-  const [localStart, setLocalStart] = useState(start)
+  // Disable any date before today in the small calendar
+  const disablePastDates = ({ date }: { date: Date }) =>
+    date < moment().startOf('day').toDate();
 
   useEffect(() => {
-    if (!isOpen) return
-    setIsEditingDetails(false)
-    setTempDesc(description || '')
-    setTempGuests(guests.join(', '))
-    setTempMeetingLink(meetingLink || '')
-    setCurrentDesc(description || '')
-    setCurrentGuests(guests)
-    setCurrentMeetingLink(meetingLink || '')
-    setIsRescheduling(false)
-    setNewDate(start)
-    setSelectedSlot(selectedTime || moment(start).format('h:mm A'))
-    setLocalStart(start)
-    setConflictError('')
-    fetchOpponentAvailability(opponentId, opponentRole)
-  }, [isOpen, description, guests, meetingLink, start, selectedTime, opponentId, opponentRole])
+    if (!isOpen) return;
+
+    setIsEditingDetails(false);
+    setTempDesc(description || '');
+    setTempGuests(guests.join(', '));
+    setTempMeetingLink(meetingLink || '');
+    setCurrentDesc(description || '');
+    setCurrentGuests(guests);
+    setCurrentMeetingLink(meetingLink || '');
+    setIsRescheduling(false);
+    setNewDate(start);
+    setSelectedSlot(selectedTime || moment(start).format('h:mm A'));
+    setLocalStart(start);
+    setConflictError('');
+
+    fetchOpponentAvailability(opponentId, opponentRole);
+  }, [isOpen, description, guests, meetingLink, start, selectedTime, opponentId, opponentRole]);
 
   useEffect(() => {
     if (!isEditingDetails && !isRescheduling) {
-      setLocalStart(start)
-      setSelectedSlot(selectedTime || moment(start).format('h:mm A'))
+      setLocalStart(start);
+      setSelectedSlot(selectedTime || moment(start).format('h:mm A'));
     }
-  }, [start, selectedTime, isEditingDetails, isRescheduling])
+  }, [start, selectedTime, isEditingDetails, isRescheduling]);
 
   async function fetchOpponentAvailability(id: string, role: OpponentRole) {
     try {
-      const colName = role === 'vendor' ? 'Vendors' : 'Buyers'
-      const docRef = doc(db, colName, id)
-      const snap = await getDoc(docRef)
+      const colName = role === 'vendor' ? 'Vendors' : 'Buyers';
+      const docRef = doc(db, colName, id);
+      const snap = await getDoc(docRef);
       if (snap.exists()) {
-        const data = snap.data()
+        const data = snap.data();
         if (data.availability) {
-          setOpponentAvailability(data.availability)
+          setOpponentAvailability(data.availability);
         }
       }
     } catch (err) {
-      console.error('fetchOpponentAvailability error:', err)
+      console.error('fetchOpponentAvailability error:', err);
     }
   }
 
   useEffect(() => {
     if (!isRescheduling) {
-      setTimeSlots([])
-      return
+      setTimeSlots([]);
+      return;
     }
+
     const foundSlot = opponentAvailability.find((slot) =>
       moment(slot.date).isSame(newDate, 'day')
-    )
+    );
     if (foundSlot) {
-      const dur = foundSlot.duration || 30
-      const generated = generateTimeSlotsFromRange(foundSlot.startTime, foundSlot.endTime, dur)
-      setTimeSlots(generated)
+      const dur = foundSlot.duration || 30;
+      const generated = generateTimeSlotsFromRange(foundSlot.startTime, foundSlot.endTime, dur);
+      setTimeSlots(generated);
     } else {
-      setTimeSlots([])
+      setTimeSlots([]);
     }
-  }, [isRescheduling, newDate, opponentAvailability])
+  }, [isRescheduling, newDate, opponentAvailability]);
 
   async function handleSaveDetails() {
     try {
-      const newGuests = tempGuests.split(',').map(e => e.trim()).filter(e => e !== '')
+      const newGuests = tempGuests
+        .split(',')
+        .map((e) => e.trim())
+        .filter((e) => e !== '');
       await updateDoc(doc(db, 'appointments', appointmentId), {
         description: tempDesc,
         guests: newGuests,
         meetingLink: tempMeetingLink,
-      })
-      setIsEditingDetails(false)
-      setCurrentDesc(tempDesc)
-      setCurrentGuests(newGuests)
-      setCurrentMeetingLink(tempMeetingLink)
+      });
+      setIsEditingDetails(false);
+      setCurrentDesc(tempDesc);
+      setCurrentGuests(newGuests);
+      setCurrentMeetingLink(tempMeetingLink);
     } catch (err) {
-      console.error('Error updating details:', err)
+      console.error('Error updating details:', err);
     }
   }
 
   async function handleRescheduleConfirm() {
+    // Combine new date and slot immediately
+    const combined = combineDateAndTime(newDate, selectedSlot);
+
+    // Prevent selecting a past time
+    if (combined < new Date()) {
+      setConflictError('Cannot reschedule to a past date/time.');
+      return;
+    }
+
     try {
-      const combined = combineDateAndTime(newDate, selectedSlot)
-      const fieldToCheck = opponentRole === 'vendor' ? 'vendorId' : 'buyerId'
+      const fieldToCheck = opponentRole === 'vendor' ? 'vendorId' : 'buyerId';
       await runTransaction(db, async (transaction) => {
-        const startOfDay = moment(combined).startOf('day').toDate()
-        const endOfDay = moment(combined).endOf('day').toDate()
-        const appointmentsRef = collection(db, 'appointments')
+        const startOfDay = moment(combined).startOf('day').toDate();
+        const endOfDay = moment(combined).endOf('day').toDate();
+        const appointmentsRef = collection(db, 'appointments');
         const qCheck = query(
           appointmentsRef,
           where(fieldToCheck, '==', opponentId),
           where('selectedDate', '>=', startOfDay),
           where('selectedDate', '<=', endOfDay)
-        )
-        const snaps = await getDocs(qCheck)
-        let conflict = false
-        snaps.forEach(docSnap => {
-          const data = docSnap.data()
+        );
+        const snaps = await getDocs(qCheck);
+
+        let conflict = false;
+        snaps.forEach((docSnap) => {
+          const data = docSnap.data();
           if (data.selectedTime === selectedSlot && docSnap.id !== appointmentId) {
-            conflict = true
+            conflict = true;
           }
-        })
+        });
+
         if (conflict) {
-          throw new Error('This time slot is already booked by the opponent.')
+          throw new Error('This time slot is already booked by the opponent.');
         }
+
         transaction.update(doc(db, 'appointments', appointmentId), {
           selectedDate: combined,
           selectedTime: selectedSlot,
-        })
-      })
-      const newStart = combineDateAndTime(newDate, selectedSlot)
-      setLocalStart(newStart)
-      setIsRescheduling(false)
-      setConflictError('')
+        });
+      });
 
-      
+      const newStart = combineDateAndTime(newDate, selectedSlot);
+      setLocalStart(newStart);
+      setIsRescheduling(false);
+      setConflictError('');
+
       if (onRescheduleSuccess) {
-        onRescheduleSuccess(newStart, selectedSlot)
+        onRescheduleSuccess(newStart, selectedSlot);
       }
     } catch (err: any) {
-      setConflictError(err.message || 'Failed to reschedule.')
-      console.error('Error rescheduling:', err)
+      setConflictError(err.message || 'Failed to reschedule.');
+      console.error('Error rescheduling:', err);
     }
   }
 
-  const googleCalendarUrl = buildGoogleCalUrl(title, localStart, end, currentDesc)
-  const computedDuration = durationMinutes || moment(end).diff(moment(localStart), 'minutes') || 60
+  const googleCalendarUrl = buildGoogleCalUrl(title, localStart, end, currentDesc);
+  const computedDuration =
+    durationMinutes || moment(end).diff(moment(localStart), 'minutes') || 60;
 
-  if (!isOpen) return null
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 bg-black bg-opacity-40 flex items-center justify-center">
       <div className="relative bg-white rounded-xl shadow-lg max-w-3xl w-full p-0">
-        <button className="absolute top-3 right-4 text-xl text-gray-500 z-10" onClick={onClose}>
+        <button
+          className="absolute top-3 right-4 text-xl text-gray-500 z-10"
+          onClick={onClose}
+        >
           &times;
         </button>
         <div className="p-6 max-h-[90vh] overflow-y-auto">
@@ -343,10 +365,10 @@ const MeetingDetailsModal: React.FC<MeetingDetailsModalProps> = ({
                 {!isEditingDetails && (
                   <button
                     onClick={() => {
-                      setIsEditingDetails(true)
-                      setTempDesc(currentDesc)
-                      setTempGuests(currentGuests.join(', '))
-                      setTempMeetingLink(currentMeetingLink)
+                      setIsEditingDetails(true);
+                      setTempDesc(currentDesc);
+                      setTempGuests(currentGuests.join(', '));
+                      setTempMeetingLink(currentMeetingLink);
                     }}
                     className="text-sm text-purple-600 hover:underline flex items-center"
                   >
@@ -363,30 +385,26 @@ const MeetingDetailsModal: React.FC<MeetingDetailsModalProps> = ({
                   </label>
                   <textarea
                     value={tempDesc}
-                    onChange={e => setTempDesc(e.target.value)}
+                    onChange={(e) => setTempDesc(e.target.value)}
                     className="w-full p-2 border rounded focus:outline-none focus:ring-1 focus:ring-purple-300 text-sm"
                     rows={3}
                   />
-                  <label
-                    className="block text-sm font-semibold text-gray-700 mt-3 mb-1"
-                  >
+                  <label className="block text-sm font-semibold text-gray-700 mt-3 mb-1">
                     Participants (comma separated)
                   </label>
                   <input
                     type="text"
                     value={tempGuests}
-                    onChange={e => setTempGuests(e.target.value)}
+                    onChange={(e) => setTempGuests(e.target.value)}
                     className="w-full p-2 border rounded focus:outline-none focus:ring-1 focus:ring-purple-300 text-sm"
                   />
-                  <label
-                    className="block text-sm font-semibold text-gray-700 mt-3 mb-1"
-                  >
+                  <label className="block text-sm font-semibold text-gray-700 mt-3 mb-1">
                     Meeting Link
                   </label>
                   <input
                     type="text"
                     value={tempMeetingLink}
-                    onChange={e => setTempMeetingLink(e.target.value)}
+                    onChange={(e) => setTempMeetingLink(e.target.value)}
                     className="w-full p-2 border rounded focus:outline-none focus:ring-1 focus:ring-purple-300 text-sm"
                   />
 
@@ -400,7 +418,7 @@ const MeetingDetailsModal: React.FC<MeetingDetailsModalProps> = ({
                     </button>
                     <button
                       onClick={() => {
-                        setIsEditingDetails(false)
+                        setIsEditingDetails(false);
                       }}
                       className="flex items-center gap-1 px-3 py-1 text-sm bg-gray-200 text-gray-600 rounded hover:bg-gray-300"
                     >
@@ -443,10 +461,11 @@ const MeetingDetailsModal: React.FC<MeetingDetailsModalProps> = ({
                 <Calendar
                   onChange={(dateVal: any) => {
                     if (dateVal instanceof Date) {
-                      setNewDate(dateVal)
+                      setNewDate(dateVal);
                     }
                   }}
                   value={newDate}
+                  tileDisabled={disablePastDates}
                 />
               </div>
               <div className="mb-4">
@@ -456,7 +475,7 @@ const MeetingDetailsModal: React.FC<MeetingDetailsModalProps> = ({
                 <div className="grid grid-cols-4 sm:grid-cols-5 lg:grid-cols-6 gap-3">
                   {timeSlots.length > 0 ? (
                     timeSlots.map((slot) => {
-                      const isSelected = slot === selectedSlot
+                      const isSelected = slot === selectedSlot;
                       return (
                         <button
                           key={slot}
@@ -469,7 +488,7 @@ const MeetingDetailsModal: React.FC<MeetingDetailsModalProps> = ({
                         >
                           {slot}
                         </button>
-                      )
+                      );
                     })
                   ) : (
                     <p className="text-xs text-gray-500 col-span-full">
@@ -492,8 +511,8 @@ const MeetingDetailsModal: React.FC<MeetingDetailsModalProps> = ({
                 </button>
                 <button
                   onClick={() => {
-                    setIsRescheduling(false)
-                    setConflictError('')
+                    setIsRescheduling(false);
+                    setConflictError('');
                   }}
                   className="bg-gray-200 text-gray-600 px-4 py-2 rounded text-sm hover:bg-gray-300"
                 >
@@ -523,7 +542,7 @@ const MeetingDetailsModal: React.FC<MeetingDetailsModalProps> = ({
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default MeetingDetailsModal
+export default MeetingDetailsModal;
