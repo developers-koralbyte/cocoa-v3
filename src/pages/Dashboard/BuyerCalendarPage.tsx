@@ -1,15 +1,16 @@
-import React, { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import moment from 'moment'
+// src/pages/BuyerCalendarPage.tsx
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import moment from 'moment';
 import {
   Calendar as BigCalendar,
   momentLocalizer,
   View,
   SlotInfo,
   Event as RBCEvent,
-} from 'react-big-calendar'
-import ReactCalendar from 'react-calendar'
-import { Bell, User } from 'lucide-react'
+} from 'react-big-calendar';
+import ReactCalendar from 'react-calendar';
+import { Bell, User } from 'lucide-react';
 import {
   doc,
   getDoc,
@@ -20,20 +21,20 @@ import {
   updateDoc,
   arrayUnion,
   runTransaction,
-} from 'firebase/firestore'
-import BaseLayout from '../../components/Dashboard/BaseLayout'
-import chatImage from '../../assets/img/Dashboard/chatImage.png'
-import { db } from '../../utils/firebase'
-import { useAuth } from '../../utils/AuthContext'
-import 'react-big-calendar/lib/css/react-big-calendar.css'
-import 'react-calendar/dist/Calendar.css'
-import AvailabilityFormModal from '../../components/calendar/AvailibilityFormModal'
-import AppointmentModal from '../../components/chat/AppointmentModal'
-import MeetingDetailsModal from '../../components/calendar/MeetingDetailsModal'
-import { toast, ToastContainer } from 'react-toastify'
-import 'react-toastify/dist/ReactToastify.css'
+} from 'firebase/firestore';
+import BaseLayout from '../../components/Dashboard/BaseLayout';
+import chatImage from '../../assets/img/Dashboard/chatImage.png';
+import { db } from '../../utils/firebase';
+import { useAuth } from '../../utils/AuthContext';
+import 'react-big-calendar/lib/css/react-big-calendar.css';
+import 'react-calendar/dist/Calendar.css';
+import AvailabilityFormModal from '../../components/calendar/AvailibilityFormModal';
+import AppointmentModal from '../../components/chat/AppointmentModal';
+import MeetingDetailsModal from '../../components/calendar/MeetingDetailsModal';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
-const localizer = momentLocalizer(moment)
+const localizer = momentLocalizer(moment);
 
 const calendarOverrides = `
 .rbc-off-range-bg {
@@ -110,12 +111,12 @@ const calendarOverrides = `
 .react-calendar__tile--active:enabled:hover {
   background-color: #5F4B8B;
 }
-`
+`;
 
 function MyToolbar(props: any) {
-  const goToBack = () => props.onNavigate('PREV')
-  const goToNext = () => props.onNavigate('NEXT')
-  const handleViewChange = (view: string) => props.onView(view)
+  const goToBack = () => props.onNavigate('PREV');
+  const goToNext = () => props.onNavigate('NEXT');
+  const handleViewChange = (view: string) => props.onView(view);
 
   return (
     <div className="flex items-center justify-between mb-4 font-nunito p-4 bg-gradient-to-r from-[#936ab7] to-[#9082c6] text-white rounded-lg shadow-lg">
@@ -151,53 +152,53 @@ function MyToolbar(props: any) {
         </button>
       </div>
     </div>
-  )
+  );
 }
 
 function hashStringToColor(str: string): string {
-  let hash = 0
+  let hash = 0;
   for (let i = 0; i < str.length; i++) {
-    hash = str.charCodeAt(i) + ((hash << 5) - hash)
-    hash |= 0
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    hash |= 0;
   }
-  let color = '#'
+  let color = '#';
   for (let i = 0; i < 3; i++) {
-    const value = (hash >> (i * 8)) & 0xff
-    color += ('00' + value.toString(16)).slice(-2)
+    const value = (hash >> (i * 8)) & 0xff;
+    color += ('00' + value.toString(16)).slice(-2);
   }
-  return color
+  return color;
 }
 
 function darkenColor(hexColor: string, factor = 0.7): string {
-  hexColor = hexColor.replace('#', '')
-  let r = parseInt(hexColor.substring(0, 2), 16)
-  let g = parseInt(hexColor.substring(2, 4), 16)
-  let b = parseInt(hexColor.substring(4, 6), 16)
-  r = Math.floor(r * factor)
-  g = Math.floor(g * factor)
-  b = Math.floor(b * factor)
+  hexColor = hexColor.replace('#', '');
+  let r = parseInt(hexColor.substring(0, 2), 16);
+  let g = parseInt(hexColor.substring(2, 4), 16);
+  let b = parseInt(hexColor.substring(4, 6), 16);
+  r = Math.floor(r * factor);
+  g = Math.floor(g * factor);
+  b = Math.floor(b * factor);
   return (
     '#' +
     [r, g, b]
       .map((x) => ('0' + x.toString(16)).slice(-2))
       .join('')
-  )
+  );
 }
 
 function getContrastingTextColor(hexColor: string): string {
-  hexColor = hexColor.replace('#', '')
-  const r = parseInt(hexColor.substring(0, 2), 16)
-  const g = parseInt(hexColor.substring(2, 4), 16)
-  const b = parseInt(hexColor.substring(4, 6), 16)
-  const brightness = (r * 299 + g * 587 + b * 114) / 1000
-  return brightness < 128 ? '#ffffff' : '#000000'
+  hexColor = hexColor.replace('#', '');
+  const r = parseInt(hexColor.substring(0, 2), 16);
+  const g = parseInt(hexColor.substring(2, 4), 16);
+  const b = parseInt(hexColor.substring(4, 6), 16);
+  const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+  return brightness < 128 ? '#ffffff' : '#000000';
 }
 
 function eventStyleGetter(event: AppointmentEvent) {
-  const key = event.buyerId || event.vendorId || event.id.toString()
-  const raw = hashStringToColor(key)
-  const bg = darkenColor(raw, 0.7)
-  const color = getContrastingTextColor(bg)
+  const key = event.buyerId || event.vendorId || event.id.toString();
+  const raw = hashStringToColor(key);
+  const bg = darkenColor(raw, 0.7);
+  const color = getContrastingTextColor(bg);
   return {
     style: {
       backgroundColor: bg,
@@ -206,124 +207,145 @@ function eventStyleGetter(event: AppointmentEvent) {
       border: 'none',
       padding: '2px 6px',
     },
-  }
+  };
 }
 
 function combineDateAndTime(date: Date, timeString: string): Date {
-  const dm = moment(date).startOf('day')
-  const tm = moment(timeString, 'h:mm A')
-  dm.hours(tm.hours()).minutes(tm.minutes())
-  return dm.toDate()
+  const dm = moment(date).startOf('day');
+  const tm = moment(timeString, 'h:mm A');
+  dm.hours(tm.hours()).minutes(tm.minutes());
+  return dm.toDate();
 }
 
 interface AppointmentDoc {
-  buyerId: string
-  vendorId: string
-  category?: string
-  createdAt?: any
-  description?: string
-  selectedDate?: any
-  selectedTime?: string
-  title?: string
-  guests?: string[]
-  meetingLink?: string
+  buyerId: string;
+  vendorId: string;
+  category?: string;
+  createdAt?: any;
+  description?: string;
+  selectedDate?: any;
+  selectedTime?: string;
+  title?: string;
+  guests?: string[];
+  meetingLink?: string;
+  duration?: number;
 }
 
 export interface AppointmentEvent extends RBCEvent {
-  id: string | number
-  title: string
-  start: Date
-  end: Date
-  desc?: string
-  buyerId?: string
-  vendorId?: string
-  category?: string
-  guests?: string[]
-  meetingLink?: string
+  id: string | number;
+  title: string;
+  start: Date;
+  end: Date;
+  desc?: string;
+  buyerId?: string;
+  vendorId?: string;
+  category?: string;
+  guests?: string[];
+  meetingLink?: string;
+  selectedTime?: string;
+  duration?: number;
 }
 
 interface UserInfo {
-  avatar?: string
-  firstName?: string
-  lastName?: string
-  role?: string
-  id?: string
-  businessName?: string
+  avatar?: string;
+  firstName?: string;
+  lastName?: string;
+  role?: string;
+  id?: string;
+  businessName?: string;
 }
 
 export function parseTimestampToDate(value: any): Date | null {
-  if (!value) return null
-  if (typeof value === 'string') return new Date(value)
-  if (value.toDate) return value.toDate()
-  if (value.seconds) return new Date(value.seconds * 1000)
-  return null
+  if (!value) return null;
+  if (typeof value === 'string') return new Date(value);
+  if (value.toDate) return value.toDate();
+  if (value.seconds) return new Date(value.seconds * 1000);
+  return null;
+}
+
+interface AvailabilitySlot {
+  date: string;         // ISO string
+  startTime: string;    // "HH:mm"
+  endTime: string;      // "HH:mm"
+  duration?: number;
 }
 
 const BuyerCalendarPage: React.FC = () => {
-  const navigate = useNavigate()
-  const { user: authUser } = useAuth()
+  const navigate = useNavigate();
+  const { user: authUser } = useAuth();
 
-  const [events, setEvents] = useState<AppointmentEvent[]>([])
-  const [selectedMeeting, setSelectedMeeting] = useState<any>(null)
-  const [showMeetingModal, setShowMeetingModal] = useState(false)
-  const [view, setView] = useState<View>('month')
+  const [events, setEvents] = useState<AppointmentEvent[]>([]);
+  const [historyEvents, setHistoryEvents] = useState<AppointmentEvent[]>([]);
+  const [tab, setTab] = useState<'upcoming' | 'history'>('upcoming');
 
-  const [oppositeUsers, setOppositeUsers] =
-    useState<Record<string, UserInfo>>({})
-  const [availability, setAvailability] = useState<any[]>([])
-  const [showAvailabilityForm, setShowAvailabilityForm] = useState(false)
+  const [selectedMeeting, setSelectedMeeting] = useState<any>(null);
+  const [showMeetingModal, setShowMeetingModal] = useState(false);
+  const [view, setView] = useState<View>('month');
 
-  const [opponentUsers, setOpponentUsers] = useState<UserInfo[]>([])
-  const [selectedOpponent, setSelectedOpponent] = useState<string>('')
-  const opponentRole = 'vendor'
+  const [oppositeUsers, setOppositeUsers] = useState<Record<string, UserInfo>>({});
+  const [availability, setAvailability] = useState<AvailabilitySlot[]>([]);
+  const [showAvailabilityForm, setShowAvailabilityForm] = useState(false);
 
-  const [showAppointmentModal, setShowAppointmentModal] = useState(false)
-  const [upcomingIndex, setUpcomingIndex] = useState(0)
+  const [opponentUsers, setOpponentUsers] = useState<UserInfo[]>([]);
+  const [selectedOpponent, setSelectedOpponent] = useState<string>('');
+  // Buyer always picks a vendor
+  const opponentRole = 'vendor';
 
-  // Fetch and filter only future appointments
+  const [showAppointmentModal, setShowAppointmentModal] = useState(false);
+  const [upcomingIndex, setUpcomingIndex] = useState(0);
+
+  // ────────────────────────────
+  // ============= FETCH APPOINTMENTS =============
   const fetchAppointmentsData = async () => {
-    if (!authUser) return
+    if (!authUser) return;
     try {
       const q = query(
         collection(db, 'appointments'),
         where('buyerId', '==', authUser.uid)
-      )
-      const snap = await getDocs(q)
-      const fetched: AppointmentEvent[] = []
-      const vendorIds = new Set<string>()
+      );
+      const snap = await getDocs(q);
+      const fetched: AppointmentEvent[] = [];
+      const vendorIds = new Set<string>();
 
       snap.forEach((docSnap) => {
-        const d = docSnap.data() as AppointmentDoc
-        vendorIds.add(d.vendorId!)
-        let start =
-          parseTimestampToDate(d.selectedDate) ||
-          new Date()
-        if (d.selectedTime && start) {
-          const tm = moment(d.selectedTime, 'h:mm A')
-          start.setHours(tm.hours(), tm.minutes())
+        const d = docSnap.data() as AppointmentDoc;
+        if (d.vendorId) vendorIds.add(d.vendorId);
+        let start: Date = new Date();
+        const rawDate = parseTimestampToDate(d.selectedDate);
+        if (rawDate) {
+          start = rawDate;
+          if (d.selectedTime) {
+            const tm = moment(d.selectedTime, 'h:mm A');
+            start.setHours(tm.hours(), tm.minutes());
+          }
         }
+        const dur = d.duration ?? 60;
+        const end = new Date(start.getTime() + dur * 60 * 1000);
+
         fetched.push({
           id: docSnap.id,
           title: d.title || '',
           start,
-          end: new Date(start.getTime() + 3600000),
+          end,
           desc: d.description || '',
           buyerId: d.buyerId,
           vendorId: d.vendorId,
           category: d.category,
           guests: d.guests || [],
           meetingLink: d.meetingLink || '',
-        })
-      })
+          selectedTime: d.selectedTime,
+          duration: d.duration,
+        });
+      });
 
-      // Fetch vendor profiles
-      const userMap: Record<string, UserInfo> = {}
+      // Batch‐fetch vendor profiles
+      const userMap: Record<string, UserInfo> = {};
       await Promise.all(
         Array.from(vendorIds).map(async (id) => {
-          const uref = doc(db, 'users', id)
-          const usnap = await getDoc(uref)
+          const uref = doc(db, 'users', id);
+          const usnap = await getDoc(uref);
           if (usnap.exists()) {
-            const u = usnap.data()
+            const u = usnap.data();
             userMap[id] = {
               avatar: u.avatar || '',
               firstName: u.firstName || 'Unknown',
@@ -331,90 +353,97 @@ const BuyerCalendarPage: React.FC = () => {
               role: u.role || 'vendor',
               id,
               businessName: u.businessName || 'Unknown Vendor',
-            }
+            };
           }
         })
-      )
+      );
 
-      // Assign blank titles
+      // Substitute blank titles, sort by start time
       const updated = fetched
         .map((evt) => {
           if (!evt.title.trim()) {
-            const v = userMap[evt.vendorId!]
+            const v = userMap[evt.vendorId!];
             return {
               ...evt,
               title: v
                 ? `${v.firstName} ${v.lastName}`
                 : 'Unknown Vendor',
-            }
+            };
           }
-          return evt
+          return evt;
         })
-        .sort(
-          (a, b) => a.start.getTime() - b.start.getTime()
-        )
+        .sort((a, b) => a.start.getTime() - b.start.getTime());
 
-      // Filter past
-      const now = new Date()
-      setEvents(updated.filter((e) => e.end >= now))
-      setOppositeUsers(userMap)
-      setUpcomingIndex(0)
+      const now = new Date();
+      const upcoming = updated.filter((e) => e.end >= now);
+      const history = updated.filter((e) => e.end < now);
+
+      setEvents(upcoming);
+      setHistoryEvents(history);
+      setOppositeUsers(userMap);
+      setUpcomingIndex(0);
     } catch (err) {
-      console.error(err)
+      console.error(err);
     }
-  }
+  };
 
-  // Weekly rolling availability for buyer
+  // ────────────────────────────
+  // ============= ROLLING WEEKLY AVAILABILITY =============
   useEffect(() => {
-    if (!authUser) return
-    const ref = doc(db, 'Buyers', authUser.uid)
+    if (!authUser) return;
+    const buyerRef = doc(db, 'Buyers', authUser.uid);
+
     const roll = async () => {
-      const s = await getDoc(ref)
-      if (!s.exists()) return
-      const all = s.data().availability || []
-      const today = moment()
-      const thisWeek = all.filter((slot: any) => {
-        const d = moment(slot.date)
-        return (
-          d.isoWeek() === today.isoWeek() && d.year() === today.year()
-        )
-      })
-      if (thisWeek.length) {
-        setAvailability(thisWeek)
-      } else if (all.length) {
+      const s = await getDoc(buyerRef);
+      if (!s.exists()) return;
+      const all: AvailabilitySlot[] = s.data().availability || [];
+      const today = moment();
+
+      // Keep only this ISO‐week’s slots
+      const thisWeek = all.filter((slot) => {
+        const d = moment(slot.date);
+        return d.isoWeek() === today.isoWeek() && d.year() === today.year();
+      });
+
+      if (thisWeek.length > 0) {
+        setAvailability(thisWeek);
+      } else if (all.length > 0) {
+        // If all availability is from a previous week,
+        // ask the user whether to copy it forward or clear it.
         const carry = window.confirm(
           'Your availability is from a past week. Carry it over to this week?'
-        )
+        );
         if (carry) {
-          const newAvail = all.map((slot: any) => {
-            const old = moment(slot.date)
+          const newSlots = all.map((slot) => {
+            const old = moment(slot.date);
             const rolled = moment()
               .isoWeekday(old.isoWeekday())
-              .startOf('day')
-            return { ...slot, date: rolled.toISOString() }
-          })
-          await updateDoc(ref, { availability: newAvail })
-          setAvailability(newAvail)
+              .startOf('day');
+            return { ...slot, date: rolled.toISOString() };
+          });
+          await updateDoc(buyerRef, { availability: newSlots });
+          setAvailability(newSlots);
         } else {
-          await updateDoc(ref, { availability: [] })
-          setAvailability([])
+          await updateDoc(buyerRef, { availability: [] });
+          setAvailability([]);
         }
       }
-    }
-    roll()
-  }, [authUser])
+    };
 
-  useEffect(fetchAppointmentsData, [authUser])
+    roll();
+  }, [authUser]);
 
-  // Fetch vendors as opponents
+  // Initial fetch
   useEffect(() => {
-    if (!authUser) return
+    fetchAppointmentsData();
+  }, [authUser]);
+
+  // Fetch all “vendor” users so that the buyer can pick one
+  useEffect(() => {
+    if (!authUser) return;
     const getVendors = async () => {
-      const q = query(
-        collection(db, 'users'),
-        where('role', '==', 'vendor')
-      )
-      const snap = await getDocs(q)
+      const q = query(collection(db, 'users'), where('role', '==', 'vendor'));
+      const snap = await getDocs(q);
       setOpponentUsers(
         snap.docs.map((d) => ({
           id: d.id,
@@ -424,115 +453,244 @@ const BuyerCalendarPage: React.FC = () => {
           businessName: d.data().businessName || '',
           avatar: d.data().avatar || '',
         }))
-      )
-    }
-    getVendors()
-  }, [authUser])
+      );
+    };
+    getVendors();
+  }, [authUser]);
 
-  const upcomingAppointments = [...events].sort(
-    (a, b) => a.start.getTime() - b.start.getTime()
-  )
-  const displayedAppointment =
-    upcomingAppointments[upcomingIndex] || null
+  const upcomingAppointments = React.useMemo(
+    () => [...events].sort((a, b) => a.start.getTime() - b.start.getTime()),
+    [events]
+  );
+  const displayedAppointment = upcomingAppointments[upcomingIndex] || null;
 
-  const handlePrevUpcoming = () =>
-    upcomingIndex > 0 &&
-    setUpcomingIndex(upcomingIndex - 1)
-  const handleNextUpcoming = () =>
-    upcomingIndex < upcomingAppointments.length - 1 &&
-    setUpcomingIndex(upcomingIndex + 1)
+  const handlePrevUpcoming = () => {
+    if (upcomingIndex > 0) setUpcomingIndex(upcomingIndex - 1);
+  };
+  const handleNextUpcoming = () => {
+    if (upcomingIndex < upcomingAppointments.length - 1)
+      setUpcomingIndex(upcomingIndex + 1);
+  };
 
   const handleOpenAppointmentModal = () => {
     if (!selectedOpponent) {
-      alert(
-        'Please select a vendor to schedule an appointment.'
-      )
-      return
+      alert('Please select a vendor to schedule an appointment.');
+      return;
     }
-    setShowAppointmentModal(true)
-  }
+    setShowAppointmentModal(true);
+  };
 
+  // ────────────────────────────
+  // ============= SAVE AVAILABILITY (with copyPrevWeek support) =============
+  const handleSaveAvailability = async (data: {
+    selectedDate?: Date;
+    startTime?: string;
+    endTime?: string;
+    duration?: number;
+    copyPrevWeek?: boolean;
+  }) => {
+    if (!authUser) return;
+    const buyerRef = doc(db, 'Buyers', authUser.uid);
+
+    // 1) If “copyPrevWeek”, do that logic:
+    if (data.copyPrevWeek) {
+      try {
+        // Fetch entire availability array from Firestore
+        const snap = await getDoc(buyerRef);
+        if (!snap.exists()) return;
+        const all: AvailabilitySlot[] = snap.data().availability || [];
+        if (all.length === 0) {
+          alert('No availability found in the previous week to copy.');
+          return;
+        }
+
+        // Determine last week’s ISO‐week & year
+        const lastWeekMoment = moment().subtract(1, 'weeks');
+        const lastWeekNum = lastWeekMoment.isoWeek();
+        const lastWeekYear = lastWeekMoment.year();
+
+        // Filter only those slots whose date falls in last week
+        const prevWeekSlots = all.filter((slot) => {
+          const sm = moment(slot.date);
+          return (
+            sm.isoWeek() === lastWeekNum &&
+            sm.year() === lastWeekYear
+          );
+        });
+        if (prevWeekSlots.length === 0) {
+          alert('No availability was found for the previous week.');
+          return;
+        }
+
+        // Roll each of those slots forward into “this week”
+        const thisWeekNum = moment().isoWeek();
+        const thisWeekYear = moment().year();
+        const newThisWeekSlots: AvailabilitySlot[] = prevWeekSlots.map(
+          (slot) => {
+            const oldDay = moment(slot.date).isoWeekday(); // 1 = Monday, …, 7 = Sunday
+            // Compute “this week’s” date that lands on the same weekday:
+            const rolledDate = moment()
+              .year(thisWeekYear)
+              .isoWeek(thisWeekNum)
+              .isoWeekday(oldDay)
+              .startOf('day');
+            return {
+              date: rolledDate.toISOString(),
+              startTime: slot.startTime,
+              endTime: slot.endTime,
+              duration: slot.duration,
+            };
+          }
+        );
+
+        // Overwrite Firestore’s availability field with ONLY “this week’s” slots
+        await updateDoc(buyerRef, { availability: newThisWeekSlots });
+        setAvailability(newThisWeekSlots);
+        toast.success('Copied previous week’s availability into this week.');
+      } catch (err) {
+        console.error('Error copying availability:', err);
+        alert('Failed to copy availability. Please try again.');
+      }
+      setShowAvailabilityForm(false);
+      return;
+    }
+
+    // 2) Otherwise, “copyPrevWeek” is false → do normal single‐slot saving
+    const newDateStr = data.selectedDate!.toISOString();
+    const newStart = data.startTime!;
+    const newEnd = data.endTime!;
+    const newDur = data.duration!;
+
+    // Before writing, check overlap against existing local state (same date only)
+    const sameDateSlots = availability.filter((slot) =>
+      moment(slot.date).isSame(moment(newDateStr), 'day')
+    );
+    const toMinutes = (t: string) => {
+      const [hh, mm] = t.split(':').map(Number);
+      return hh * 60 + mm;
+    };
+    const newStartMin = toMinutes(newStart),
+      newEndMin = toMinutes(newEnd);
+
+    const overlapFound = sameDateSlots.some((slot) => {
+      const es = toMinutes(slot.startTime);
+      const ee = toMinutes(slot.endTime);
+      // Overlap if newStart < existingEnd && existingStart < newEnd
+      return newStartMin < ee && es < newEndMin;
+    });
+    if (overlapFound) {
+      alert('This availability overlaps an existing slot.');
+      return;
+    }
+
+    // All good—write to Firestore with arrayUnion
+    const newSlot: AvailabilitySlot = {
+      date: newDateStr,
+      startTime: newStart,
+      endTime: newEnd,
+      duration: newDur,
+    };
+    try {
+      await updateDoc(buyerRef, {
+        availability: arrayUnion(newSlot),
+      });
+      // Update local state immediately so the UI shows the new slot
+      setAvailability((prev) => [...prev, newSlot]);
+    } catch (err) {
+      console.error('Error saving availability:', err);
+      alert('Failed to save availability. Please try again.');
+    }
+
+    setShowAvailabilityForm(false);
+  };
+
+  // ────────────────────────────
+  // ============= SAVE APPOINTMENT =============
   const saveAppointment = async (data: any) => {
     try {
-      const buyerId = authUser!.uid
-      const vendorId = selectedOpponent
-      const combined = combineDateAndTime(
-        data.selectedDate,
-        data.selectedTime
-      )
+      const buyerId = authUser!.uid;
+      const vendorId = selectedOpponent;
+      const combined = combineDateAndTime(data.selectedDate, data.selectedTime);
       if (combined < new Date()) {
-        toast.error(
-          'Cannot schedule appointment in the past.'
-        )
-        return
+        toast.error('Cannot schedule appointment in the past.');
+        return;
       }
-      const id = new Date().getTime().toString()
+      const id = new Date().getTime().toString();
       const docData = {
         ...data,
         buyerId,
         vendorId,
         createdAt: new Date(),
         selectedDate: combined,
-      }
+      };
+
+      // Before inserting, guard against overlapping appointments
       await runTransaction(db, async (tx) => {
-        const startDay = moment(combined)
-          .startOf('day')
-          .toDate()
-        const endDay = moment(combined)
-          .endOf('day')
-          .toDate()
-        const apptsRef = collection(
-          db,
-          'appointments'
-        )
+        const startOfDay = moment(combined).startOf('day').toDate();
+        const endOfDay = moment(combined).endOf('day').toDate();
+        const apptsRef = collection(db, 'appointments');
         const qcheck = query(
           apptsRef,
           where('vendorId', '==', vendorId),
-          where('selectedDate', '>=', startDay),
-          where('selectedDate', '<=', endDay)
-        )
-        const snap = await getDocs(qcheck)
-        if (
-          snap.docs.some(
-            (d) =>
-              d.data().selectedTime ===
-              data.selectedTime
-          )
-        ) {
-          throw new Error(
-            'This time slot is already booked.'
-          )
+          where('selectedDate', '>=', startOfDay),
+          where('selectedDate', '<=', endOfDay)
+        );
+        const snap = await getDocs(qcheck);
+
+        const newStart = moment(data.selectedTime, 'h:mm A');
+        const newDur = data.durationMinutes ?? 60;
+        const newEnd = newStart.clone().add(newDur, 'minutes');
+        let conflict = false;
+
+        snap.forEach((ds) => {
+          const d = ds.data() as any;
+          if (!d.selectedTime) return;
+          const es = moment(d.selectedTime, 'h:mm A');
+          const ed = d.duration ?? 60;
+          const ee = es.clone().add(ed, 'minutes');
+          if (newStart.isBefore(ee) && es.isBefore(newEnd)) {
+            conflict = true;
+          }
+        });
+
+        if (conflict) {
+          throw new Error('This time slot overlaps an existing appointment.');
         }
-        tx.set(doc(db, 'appointments', id), docData)
-      })
-      toast.success(
-        'Appointment scheduled successfully!'
-      )
-      setTimeout(fetchAppointmentsData, 500)
+
+        tx.set(doc(db, 'appointments', id), docData);
+      });
+
+      toast.success('Appointment scheduled successfully!');
+      setTimeout(fetchAppointmentsData, 500);
     } catch (err: any) {
-      console.error(err)
-      toast.error(
-        err.message || 'Failed to schedule appointment.'
-      )
+      console.error('Error scheduling appointment:', err);
+      toast.error(err.message || 'Failed to schedule appointment.');
     }
-  }
+  };
 
   const handleSaveAppointment = (d: any) => {
-    saveAppointment(d)
-    setShowAppointmentModal(false)
-  }
+    // We compute durationMinutes from computedEndTime
+    saveAppointment({
+      ...d,
+      durationMinutes: d.computedEndTime
+        ? moment(d.computedEndTime, 'h:mm A').diff(
+            moment(d.selectedTime, 'h:mm A'),
+            'minutes'
+          )
+        : 60,
+    });
+    setShowAppointmentModal(false);
+  };
 
   const handleSelectEvent = (evt: AppointmentEvent) => {
-    const v = oppositeUsers[evt.vendorId!]
+    const v = oppositeUsers[evt.vendorId!];
     setSelectedMeeting({
       appointmentId: evt.id,
       title: evt.title,
       description: evt.desc,
       start: evt.start,
       end: evt.end,
-      withUserName: v
-        ? `${v.firstName} ${v.lastName}`
-        : 'Unknown Vendor',
+      withUserName: v ? `${v.firstName} ${v.lastName}` : 'Unknown Vendor',
       withUserAvatar: v?.avatar || '',
       opponentRole: 'vendor',
       opponentId: evt.vendorId,
@@ -540,27 +698,18 @@ const BuyerCalendarPage: React.FC = () => {
       durationMinutes: evt.duration,
       guests: evt.guests,
       meetingLink: evt.meetingLink,
-    })
-    setShowMeetingModal(true)
-  }
-
-  // Disable past days in small calendar
- 
+    });
+    setShowMeetingModal(true);
+  };
 
   return (
     <BaseLayout>
       <ToastContainer />
-      <style
-        dangerouslySetInnerHTML={{
-          __html: calendarOverrides,
-        }}
-      />
+      <style dangerouslySetInnerHTML={{ __html: calendarOverrides }} />
       <div className="p-6 font-nunito">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-4xl font-bold text-gray-800">
-            Calendar
-          </h1>
+          <h1 className="text-4xl font-bold text-gray-800">Calendar</h1>
           <div className="flex items-center gap-x-5 gap-4">
             <div>
               <h2 className="font-bold">
@@ -594,9 +743,9 @@ const BuyerCalendarPage: React.FC = () => {
                 startAccessor="start"
                 endAccessor="end"
                 selectable
-                onSelectSlot={(
-                  slotInfo: SlotInfo
-                ) => console.log('Selected slot', slotInfo)}
+                onSelectSlot={(slotInfo: SlotInfo) =>
+                  console.log('Selected slot', slotInfo)
+                }
                 onSelectEvent={handleSelectEvent}
                 components={{ toolbar: MyToolbar }}
                 views={['month', 'week', 'day']}
@@ -612,25 +761,25 @@ const BuyerCalendarPage: React.FC = () => {
 
           {/* RIGHT SIDE */}
           <div className="w-80 border-4 border-[#6868AC] border-l-0 rounded-r-[3.5rem] bg-white p-6 space-y-6">
-            {/* Small Calendar */}
-            
-
             {/* Upcoming Appointment */}
             <div className="bg-white rounded-[2rem] p-6 shadow transition-all duration-500">
               <div className="flex justify-between items-center mb-4">
-                <h3 className="font-bold">
-                  Upcoming Appointment
-                </h3>
+                <h3 className="font-bold">Upcoming Appointment</h3>
                 <div className="flex gap-2">
                   <button
                     className="text-purple-600"
                     onClick={handlePrevUpcoming}
+                    disabled={upcomingIndex === 0}
                   >
                     &lt;
                   </button>
                   <button
                     className="text-purple-600"
                     onClick={handleNextUpcoming}
+                    disabled={
+                      upcomingIndex >= upcomingAppointments.length - 1 ||
+                      upcomingAppointments.length === 0
+                    }
                   >
                     &gt;
                   </button>
@@ -640,15 +789,9 @@ const BuyerCalendarPage: React.FC = () => {
                 <div className="flex items-center gap-4">
                   <div className="w-10 h-10 rounded-full overflow-hidden">
                     {displayedAppointment.vendorId &&
-                    oppositeUsers[
-                      displayedAppointment.vendorId
-                    ]?.avatar ? (
+                    oppositeUsers[displayedAppointment.vendorId]?.avatar ? (
                       <img
-                        src={
-                          oppositeUsers[
-                            displayedAppointment.vendorId
-                          ].avatar
-                        }
+                        src={oppositeUsers[displayedAppointment.vendorId].avatar}
                         alt="Vendor avatar"
                         className="w-full h-full object-cover"
                       />
@@ -657,23 +800,18 @@ const BuyerCalendarPage: React.FC = () => {
                     )}
                   </div>
                   <div className="flex-1">
-                    <h4 className="font-medium">
-                      {displayedAppointment.title ||
-                        'Unknown Vendor'}
+                    <h4 className="font-medium line-clamp-5">
+                      {displayedAppointment.title || 'Unknown Vendor'}
                     </h4>
                     <div className="text-sm text-gray-500">
-                      {moment(
-                        displayedAppointment.start
-                      ).format(
+                      {moment(displayedAppointment.start).format(
                         'ddd, MMM Do, h:mm A'
                       )}
                     </div>
                   </div>
                   <Bell
                     className="w-4 h-4 text-purple-600 cursor-pointer"
-                    onClick={() =>
-                      alert('Reminder set!')
-                    }
+                    onClick={() => alert('Reminder set!')}
                   />
                 </div>
               ) : (
@@ -685,15 +823,13 @@ const BuyerCalendarPage: React.FC = () => {
 
             {/* Schedule Appointment */}
             <div className="bg-white rounded-[2rem] p-6 shadow">
-              <h3 className="font-bold mb-4">
-                Schedule Appointment
-              </h3>
+              <h3 className="font-bold mb-4">Schedule Appointment</h3>
               <div className="flex items-center mb-3">
                 <div className="w-10 h-10 mr-3">
                   {(() => {
                     const opp = opponentUsers.find(
                       (op) => op.id === selectedOpponent
-                    )
+                    );
                     return opp?.avatar ? (
                       <img
                         src={opp.avatar}
@@ -702,7 +838,7 @@ const BuyerCalendarPage: React.FC = () => {
                       />
                     ) : (
                       <User className="w-10 h-10 text-gray-400" />
-                    )
+                    );
                   })()}
                 </div>
                 <div className="flex-1">
@@ -712,17 +848,13 @@ const BuyerCalendarPage: React.FC = () => {
                   <select
                     className="border border-gray-300 rounded px-2 py-1 w-full"
                     value={selectedOpponent}
-                    onChange={(e) =>
-                      setSelectedOpponent(e.target.value)
-                    }
+                    onChange={(e) => setSelectedOpponent(e.target.value)}
                   >
                     <option value="">Select</option>
                     {opponentUsers.map((op) => (
                       <option key={op.id} value={op.id}>
                         {op.firstName} {op.lastName}
-                        {op.businessName
-                          ? ` - ${op.businessName}`
-                          : ''}
+                        {op.businessName ? ` - ${op.businessName}` : ''}
                       </option>
                     ))}
                   </select>
@@ -743,45 +875,38 @@ const BuyerCalendarPage: React.FC = () => {
                   My Availability
                 </h3>
                 <button
-                  onClick={() =>
-                    setShowAvailabilityForm(true)
-                  }
+                  onClick={() => setShowAvailabilityForm(true)}
                   className="bg-[#5F4B8B] text-white px-2 py-1 rounded shadow hover:bg-[#4A3971]"
                 >
                   +
                 </button>
               </div>
               <ul className="text-sm text-gray-600 space-y-1">
+                {availability.length === 0 && (
+                  <li className="text-gray-500 italic">
+                    No availability set.
+                  </li>
+                )}
                 {availability.map((slot, idx) => {
                   const start = slot.startTime
-                    ? moment(
-                        slot.startTime,
-                        'HH:mm'
-                      ).format('h:mm A')
-                    : ''
+                    ? moment(slot.startTime, 'HH:mm').format('h:mm A')
+                    : '';
                   const end = slot.endTime
-                    ? moment(slot.endTime, 'HH:mm').format(
-                        'h:mm A'
-                      )
-                    : ''
+                    ? moment(slot.endTime, 'HH:mm').format('h:mm A')
+                    : '';
                   const day = slot.date
-                    ? moment(slot.date).format('ddd')
-                    : ''
+                    ? moment(slot.date).format('MMM D, YYYY')
+                    : '';
                   return (
-                    <li
-                      key={idx}
-                      className="flex justify-between"
-                    >
+                    <li key={idx} className="flex justify-between">
                       <span className="font-medium text-gray-700">
                         {day}
                       </span>
                       <span>
-                        {start && end
-                          ? `${start} - ${end}`
-                          : ''}
+                        {start && end ? `${start} - ${end}` : ''}
                       </span>
                     </li>
-                  )
+                  );
                 })}
               </ul>
             </div>
@@ -801,47 +926,20 @@ const BuyerCalendarPage: React.FC = () => {
         />
       </div>
 
+      {/* Modals */}
       {showAvailabilityForm && (
         <AvailabilityFormModal
-          onClose={() =>
-            setShowAvailabilityForm(false)
-          }
+          onClose={() => setShowAvailabilityForm(false)}
           onSave={(slot) => {
-            const ref = doc(
-              db,
-              'Buyers',
-              authUser!.uid
-            )
-            const newSlot = {
-              date: slot.selectedDate.toISOString(),
-              startTime: slot.startTime,
-              endTime: slot.endTime,
-              duration: slot.duration,
-            }
-            updateDoc(ref, {
-              availability: arrayUnion(newSlot),
-            })
-              .then(() =>
-                setAvailability((a) => [
-                  ...a,
-                  newSlot,
-                ])
-              )
-              .catch(() =>
-                alert(
-                  'Failed to save availability.'
-                )
-              )
-            setShowAvailabilityForm(false)
+            // Pass through to our new handleSaveAvailability
+            handleSaveAvailability(slot);
           }}
         />
       )}
 
       {showAppointmentModal && (
         <AppointmentModal
-          onClose={() =>
-            setShowAppointmentModal(false)
-          }
+          onClose={() => setShowAppointmentModal(false)}
           onSchedule={handleSaveAppointment}
           selectedPartner={selectedOpponent}
         />
@@ -850,14 +948,12 @@ const BuyerCalendarPage: React.FC = () => {
       {showMeetingModal && selectedMeeting && (
         <MeetingDetailsModal
           isOpen={showMeetingModal}
-          onClose={() =>
-            setShowMeetingModal(false)
-          }
+          onClose={() => setShowMeetingModal(false)}
           {...selectedMeeting}
-          onRescheduleSuccess={(
-            newStart,
-            newSlot
-          ) =>
+          // ───────────────────────────────────────────────────────────────────────
+          // Modified onRescheduleSuccess: update local modal + re-fetch entire list
+          onRescheduleSuccess={(newStart, newSlot) => {
+            // 1) update the open modal’s displayed time immediately
             setSelectedMeeting((prev: any) =>
               prev
                 ? {
@@ -866,12 +962,14 @@ const BuyerCalendarPage: React.FC = () => {
                     selectedTime: newSlot,
                   }
                 : prev
-            )
-          }
+            );
+            // 2) re-fetch the parent’s event list so the calendar grid re-renders
+            fetchAppointmentsData();
+          }}
         />
       )}
     </BaseLayout>
-  )
-}
+  );
+};
 
-export default BuyerCalendarPage
+export default BuyerCalendarPage;
