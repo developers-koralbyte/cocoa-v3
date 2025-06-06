@@ -12,9 +12,17 @@ import {
   getDocs,
   updateDoc,
   runTransaction,
+  deleteDoc,
 } from 'firebase/firestore';
 import { db } from '../../utils/firebase';
-import { Pencil, Check, X, Clock, User as UserIcon } from 'lucide-react';
+import {
+  Pencil,
+  Check,
+  X,
+  Clock,
+  User as UserIcon,
+  Trash2,
+} from 'lucide-react';
 
 type OpponentRole = 'vendor' | 'buyer';
 
@@ -75,13 +83,17 @@ const calendarStyle = `
 `;
 
 export interface AvailabilitySlot {
-  date: string;
-  startTime: string;
-  endTime: string;
-  duration?: number;
+  date: string;       // ISO string
+  startTime: string;  // "HH:mm"
+  endTime: string;    // "HH:mm"
+  duration?: number;  // in minutes (optional; default 30)
 }
 
-function generateTimeSlotsFromRange(startTime: string, endTime: string, slotDuration = 30) {
+function generateTimeSlotsFromRange(
+  startTime: string,
+  endTime: string,
+  slotDuration = 30
+) {
   const out: string[] = [];
   let current = moment(startTime, 'HH:mm');
   const finish = moment(endTime, 'HH:mm');
@@ -92,7 +104,12 @@ function generateTimeSlotsFromRange(startTime: string, endTime: string, slotDura
   return out;
 }
 
-function buildGoogleCalUrl(title: string, start: Date, end: Date, description?: string) {
+function buildGoogleCalUrl(
+  title: string,
+  start: Date,
+  end: Date,
+  description?: string
+) {
   const startStr = moment(start).utc().format('YYYYMMDDTHHmmss[Z]');
   const endStr = moment(end).utc().format('YYYYMMDDTHHmmss[Z]');
   const calURL = new URL('https://calendar.google.com/calendar/render');
@@ -115,6 +132,7 @@ function combineDateAndTime(date: Date, timeStr: string): Date {
 export interface MeetingDetailsModalProps {
   isOpen: boolean;
   onClose: () => void;
+
   appointmentId: string;
   title: string;
   description?: string;
@@ -123,18 +141,28 @@ export interface MeetingDetailsModalProps {
   category?: string;
   withUserName: string;
   withUserAvatar?: string;
+
   opponentRole: OpponentRole;
   opponentId: string;
+
   selectedTime?: string;
   durationMinutes?: number;
   guests?: string[];
   meetingLink?: string;
+
   onRescheduleSuccess?: (newStart: Date, newSlot: string) => void;
+
+  /** NEW: Called after “Edit Details” is saved, so the parent can re‐fetch. */
+  onDetailsSave?: () => void;
+
+  /** OPTIONAL: Called after deletion, so the parent can re‐fetch. */
+  onDeleteSuccess?: () => void;
 }
 
 const MeetingDetailsModal: React.FC<MeetingDetailsModalProps> = ({
   isOpen,
   onClose,
+
   appointmentId,
   title,
   description,
@@ -143,42 +171,52 @@ const MeetingDetailsModal: React.FC<MeetingDetailsModalProps> = ({
   category,
   withUserName,
   withUserAvatar,
+
   opponentRole,
   opponentId,
+
   selectedTime = '',
   durationMinutes = 30,
   guests = [],
   meetingLink = '',
+
   onRescheduleSuccess,
+  onDetailsSave,
+  onDeleteSuccess,
 }) => {
   const [isEditingDetails, setIsEditingDetails] = useState(false);
   const [tempDesc, setTempDesc] = useState('');
   const [tempGuests, setTempGuests] = useState('');
   const [tempMeetingLink, setTempMeetingLink] = useState('');
+
   const [isRescheduling, setIsRescheduling] = useState(false);
   const [newDate, setNewDate] = useState<Date>(start);
   const [selectedSlot, setSelectedSlot] = useState<string>('');
   const [conflictError, setConflictError] = useState('');
+
   const [opponentAvailability, setOpponentAvailability] = useState<AvailabilitySlot[]>([]);
   const [timeSlots, setTimeSlots] = useState<string[]>([]);
+
   const [currentDesc, setCurrentDesc] = useState(description || '');
   const [currentGuests, setCurrentGuests] = useState<string[]>(guests);
   const [currentMeetingLink, setCurrentMeetingLink] = useState(meetingLink);
+
   const [localStart, setLocalStart] = useState(start);
 
-  // Disable any date before today in the small calendar
+  // Disable past dates in the rescheduling calendar
   const disablePastDates = ({ date }: { date: Date }) =>
     date < moment().startOf('day').toDate();
 
+  // Whenever the modal opens or its inputs change, reset all internal state:
   useEffect(() => {
     if (!isOpen) return;
 
     setIsEditingDetails(false);
     setTempDesc(description || '');
-    setTempGuests(guests.join(', '));
+    setTempGuests( (guests || []).join(', ') );
     setTempMeetingLink(meetingLink || '');
     setCurrentDesc(description || '');
-    setCurrentGuests(guests);
+    setCurrentGuests(guests || []);
     setCurrentMeetingLink(meetingLink || '');
     setIsRescheduling(false);
     setNewDate(start);
@@ -186,9 +224,21 @@ const MeetingDetailsModal: React.FC<MeetingDetailsModalProps> = ({
     setLocalStart(start);
     setConflictError('');
 
+    // Fetch the opponent’s availability from Firestore:
     fetchOpponentAvailability(opponentId, opponentRole);
-  }, [isOpen, description, guests, meetingLink, start, selectedTime, opponentId, opponentRole]);
+  }, [
+    isOpen,
+    description,
+    guests,
+    meetingLink,
+    start,
+    selectedTime,
+    opponentId,
+    opponentRole,
+  ]);
 
+  // If the parent changes `start`/`selectedTime` while we are not editing or rescheduling,
+  // update our localStart and selectedSlot accordingly:
   useEffect(() => {
     if (!isEditingDetails && !isRescheduling) {
       setLocalStart(start);
@@ -196,6 +246,8 @@ const MeetingDetailsModal: React.FC<MeetingDetailsModalProps> = ({
     }
   }, [start, selectedTime, isEditingDetails, isRescheduling]);
 
+  // Fetch the opponent’s availability from the correct collection (“Vendors” if role=’vendor’,
+  // otherwise “Buyers”) and store in state:
   async function fetchOpponentAvailability(id: string, role: OpponentRole) {
     try {
       const colName = role === 'vendor' ? 'Vendors' : 'Buyers';
@@ -203,15 +255,18 @@ const MeetingDetailsModal: React.FC<MeetingDetailsModalProps> = ({
       const snap = await getDoc(docRef);
       if (snap.exists()) {
         const data = snap.data();
-        if (data.availability) {
-          setOpponentAvailability(data.availability);
-        }
+        setOpponentAvailability((data.availability as AvailabilitySlot[]) || []);
+      } else {
+        setOpponentAvailability([]);
       }
     } catch (err) {
       console.error('fetchOpponentAvailability error:', err);
+      setOpponentAvailability([]);
     }
   }
 
+  // Whenever “isRescheduling” flips to true, or whenever newDate changes,
+  // recompute the time slots for that exact date (if availability exists):
   useEffect(() => {
     if (!isRescheduling) {
       setTimeSlots([]);
@@ -221,40 +276,69 @@ const MeetingDetailsModal: React.FC<MeetingDetailsModalProps> = ({
     const foundSlot = opponentAvailability.find((slot) =>
       moment(slot.date).isSame(newDate, 'day')
     );
+
     if (foundSlot) {
       const dur = foundSlot.duration || 30;
-      const generated = generateTimeSlotsFromRange(foundSlot.startTime, foundSlot.endTime, dur);
+      const generated = generateTimeSlotsFromRange(
+        foundSlot.startTime,
+        foundSlot.endTime,
+        dur
+      );
       setTimeSlots(generated);
+
+      if (!generated.includes(selectedSlot)) {
+        setSelectedSlot('');
+      }
     } else {
+      // No availability for that exact date:
       setTimeSlots([]);
+      setSelectedSlot('');
     }
   }, [isRescheduling, newDate, opponentAvailability]);
 
+  // === “Edit Details” ===
   async function handleSaveDetails() {
     try {
+      // 1) Parse comma‐separated participants into an array
       const newGuests = tempGuests
         .split(',')
         .map((e) => e.trim())
         .filter((e) => e !== '');
+
+      // 2) Write to Firestore:
       await updateDoc(doc(db, 'appointments', appointmentId), {
         description: tempDesc,
         guests: newGuests,
         meetingLink: tempMeetingLink,
       });
+
+      // 3) Update our local “current…” state so the modal reflects the change immediately:
       setIsEditingDetails(false);
       setCurrentDesc(tempDesc);
       setCurrentGuests(newGuests);
       setCurrentMeetingLink(tempMeetingLink);
+
+      // 4) Notify parent to re‐fetch its calendar events (so the calendar view updates immediately):
+      if (onDetailsSave) {
+        onDetailsSave();
+      }
     } catch (err) {
       console.error('Error updating details:', err);
     }
   }
 
+  // === “Reschedule” ===
   async function handleRescheduleConfirm() {
-    // Combine new date and slot immediately
-    const combined = combineDateAndTime(newDate, selectedSlot);
+    if (timeSlots.length === 0) {
+      setConflictError('No availability on the selected date.');
+      return;
+    }
+    if (!selectedSlot) {
+      setConflictError('Please choose a valid time slot.');
+      return;
+    }
 
-    // Prevent selecting a past time
+    const combined = combineDateAndTime(newDate, selectedSlot);
     if (combined < new Date()) {
       setConflictError('Cannot reschedule to a past date/time.');
       return;
@@ -277,11 +361,13 @@ const MeetingDetailsModal: React.FC<MeetingDetailsModalProps> = ({
         let conflict = false;
         snaps.forEach((docSnap) => {
           const data = docSnap.data();
-          if (data.selectedTime === selectedSlot && docSnap.id !== appointmentId) {
+          if (
+            data.selectedTime === selectedSlot &&
+            docSnap.id !== appointmentId
+          ) {
             conflict = true;
           }
         });
-
         if (conflict) {
           throw new Error('This time slot is already booked by the opponent.');
         }
@@ -306,21 +392,50 @@ const MeetingDetailsModal: React.FC<MeetingDetailsModalProps> = ({
     }
   }
 
-  const googleCalendarUrl = buildGoogleCalUrl(title, localStart, end, currentDesc);
+  // === “Cancel Appointment” / Delete ===
+  async function handleCancelAppointment() {
+    const confirmResult = window.confirm(
+      'Are you sure you want to cancel this appointment? This action cannot be undone.'
+    );
+    if (!confirmResult) return;
+
+    try {
+      await deleteDoc(doc(db, 'appointments', appointmentId));
+      if (onDeleteSuccess) {
+        onDeleteSuccess();
+      }
+      onClose();
+    } catch (err) {
+      console.error('Error deleting appointment:', err);
+    }
+  }
+
+  // === Compute “Add to Google Calendar” link ===
   const computedDuration =
-    durationMinutes || moment(end).diff(moment(localStart), 'minutes') || 60;
+    durationMinutes ||
+    moment(end).diff(moment(localStart), 'minutes') ||
+    60;
+  const endDate = new Date(localStart.getTime() + computedDuration * 60000);
+  const googleCalendarUrl = buildGoogleCalUrl(
+    title,
+    localStart,
+    endDate,
+    currentDesc
+  );
 
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 bg-black bg-opacity-40 flex items-center justify-center">
       <div className="relative bg-white rounded-xl shadow-lg max-w-3xl w-full p-0">
+        {/* “X” Button to close */}
         <button
           className="absolute top-3 right-4 text-xl text-gray-500 z-10"
           onClick={onClose}
         >
           &times;
         </button>
+
         <div className="p-6 max-h-[90vh] overflow-y-auto">
           <style dangerouslySetInnerHTML={{ __html: calendarStyle }} />
 
@@ -358,6 +473,7 @@ const MeetingDetailsModal: React.FC<MeetingDetailsModalProps> = ({
             </div>
           )}
 
+          {/* ────────── DETAILS SECTION ────────── */}
           {!isRescheduling && (
             <div className="mb-6">
               <div className="flex justify-between items-center">
@@ -448,6 +564,7 @@ const MeetingDetailsModal: React.FC<MeetingDetailsModalProps> = ({
             </div>
           )}
 
+          {/* ────────── RESCHEDULE SECTION ────────── */}
           {isRescheduling ? (
             <div className="bg-gray-50 rounded p-4 mb-4">
               <h4 className="text-md font-semibold text-gray-800 flex items-center mb-3">
@@ -505,7 +622,12 @@ const MeetingDetailsModal: React.FC<MeetingDetailsModalProps> = ({
               <div className="flex justify-end gap-3">
                 <button
                   onClick={handleRescheduleConfirm}
-                  className="bg-[#5F4B8B] hover:bg-purple-700 text-white px-4 py-2 rounded text-sm font-semibold"
+                  disabled={timeSlots.length === 0 || !selectedSlot}
+                  className={`px-4 py-2 rounded text-sm font-semibold ${
+                    !selectedSlot
+                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                      : 'bg-[#5F4B8B] hover:bg-purple-700 text-white'
+                  }`}
                 >
                   Save
                 </button>
@@ -521,23 +643,31 @@ const MeetingDetailsModal: React.FC<MeetingDetailsModalProps> = ({
               </div>
             </div>
           ) : (
-            <button
-              onClick={() => setIsRescheduling(true)}
-              className="w-full bg-[#5F4B8B] hover:bg-purple-700 text-white px-4 py-2 rounded text-sm font-semibold mb-3"
-            >
-              Reschedule
-            </button>
-          )}
-
-          {!isRescheduling && (
-            <a
-              href={googleCalendarUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="block text-sm text-purple-600 hover:underline text-center"
-            >
-              Add to Google Calendar
-            </a>
+            <>
+              <div className="flex gap-3 mb-3">
+                <button
+                  onClick={() => setIsRescheduling(true)}
+                  className="flex-1 bg-[#5F4B8B] hover:bg-purple-700 text-white px-4 py-2 rounded text-sm font-semibold"
+                >
+                  Reschedule
+                </button>
+                <button
+                  onClick={handleCancelAppointment}
+                  className="flex-1 flex items-center justify-center gap-1 bg-red-100 hover:bg-red-200 text-red-700 px-4 py-2 rounded text-sm font-semibold"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  Cancel Appointment
+                </button>
+              </div>
+              <a
+                href={googleCalendarUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="block text-sm text-purple-600 hover:underline text-center"
+              >
+                Add to Google Calendar
+              </a>
+            </>
           )}
         </div>
       </div>

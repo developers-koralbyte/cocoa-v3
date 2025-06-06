@@ -1,3 +1,5 @@
+// src/components/calendar/AppointmentModal.tsx
+
 import React, { useState, useEffect } from 'react';
 import Calendar from 'react-calendar';
 import moment from 'moment';
@@ -7,14 +9,14 @@ import { db } from '../../utils/firebase';
 import { useAuth } from '../../utils/AuthContext';
 
 export interface AvailabilitySlot {
-  date: string;          // e.g. "2025-04-07T20:10:32.044Z"
-  startTime: string;     // e.g. "08:00"
-  endTime: string;       // e.g. "17:00"
-  duration?: number;     // in minutes (optional; default to 30)
+  date: string;        // e.g. "2025-04-07T20:10:32.044Z"
+  startTime: string;   // e.g. "08:00"
+  endTime: string;     // e.g. "17:00"
+  duration?: number;   // in minutes (e.g. 30)
 }
 
 export interface TimeSlot {
-  time: string;          // e.g. "8:00 AM"
+  time: string;        // e.g. "8:00 AM"
 }
 
 interface AppointmentModalProps {
@@ -30,19 +32,21 @@ interface AppointmentModalProps {
   selectedPartner: string;    // the vendorId or buyerId we're scheduling with
 }
 
-// Create slots from start (HH:mm) up to end (HH:mm), stepping by duration
+// Create slots from "start" (HH:mm) up to "end" (HH:mm), stepping by "duration" minutes
 const generateTimeSlots = (
-  start: string,  // "08:00"
-  end: string,    // "17:00"
-  duration: number = 30
+  start: string,    // "08:00"
+  end: string,      // "17:00"
+  duration: number
 ): TimeSlot[] => {
   const slots: TimeSlot[] = [];
   let current = moment(start, 'HH:mm');
   const finish = moment(end, 'HH:mm');
+
   while (current.isBefore(finish)) {
     slots.push({ time: current.format('h:mm A') });
     current.add(duration, 'minutes');
   }
+
   return slots;
 };
 
@@ -62,30 +66,29 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
   const [bookedAppointments, setBookedAppointments] = useState<any[]>([]);
 
   const { user: authUser } = useAuth();
+  const [error, setError] = useState<string>('');
 
-  // Determine weekday (e.g. "monday", "tuesday", etc.)
-  const weekdayName = moment(selectedDate).format('dddd').toLowerCase();
-
-  // Email regex
+  // Simple email‐validation
   const isValidEmail = (email: string) => {
     const pattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return pattern.test(email.trim());
   };
 
-  // Disable past dates in the left calendar
+  // Disable any date before today in the left‐hand calendar
   const tileDisabled = ({ date }: { date: Date }) => {
     return date < moment().startOf('day').toDate();
   };
 
-  // -------------- Fetch Partner Availability --------------
+  // ────────── Fetch Partner’s Availability ──────────
   const fetchPartnerAvailability = async (): Promise<AvailabilitySlot[]> => {
     if (!selectedPartner) return [];
-    // First check "Vendors" collection
+
+    // First try the "Vendors" collection
     let partnerDocRef = doc(db, 'Vendors', selectedPartner);
     let partnerSnap = await getDoc(partnerDocRef);
 
     if (!partnerSnap.exists()) {
-      // If not in Vendors, check "Buyers"
+      // Otherwise check "Buyers"
       partnerDocRef = doc(db, 'Buyers', selectedPartner);
       partnerSnap = await getDoc(partnerDocRef);
     }
@@ -98,16 +101,16 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
     }
   };
 
-  // -------------- Fetch Booked Appointments --------------
+  // ────────── Fetch Already‐Booked Appointments for This Partner ──────────
   const fetchBookedAppointmentsForPartner = async () => {
     if (!selectedPartner) return;
+    if (!authUser || !authUser.id) return;
+
     const dateToQuery = selectedDate || new Date();
     const startOfDay = moment(dateToQuery).startOf('day').toDate();
     const endOfDay = moment(dateToQuery).endOf('day').toDate();
 
-    if (!authUser || !authUser.id) return;
-
-    // If I'm the buyer, I need to query vendorId = selectedPartner, else buyerId
+    // Decide whether we query vendorId or buyerId based on this user’s role
     const currentUserRole = (authUser.role || '').toLowerCase();
     const field = currentUserRole === 'buyer' ? 'vendorId' : 'buyerId';
 
@@ -127,39 +130,59 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
     }
   };
 
-  // Whenever selectedPartner or selectedDate changes, re‐fetch availability & booked appointments
+  // Whenever the selectedPartner or selectedDate changes, re‐fetch:
   useEffect(() => {
     if (!selectedPartner) return;
+
     (async () => {
       const avail = await fetchPartnerAvailability();
       setAvailability(avail);
+
+      console.log("🚀 [AppointmentModal] fetched availability array:", avail);
+      console.log(
+        "🚀 [AppointmentModal] current selectedDate:", 
+        moment(selectedDate).format("YYYY-MM-DD (dddd) HH:mm")
+      );
+
+      console.log("🚀 [AppointmentModal] raw ISO strings from Firestore:");
+      avail.forEach((slot, idx) => {
+        console.log(
+          `  slot[${idx}].date (ISO) = "${slot.date}", `
+          + `moment.utc(slot.date).format("YYYY-MM-DD (UTC)") = `
+          + `${moment.utc(slot.date).format("YYYY-MM-DD (UTC)")} `
+          + `| moment(slot.date).local().format("YYYY-MM-DD (local HH:mm)") = `
+          + `${moment(slot.date).format("YYYY-MM-DD (local HH:mm)")}`
+        );
+      });
+
       await fetchBookedAppointmentsForPartner();
     })();
   }, [selectedPartner, selectedDate]);
 
-  // -------------- Derive “today’s availability slot” --------------
+  // ────────── Derive “today’s availability slot” by comparing UTC dates ──────────
   const partnerAvail = availability.find((slot) => {
     if (!slot.date) return false;
-    // Compare weekday names
-    const slotDayName = moment(slot.date).format('dddd').toLowerCase();
-    return slotDayName === weekdayName;
+    // Compare only the UTC‐date portion of each
+    const slotUTC = moment.utc(slot.date).startOf('day');
+    const selUTC  = moment.utc(selectedDate).startOf('day');
+    return slotUTC.isSame(selUTC, 'day');
   });
+
+  // If there is no entry for this exact date, `partnerAvail` is undefined:
   const duration = partnerAvail?.duration ?? 30;
   const timeSlots =
-    partnerAvail && partnerAvail.startTime !== partnerAvail.endTime
+    partnerAvail 
       ? generateTimeSlots(partnerAvail.startTime, partnerAvail.endTime, duration)
       : [];
 
-  // -------------- Check if a time slot is already booked --------------
+  // ────────── Check if a given slot is already booked ──────────
   const isSlotBooked = (slotTime: string) => {
-    // Each booked appointment has: selectedDate (Timestamp), selectedTime (e.g. "8:00 AM"), and maybe a duration
     return bookedAppointments.some((app) => {
-      // We only need to compare the same day & exact time string
       return (app.selectedTime || '') === slotTime;
     });
   };
 
-  // -------------- Participant Fields --------------
+  // ────────── Participant Fields (add / validate) ──────────
   const handleAddParticipantField = () => {
     setParticipants((prev) => [...prev, '']);
     setParticipantErrors((prev) => [...prev, '']);
@@ -189,19 +212,17 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
     }
   };
 
-  // -------------- Handle “Schedule” --------------
-  const [error, setError] = useState<string>('');
-
+  // ────────── Handle “Schedule” Button Click ──────────
   const handleSchedule = () => {
     setError('');
 
-    // 1) Must pick a slot
+    // 1) Must pick a time slot
     if (!selectedTime) {
       setError('Please select a time slot.');
       return;
     }
 
-    // 2) If any participant fields are non‐empty, they must be valid
+    // 2) If any participant field is non‐empty, it must be valid
     for (let i = 0; i < participants.length; i++) {
       const email = participants[i];
       if (email.trim() && !isValidEmail(email)) {
@@ -210,7 +231,7 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
       }
     }
 
-    // 3) Compute endTime from selectedTime + duration
+    // 3) Compute endTime = selectedTime + partnerAvail.duration minutes
     const timeMoment = moment(selectedTime, 'h:mm A');
     if (!timeMoment.isValid()) {
       setError('Selected time format is invalid.');
@@ -218,18 +239,15 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
     }
     const computedEndTime = timeMoment.clone().add(duration, 'minutes').format('h:mm A');
 
-    // 4) Check that this appointment does not overlap any already booked appointment
-    //    We'll compute numeric-minute window and compare
+    // 4) Check overlap against already‐booked appointments
     const selectedStart = moment(selectedTime, 'h:mm A');
     const selectedEnd = moment(computedEndTime, 'h:mm A');
 
     const hasConflict = bookedAppointments.some((app) => {
       if (!app.selectedTime) return false;
-      // If the existing appointment has a `duration` field, use it; else assume 60m
       const existingStart = moment(app.selectedTime, 'h:mm A');
       const existingDur = app.duration ?? 60;
       const existingEnd = existingStart.clone().add(existingDur, 'minutes');
-      // Overlap if start1 < end2 && start2 < end1
       return (
         selectedStart.isBefore(existingEnd) &&
         existingStart.isBefore(selectedEnd)
@@ -241,7 +259,7 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
       return;
     }
 
-    // 5) All good: call onSchedule (parent will handle Firestore write)
+    // 5) All validations passed → call onSchedule
     onSchedule({
       selectedDate,
       selectedTime,
@@ -251,9 +269,11 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
       meetingLink,
     });
 
+    // Close modal after scheduling
     onClose();
   };
 
+  // ────────── Styles for the React‐Calendar ──────────
   const calendarStyle = `
     .react-calendar {
       font-family: 'Nunito Sans', sans-serif;
@@ -325,9 +345,9 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
           </button>
         </div>
 
-        {/* Main content */}
+        {/* Main Content */}
         <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
-          {/* Left column: Calendar & summary */}
+          {/* Left Column: Calendar & Summary */}
           <div className="w-full md:w-1/2 p-6 border-r border-gray-200 overflow-auto">
             <h3 className="text-lg font-semibold mb-3 text-gray-700">
               Select Date
@@ -351,7 +371,7 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
               />
             </div>
 
-            {/* Meeting Summary */}
+            {/* Meeting Summary (only if some fields are filled) */}
             {(selectedTime ||
               description ||
               participants.some((e) => e.trim()) ||
@@ -385,9 +405,10 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
                   <div className="text-sm text-gray-600 mt-2">
                     <strong>Participants:</strong>
                     <ul className="list-disc list-inside ml-2 mt-1">
-                      {participants.map(
-                        (email, i) => email.trim() && <li key={i}>{email.trim()}</li>
-                      )}
+                      {participants
+                        .map((email) => email.trim())
+                        .filter((e) => !!e)
+                        .map((email, i) => <li key={i}>{email}</li>)}
                     </ul>
                   </div>
                 )}
@@ -400,7 +421,7 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
             )}
           </div>
 
-          {/* Right column: Time slots & inputs */}
+          {/* Right Column: Time Slots & Inputs */}
           <div className="w-full md:w-1/2 p-6 overflow-auto">
             <h3 className="text-lg font-semibold mb-3 text-gray-700">
               Select Time
@@ -438,13 +459,13 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
               </div>
             ) : (
               <p className="text-red-400 text-sm mb-6">
-                No availability for {moment(selectedDate).format('dddd')}.
+                No availability for {moment(selectedDate).format('dddd, MMM D, YYYY')}.
               </p>
             )}
 
             <p className="mb-4 text-sm text-red-600">{error}</p>
 
-            {/* Description */}
+            {/* Meeting Description */}
             <label className="block text-sm font-semibold text-gray-700 mb-1">
               Meeting Description
             </label>

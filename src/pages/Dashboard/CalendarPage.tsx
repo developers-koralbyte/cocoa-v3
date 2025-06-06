@@ -116,12 +116,13 @@ interface AppointmentDoc {
   category?: string;
   createdAt?: any;
   description?: string;
-  selectedDate?: any;   // Firestore Timestamp or ISO string
-  selectedTime?: string; // "h:mm A"
+  selectedDate?: any;
+  selectedTime?: string;
   title?: string;
   guests?: string[];
   meetingLink?: string;
-  duration?: number;     // in minutes (optional)
+  // Our Firestore field is “durationMinutes”
+  durationMinutes?: number;
 }
 
 export interface AppointmentEvent extends RBCEvent {
@@ -136,7 +137,8 @@ export interface AppointmentEvent extends RBCEvent {
   guests?: string[];
   meetingLink?: string;
   selectedTime?: string;
-  duration?: number;
+  duration?: number;          // total minutes
+  durationMinutes?: number;   // same as `duration`
 }
 
 interface UserInfo {
@@ -283,8 +285,10 @@ const CalendarPage: React.FC = () => {
             startDate.setMinutes(timeMoment.minutes());
           }
         }
-        const dur = data.duration ?? 60;
-        const endDate = new Date(startDate.getTime() + dur * 60 * 1000);
+
+        // ← IMPORTANT CHANGE: use data.durationMinutes, default to 30
+        const durMinutes = data.durationMinutes ?? 30;
+        const endDate = new Date(startDate.getTime() + durMinutes * 60 * 1000);
 
         fetchedEvents.push({
           id: docId,
@@ -298,7 +302,8 @@ const CalendarPage: React.FC = () => {
           guests: data.guests || [],
           meetingLink: data.meetingLink || '',
           selectedTime: data.selectedTime,
-          duration: data.duration,
+          duration: durMinutes,
+          durationMinutes: durMinutes,
         });
       });
 
@@ -356,54 +361,29 @@ const CalendarPage: React.FC = () => {
     }
   };
 
-  // ────────────────────────────
-  // ============= ROLLING WEEKLY AVAILABILITY =============
-  useEffect(() => {
-    if (!authUser) return;
-    const vendorDocRef = doc(db, 'Vendors', authUser.uid);
+ 
+// ────────────────────────────
+// ============= FETCH ALL AVAILABILITY =============
+useEffect(() => {
+  if (!authUser) return;
+  const vendorDocRef = doc(db, 'Vendors', authUser.uid);
 
-    const fetchAndRollAvailability = async () => {
-      const snap = await getDoc(vendorDocRef);
-      if (!snap.exists()) return;
+  const fetchAvailability = async () => {
+    const snap = await getDoc(vendorDocRef);
+    if (!snap.exists()) return;
 
-      const allAvail: AvailabilitySlot[] = snap.data().availability || [];
-      const today = moment();
+    // Grab the entire availability array (no weekly filtering)
+    const allAvail: AvailabilitySlot[] = snap.data().availability || [];
+    // Sort by date ascending
+    const sortedAvail = allAvail.sort((a, b) =>
+      moment(a.date).toDate().getTime() - moment(b.date).toDate().getTime()
+    );
+    setAvailability(sortedAvail);
+  };
 
-      // Keep only this week's slots
-      const thisWeek = allAvail.filter((slot) => {
-        const d = moment(slot.date);
-        return d.isoWeek() === today.isoWeek() && d.year() === today.year();
-      });
+  fetchAvailability();
+}, [authUser]);
 
-      if (thisWeek.length > 0) {
-        setAvailability(thisWeek);
-      } else if (allAvail.length > 0) {
-        const carry = window.confirm(
-          'Your existing availability is from a past week. Would you like to carry it over to this week?'
-        );
-        if (carry) {
-          const newAvail = allAvail.map((slot) => {
-            const old = moment(slot.date);
-            const rolled = moment().isoWeekday(old.isoWeekday()).startOf('day');
-            return {
-              ...slot,
-              date: rolled.toISOString(),
-              startTime: slot.startTime,
-              endTime: slot.endTime,
-              duration: slot.duration,
-            };
-          });
-          await updateDoc(vendorDocRef, { availability: newAvail });
-          setAvailability(newAvail);
-        } else {
-          await updateDoc(vendorDocRef, { availability: [] });
-          setAvailability([]);
-        }
-      }
-    };
-
-    fetchAndRollAvailability();
-  }, [authUser]);
 
   useEffect(() => {
     fetchAppointmentsData();
@@ -481,7 +461,6 @@ const CalendarPage: React.FC = () => {
     // If user checked “copy from previous week,” do that logic:
     if (availabilityData.copyPrevWeek) {
       try {
-        // 1) Fetch entire availability array from Firestore
         const snap = await getDoc(vendorDocRef);
         if (!snap.exists()) return;
 
@@ -491,12 +470,10 @@ const CalendarPage: React.FC = () => {
           return;
         }
 
-        // 2) Determine last week’s ISO-week & year
         const lastWeekMoment = moment().subtract(1, 'weeks');
         const lastWeekNum = lastWeekMoment.isoWeek();
         const lastWeekYear = lastWeekMoment.year();
 
-        // 3) Filter out only those slots whose date falls in last week
         const prevWeekSlots = allAvail.filter((slot) => {
           const slotMoment = moment(slot.date);
           return (
@@ -510,15 +487,12 @@ const CalendarPage: React.FC = () => {
           return;
         }
 
-        // 4) For each of those slots, roll them forward into “this week”
-        const thisWeekMoment = moment(); // today
+        const thisWeekMoment = moment();
         const thisWeekNum = thisWeekMoment.isoWeek();
         const thisWeekYear = thisWeekMoment.year();
 
-        // Build a brand-new array of “this week’s” availability
         const newThisWeekSlots: AvailabilitySlot[] = prevWeekSlots.map((slot) => {
-          const oldDayOfWeek = moment(slot.date).isoWeekday(); // 1=Mon .. 7=Sun
-          // Compute “this week’s” date with that same weekday:
+          const oldDayOfWeek = moment(slot.date).isoWeekday();
           const rolledDate = moment()
             .year(thisWeekYear)
             .isoWeek(thisWeekNum)
@@ -533,10 +507,7 @@ const CalendarPage: React.FC = () => {
           };
         });
 
-        // 5) Overwrite Firestore’s availability field with ONLY these “this week” slots
         await updateDoc(vendorDocRef, { availability: newThisWeekSlots });
-
-        // 6) Update local state immediately:
         setAvailability(newThisWeekSlots);
         toast.success('Copied previous week’s availability into this week.');
       } catch (err) {
@@ -548,13 +519,11 @@ const CalendarPage: React.FC = () => {
       return;
     }
 
-    // Otherwise: “copyPrevWeek” is false → do normal single-slot saving
     const newDateStr = availabilityData.selectedDate!.toISOString();
-    const newStart = availabilityData.startTime!; // "HH:mm"
-    const newEnd = availabilityData.endTime!;     // "HH:mm"
+    const newStart = availabilityData.startTime!;
+    const newEnd = availabilityData.endTime!;
     const newDur = availabilityData.duration!;
 
-    // 1) Before writing, check overlap with existing local state
     const sameDateSlots = availability.filter((slot) =>
       moment(slot.date).isSame(moment(newDateStr), 'day')
     );
@@ -576,7 +545,6 @@ const CalendarPage: React.FC = () => {
       return;
     }
 
-    // 2) Write the single slot via arrayUnion
     const newAvail: AvailabilitySlot = {
       date: newDateStr,
       startTime: newStart,
@@ -703,7 +671,7 @@ const CalendarPage: React.FC = () => {
       opponentRole: 'buyer',
       opponentId: event.buyerId || '',
       selectedTime: event.selectedTime,
-      durationMinutes: event.duration ?? 60,
+      durationMinutes: event.durationMinutes ?? 30,  // ← use durationMinutes
       guests: event.guests,
       meetingLink: event.meetingLink,
     });
@@ -927,49 +895,52 @@ const CalendarPage: React.FC = () => {
               </div>
 
               {/* My Availability List */}
-              <div className="bg-white shadow rounded-lg p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-md font-semibold text-gray-700">
-                    My Availability
-                  </h3>
-                  <button
-                    onClick={() => setShowAvailabilityForm(true)}
-                    className="bg-[#5F4B8B] text-white px-2 py-1 rounded shadow hover:bg-[#4A3971]"
-                  >
-                    +
-                  </button>
-                </div>
-                <ul className="text-sm text-gray-600 space-y-1">
-                  {availability.length === 0 && (
-                    <li className="text-gray-500 italic">
-                      No availability set.
-                    </li>
-                  )}
-                  {availability.map((slot, idx) => {
-                    const formattedStart = slot.startTime
-                      ? moment(slot.startTime, 'HH:mm').format('h:mm A')
-                      : '';
-                    const formattedEnd = slot.endTime
-                      ? moment(slot.endTime, 'HH:mm').format('h:mm A')
-                      : '';
-                    const formattedDay = slot.date
-                      ? moment(slot.date).format('MMM D, YYYY')
-                      : '';
-                    return (
-                      <li key={idx} className="flex justify-between">
-                        <span className="font-medium text-gray-700">
-                          {formattedDay}
-                        </span>
-                        <span>
-                          {formattedStart && formattedEnd
-                            ? `${formattedStart} – ${formattedEnd}`
-                            : ''}
-                        </span>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </div>
+{/* My Availability List */}
+<div className="bg-white shadow rounded-lg p-4">
+  <div className="flex items-center justify-between mb-3">
+    <h3 className="text-md font-semibold text-gray-700">
+      My Availability
+    </h3>
+    <button
+      onClick={() => setShowAvailabilityForm(true)}
+      className="bg-[#5F4B8B] text-white px-2 py-1 rounded shadow hover:bg-[#4A3971]"
+    >
+      +
+    </button>
+  </div>
+  <ul className="text-sm text-gray-600 space-y-1">
+    {availability.length === 0 && (
+      <li className="text-gray-500 italic">
+        No availability set.
+      </li>
+    )}
+    {availability.map((slot, idx) => {
+      const formattedStart = slot.startTime
+        ? moment(slot.startTime, 'HH:mm').format('h:mm A')
+        : '';
+      const formattedEnd = slot.endTime
+        ? moment(slot.endTime, 'HH:mm').format('h:mm A')
+        : '';
+      const formattedDay = slot.date
+        ? moment(slot.date).format('MMM D, YYYY')
+        : '';
+      return (
+        <li key={idx} className="flex justify-between">
+          <span className="font-medium text-gray-700">
+            {formattedDay}
+          </span>
+          <span>
+            {formattedStart && formattedEnd
+              ? `${formattedStart} – ${formattedEnd}`
+              : ''}
+          </span>
+        </li>
+      );
+    })}
+  </ul>
+</div>
+
+
             </div>
           </div>
         )}
@@ -1050,13 +1021,12 @@ const CalendarPage: React.FC = () => {
             opponentRole={selectedMeeting.opponentRole}
             opponentId={selectedMeeting.opponentId}
             selectedTime={selectedMeeting.selectedTime}
-            durationMinutes={selectedMeeting.durationMinutes || 60}
+            durationMinutes={selectedMeeting.durationMinutes || 30}
             guests={selectedMeeting.guests}
             meetingLink={selectedMeeting.meetingLink}
             // ───────────────────────────────────────────────────────────────────────
-            // Modified onRescheduleSuccess: update local modal + re-fetch entire list
+            // 1) onRescheduleSuccess: update the modal’s local state + re-fetch parent
             onRescheduleSuccess={(newStart, newSlot) => {
-              // 1) update the open modal’s displayed time immediately
               setSelectedMeeting((prev: any) => {
                 if (!prev) return prev;
                 return {
@@ -1065,8 +1035,16 @@ const CalendarPage: React.FC = () => {
                   selectedTime: newSlot,
                 };
               });
-              // 2) re-fetch the parent’s event list so the calendar grid re-renders
               fetchAppointmentsData();
+            }}
+            // 2) onDetailsSave: called after “Edit Details” is saved; re-fetch calendar
+            onDetailsSave={() => {
+              fetchAppointmentsData();
+            }}
+            // 3) onDeleteSuccess: called after “Cancel Appointment”; re-fetch + close modal
+            onDeleteSuccess={() => {
+              fetchAppointmentsData();
+              setShowMeetingModal(false);
             }}
           />
         )}
