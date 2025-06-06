@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Plus, Edit } from 'lucide-react'
+import { Plus, Edit, X, AlertTriangle } from 'lucide-react'
 import ProductForm, { ProductFormData } from './Forms/ProductForm'
 import { collection, addDoc, getDocs, query, where, doc, updateDoc } from 'firebase/firestore'
 import { db } from '../../../utils/firebase'
@@ -21,6 +21,42 @@ interface Product {
   pricingType?: string
 }
 
+// Alert Modal Component
+interface AlertModalProps {
+  isOpen: boolean
+  title: string
+  message: string
+  onClose: () => void
+}
+
+const AlertModal: React.FC<AlertModalProps> = ({ isOpen, title, message, onClose }) => {
+  if (!isOpen) return null
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg max-w-md w-full mx-4 shadow-2xl">
+        <div className="p-6">
+          <div className="flex items-center mb-4">
+            <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center mr-3">
+              <AlertTriangle className="w-5 h-5 text-red-600" />
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+          </div>
+          <p className="text-gray-600 mb-6">{message}</p>
+          <div className="flex justify-end">
+            <button
+              onClick={onClose}
+              className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors font-medium"
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 const VendorProducts: React.FC = () => {
   // Store & Router
   const { currentUser } = useUserStore() as { currentUser: { id: string } }
@@ -32,6 +68,17 @@ const VendorProducts: React.FC = () => {
   const [error, setError] = useState<string | null>(null)
   const [isProductFormOpen, setIsProductFormOpen] = useState<boolean>(false)
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
+  
+  // Alert modal state
+  const [alertModal, setAlertModal] = useState<{
+    isOpen: boolean
+    title: string
+    message: string
+  }>({
+    isOpen: false,
+    title: '',
+    message: ''
+  })
 
   // Fetch products from Firestore
   useEffect(() => {
@@ -65,6 +112,33 @@ const VendorProducts: React.FC = () => {
     fetchProducts()
   }, [currentUser?.id])
 
+  // Check for duplicate products
+  const checkForDuplicateProduct = (data: ProductFormData, excludeId?: string): boolean => {
+    return products.some(product => 
+      product.id !== excludeId && 
+      product.name.toLowerCase().trim() === data.name.toLowerCase().trim() &&
+      product.category?.toLowerCase() === data.category?.toLowerCase()
+    )
+  }
+
+  // Show alert modal
+  const showAlert = (title: string, message: string) => {
+    setAlertModal({
+      isOpen: true,
+      title,
+      message
+    })
+  }
+
+  // Close alert modal
+  const closeAlert = () => {
+    setAlertModal({
+      isOpen: false,
+      title: '',
+      message: ''
+    })
+  }
+
   // Handlers
   const handleAddProduct = () => {
     setEditingProduct(null)
@@ -83,7 +157,19 @@ const VendorProducts: React.FC = () => {
       return
     }
 
+    // Check for duplicates and show alert modal
+    const isDuplicate = checkForDuplicateProduct(data, editingProduct?.id)
+    if (isDuplicate) {
+      showAlert(
+        'Duplicate Product Name',
+        `A product with the name "${data.name}" already exists in the "${data.category}" category. Please choose a different name or category.`
+      )
+      return
+    }
+
     setIsLoading(true)
+    setError(null) // Clear any previous errors
+    
     try {
       if (editingProduct?.id) {
         // Update existing product
@@ -130,7 +216,10 @@ const VendorProducts: React.FC = () => {
       setIsProductFormOpen(false)
     } catch (error) {
       console.error('Error managing product:', error)
-      setError('Failed to save product. Please try again.')
+      showAlert(
+        'Error',
+        'Failed to save product. Please try again.'
+      )
     } finally {
       setIsLoading(false)
     }
@@ -139,10 +228,10 @@ const VendorProducts: React.FC = () => {
   return (
     <div className="mb-12">
       {/* Card container */}
-<div className="bg-gray-100 rounded-[1.5rem] shadow-md p-4">
+      <div className="bg-gray-100 rounded-[1.5rem] shadow-md p-4">
         <h2 className="text-xl font-bold mb-4">My Products</h2>
 
-        {/* Error message */}
+        {/* Error message (for general errors, not duplicate product errors) */}
         {error && (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4 relative">
             {error}
@@ -246,9 +335,18 @@ const VendorProducts: React.FC = () => {
         onClose={() => {
           setIsProductFormOpen(false)
           setEditingProduct(null)
+          setError(null) // Clear error when closing
         }}
         onSubmit={handleProductFormSubmit}
         editProduct={editingProduct}
+      />
+
+      {/* Alert Modal for duplicate product and other alerts */}
+      <AlertModal
+        isOpen={alertModal.isOpen}
+        title={alertModal.title}
+        message={alertModal.message}
+        onClose={closeAlert}
       />
     </div>
   )

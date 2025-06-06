@@ -55,14 +55,12 @@ const BaseInvoicePreview: React.FC<BaseInvoicePreviewProps> = ({
   items,
   totals,
 }) => {
-  // Safely extract numeric fields with fallback to 0
   const grandTotal = totals.total ?? 0
   const subTotal = totals.subtotal ?? 0
   const taxTotal = totals.tax ?? 0
 
   return (
     <div className="w-full p-8 bg-white border rounded-[3.5rem] shadow-2xl">
-      {/* Header Section */}
       <div className="flex justify-between items-start mb-12">
         <div>
           <h1 className="text-[35px] font-nunito font-bold text-[#5F4B8B] mb-4">
@@ -78,8 +76,6 @@ const BaseInvoicePreview: React.FC<BaseInvoicePreviewProps> = ({
             <p>Due Date : {invoiceData.dueDate ?? 'N/A'}</p>
           </div>
         </div>
-
-        {/* Logo Display Section */}
         <div className="pr-10 pt-8">
           <div className="relative w-24 h-24 bg-[#F3F0FA] rounded-full overflow-hidden">
             {companyLogo ? (
@@ -97,9 +93,7 @@ const BaseInvoicePreview: React.FC<BaseInvoicePreviewProps> = ({
         </div>
       </div>
 
-      {/* Company and Client Information */}
       <div className="grid grid-cols-2 gap-8 mb-8">
-        {/* Company Info */}
         <div>
           <h3 className="text-xl font-bold text-[#5F4B8B] mb-2">
             {invoiceData.companyName ?? 'N/A'}
@@ -108,12 +102,8 @@ const BaseInvoicePreview: React.FC<BaseInvoicePreviewProps> = ({
           <p>{invoiceData.companyAddress ?? ''}</p>
           <p>{invoiceData.companyLocation ?? ''}</p>
         </div>
-
-        {/* Client Info - Right Aligned */}
         <div className="text-right">
-          <h3 className="text-xl font-bold text-[#5F4B8B] mb-2">
-            Invoice to
-          </h3>
+          <h3 className="text-xl font-bold text-[#5F4B8B] mb-2">Invoice to</h3>
           <p>{invoiceData.recipientName ?? ''}</p>
           <p>{invoiceData.recipientPhone ?? ''}</p>
           <p>{invoiceData.recipientEmail ?? ''}</p>
@@ -121,14 +111,12 @@ const BaseInvoicePreview: React.FC<BaseInvoicePreviewProps> = ({
         </div>
       </div>
 
-      {/* Amount Due Section */}
       <div className="mb-8">
         <p className="text-[#5F4B8B] font-bold text-lg">
           CAD {grandTotal.toFixed(2)} due on {invoiceData.dueDate ?? 'N/A'}
         </p>
       </div>
 
-      {/* Items Table */}
       <div className="mb-5">
         <table className="w-full">
           <thead className="bg-[#F3F0FA] text-[#5F4B8B]">
@@ -154,9 +142,7 @@ const BaseInvoicePreview: React.FC<BaseInvoicePreviewProps> = ({
                   <td className="py-3 px-4 text-center">
                     CAD {safePrice.toFixed(2)}
                   </td>
-                  <td className="py-3 px-4 text-center">
-                    {safeTax}%
-                  </td>
+                  <td className="py-3 px-4 text-center">{safeTax}%</td>
                   <td className="py-3 px-4 text-right">
                     CAD {lineAmount.toFixed(2)}
                   </td>
@@ -198,11 +184,10 @@ const BaseInvoicePreview: React.FC<BaseInvoicePreviewProps> = ({
 
 // ---------------------------------------------
 // 3) The container that can toggle edit/preview
-//    but also safely handle hideEditButton
 // ---------------------------------------------
 export interface InvoicePreviewContainerProps extends BaseInvoicePreviewProps {
   isPreview: boolean
-  onTogglePreview: () => void
+  onTogglePreview?: () => void
   hideEditButton?: boolean
 }
 
@@ -217,10 +202,9 @@ const InvoicePreview: React.FC<InvoicePreviewContainerProps> = ({
 }) => {
   return (
     <div className="relative">
-      {/* Toggle Button (Edit/Preview) only if hideEditButton is false */}
       {!hideEditButton && (
         <button
-          onClick={onTogglePreview}
+          onClick={() => onTogglePreview?.()}
           className="absolute left-1/2 transform -translate-x-1/2 top-8 z-10 flex items-center gap-2 bg-buttonBg text-white px-6 py-2 rounded-full hover:bg-[#4a3a6d] transition-colors"
         >
           {isPreview ? (
@@ -237,7 +221,6 @@ const InvoicePreview: React.FC<InvoicePreviewContainerProps> = ({
         </button>
       )}
 
-      {/* If in preview mode, render the invoice */}
       {isPreview && (
         <BaseInvoicePreview
           companyLogo={companyLogo}

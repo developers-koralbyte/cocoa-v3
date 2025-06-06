@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Plus, Edit } from 'lucide-react'
+import { Plus, Edit, X, AlertTriangle } from 'lucide-react'
 import ServiceForm, { ServiceFormData } from './Forms/ServiceForm'
 import { collection, addDoc, getDocs, query, where, doc, updateDoc } from 'firebase/firestore'
 import { db } from '../../../utils/firebase'
@@ -17,6 +17,43 @@ interface Service {
   softwareUsed: string
   photo: string
   vendorId: string
+  pricingType?: string
+}
+
+// Alert Modal Component
+interface AlertModalProps {
+  isOpen: boolean
+  title: string
+  message: string
+  onClose: () => void
+}
+
+const AlertModal: React.FC<AlertModalProps> = ({ isOpen, title, message, onClose }) => {
+  if (!isOpen) return null
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg max-w-md w-full mx-4 shadow-2xl">
+        <div className="p-6">
+          <div className="flex items-center mb-4">
+            <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center mr-3">
+              <AlertTriangle className="w-5 h-5 text-red-600" />
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+          </div>
+          <p className="text-gray-600 mb-6">{message}</p>
+          <div className="flex justify-end">
+            <button
+              onClick={onClose}
+              className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors font-medium"
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
 }
 
 const VendorServices: React.FC = () => {
@@ -30,6 +67,17 @@ const VendorServices: React.FC = () => {
   const [error, setError] = useState<string | null>(null)
   const [isServiceFormOpen, setIsServiceFormOpen] = useState<boolean>(false)
   const [editingService, setEditingService] = useState<Service | null>(null)
+  
+  // Alert modal state
+  const [alertModal, setAlertModal] = useState<{
+    isOpen: boolean
+    title: string
+    message: string
+  }>({
+    isOpen: false,
+    title: '',
+    message: ''
+  })
 
   // Fetch services from Firestore
   useEffect(() => {
@@ -63,6 +111,32 @@ const VendorServices: React.FC = () => {
     fetchServices()
   }, [currentUser?.id])
 
+  // Check for duplicate services
+  const checkForDuplicateService = (data: ServiceFormData, excludeId?: string): boolean => {
+    return services.some(service => 
+      service.id !== excludeId && 
+      service.name.toLowerCase().trim() === data.name.toLowerCase().trim()
+    )
+  }
+
+  // Show alert modal
+  const showAlert = (title: string, message: string) => {
+    setAlertModal({
+      isOpen: true,
+      title,
+      message
+    })
+  }
+
+  // Close alert modal
+  const closeAlert = () => {
+    setAlertModal({
+      isOpen: false,
+      title: '',
+      message: ''
+    })
+  }
+
   // Handlers
   const handleAddService = () => {
     setEditingService(null)
@@ -81,7 +155,19 @@ const VendorServices: React.FC = () => {
       return
     }
 
+    // Check for duplicates and show alert modal
+    const isDuplicate = checkForDuplicateService(data, editingService?.id)
+    if (isDuplicate) {
+      showAlert(
+        'Duplicate Service Name',
+        `A service with the name "${data.name}" already exists. Please choose a different name.`
+      )
+      return
+    }
+
     setIsLoading(true)
+    setError(null) // Clear any previous errors
+    
     try {
       if (editingService?.id) {
         // Update existing service
@@ -91,6 +177,7 @@ const VendorServices: React.FC = () => {
           description: data.description,
           price: data.price || 0,
           softwareUsed: data.softwareUsed || '',
+          pricingType: data.pricingType || 'one-time',
         }
         // Only update photo if a new one was uploaded
         if (data.image && data.image !== editingService.photo) {
@@ -116,6 +203,7 @@ const VendorServices: React.FC = () => {
           softwareUsed: data.softwareUsed || '',
           photo: data.image,
           vendorId: currentUser.id,
+          pricingType: data.pricingType || 'one-time',
         }
 
         const docRef = await addDoc(collection(db, 'services'), newService)
@@ -124,7 +212,10 @@ const VendorServices: React.FC = () => {
       setIsServiceFormOpen(false)
     } catch (error) {
       console.error('Error adding/editing service:', error)
-      setError('Failed to add/edit service. Please try again.')
+      showAlert(
+        'Error',
+        'Failed to add/edit service. Please try again.'
+      )
     } finally {
       setIsLoading(false)
     }
@@ -133,10 +224,10 @@ const VendorServices: React.FC = () => {
   return (
     <div className="mb-12">
       {/* Card container */}
-<div className="bg-gray-100 rounded-[1.5rem] shadow-md p-4">
+      <div className="bg-gray-100 rounded-[1.5rem] shadow-md p-4">
         <h2 className="text-xl font-bold mb-4">My Services</h2>
 
-        {/* Error message */}
+        {/* Error message (for general errors, not duplicate service errors) */}
         {error && (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4 relative">
             {error}
@@ -240,9 +331,18 @@ const VendorServices: React.FC = () => {
         onClose={() => {
           setIsServiceFormOpen(false)
           setEditingService(null)
+          setError(null) // Clear error when closing
         }}
         onSubmit={handleServiceFormSubmit}
-        editService={editingService} // Ensure your ServiceForm component accepts this prop
+        editService={editingService}
+      />
+
+      {/* Alert Modal for duplicate service and other alerts */}
+      <AlertModal
+        isOpen={alertModal.isOpen}
+        title={alertModal.title}
+        message={alertModal.message}
+        onClose={closeAlert}
       />
     </div>
   )

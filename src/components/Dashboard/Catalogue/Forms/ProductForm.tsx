@@ -16,14 +16,14 @@ interface ProductFormProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (product: ProductFormData) => void;
-  editProduct?: any | null; // The product to edit, if any
+  editProduct?: any | null;
 }
 
-const ProductForm: React.FC<ProductFormProps> = ({ 
-  isOpen, 
-  onClose, 
-  onSubmit, 
-  editProduct 
+const ProductForm: React.FC<ProductFormProps> = ({
+  isOpen,
+  onClose,
+  onSubmit,
+  editProduct
 }) => {
   const [formData, setFormData] = useState<ProductFormData>({
     name: '',
@@ -34,11 +34,10 @@ const ProductForm: React.FC<ProductFormProps> = ({
     stock: 0,
     pricingType: 'one-time'
   });
-  
+
   const [isUploading, setIsUploading] = useState<boolean>(false);
   const [uploadProgress, setUploadProgress] = useState<number>(0);
 
-  // Set form data if we're editing a product
   useEffect(() => {
     if (editProduct) {
       setFormData({
@@ -51,7 +50,6 @@ const ProductForm: React.FC<ProductFormProps> = ({
         pricingType: editProduct.pricingType || 'one-time'
       });
     } else {
-      // Reset form if not editing
       setFormData({
         name: '',
         description: '',
@@ -64,14 +62,16 @@ const ProductForm: React.FC<ProductFormProps> = ({
     }
   }, [editProduct]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
+    setFormData(prev => ({
       ...prev,
-      // Convert numeric fields to numbers
-      [name]: name === 'price' || name === 'stock'
-        ? parseFloat(value) || 0
-        : value,
+      [name]:
+        name === 'price' || name === 'stock'
+          ? parseFloat(value) || 0
+          : value
     }));
   };
 
@@ -81,30 +81,25 @@ const ProductForm: React.FC<ProductFormProps> = ({
 
     try {
       setIsUploading(true);
-      // Simulate upload progress
       const interval = setInterval(() => {
-        setUploadProgress(prev => {
-          if (prev >= 90) {
+        setUploadProgress(p => {
+          if (p >= 90) {
             clearInterval(interval);
             return 90;
           }
-          return prev + 10;
+          return p + 10;
         });
       }, 300);
 
-      // Upload the file and get URL
       const imageUrl = await upload(file);
-      
+
       setUploadProgress(100);
       setTimeout(() => {
         setIsUploading(false);
         setUploadProgress(0);
       }, 500);
 
-      setFormData(prev => ({
-        ...prev,
-        image: imageUrl as string
-      }));
+      setFormData(prev => ({ ...prev, image: imageUrl as string }));
     } catch (error) {
       console.error('Error uploading file:', error);
       setIsUploading(false);
@@ -121,22 +116,22 @@ const ProductForm: React.FC<ProductFormProps> = ({
 
   return (
     <div
-      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 px-4"
       role="dialog"
       aria-modal="true"
     >
-      <div className="bg-purple-100 rounded-2xl w-full max-w-md overflow-hidden shadow-lg">
-        <div className="flex justify-between items-center bg-purple-400 p-4 text-white">
-          <h2 className="text-xl font-bold">
+      <div className="bg-[#D9D9D9] rounded-2xl w-full max-w-sm md:max-w-lg overflow-hidden shadow-lg">
+        <div className="flex justify-between items-center bg-buttonBg p-4 text-white">
+          <h2 className="text-lg sm:text-xl md:text-2xl font-bold">
             {editProduct ? 'Edit Product' : 'Add New Product'}
           </h2>
           <button onClick={onClose} className="text-white" aria-label="Close modal">
-            <X className="w-6 h-6" />
+            <X className="w-5 h-5 sm:w-6 sm:h-6" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <form onSubmit={handleSubmit} className="p-4 md:p-6 space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label htmlFor="name" className="block text-sm font-medium text-gray-700">
                 Product Name
@@ -147,10 +142,11 @@ const ProductForm: React.FC<ProductFormProps> = ({
                 name="name"
                 value={formData.name}
                 onChange={handleChange}
-                className="mt-1 block w-full border border-gray-300 rounded-md p-2"
+                className="mt-1 block w-full border border-gray-300 rounded-md p-2 text-sm"
                 required
               />
             </div>
+
             <div>
               <label htmlFor="price" className="block text-sm font-medium text-gray-700">
                 Price
@@ -161,7 +157,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
                 name="price"
                 value={formData.price}
                 onChange={handleChange}
-                className="mt-1 block w-full border border-gray-300 rounded-md p-2"
+                className="mt-1 block w-full border border-gray-300 rounded-md p-2 text-sm"
                 required
                 min="0"
                 step="0.01"
@@ -169,7 +165,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
             </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label htmlFor="category" className="block text-sm font-medium text-gray-700">
                 Category
@@ -179,7 +175,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
                 name="category"
                 value={formData.category}
                 onChange={handleChange}
-                className="mt-1 block w-full border border-gray-300 rounded-md p-2"
+                className="mt-1 block w-full border border-gray-300 rounded-md p-2 text-sm"
               >
                 <option value="">Select category</option>
                 <option value="Accounting">Accounting</option>
@@ -189,6 +185,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
                 <option value="Other">Other</option>
               </select>
             </div>
+
             <div>
               <label htmlFor="stock" className="block text-sm font-medium text-gray-700">
                 Stock
@@ -199,7 +196,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
                 name="stock"
                 value={formData.stock}
                 onChange={handleChange}
-                className="mt-1 block w-full border border-gray-300 rounded-md p-2"
+                className="mt-1 block w-full border border-gray-300 rounded-md p-2 text-sm"
                 min="0"
               />
             </div>
@@ -214,7 +211,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
               name="pricingType"
               value={formData.pricingType}
               onChange={handleChange}
-              className="mt-1 block w-full border border-gray-300 rounded-md p-2"
+              className="mt-1 block w-full border border-gray-300 rounded-md p-2 text-sm"
             >
               <option value="one-time">One-time payment</option>
               <option value="monthly">Monthly subscription</option>
@@ -232,24 +229,26 @@ const ProductForm: React.FC<ProductFormProps> = ({
               name="description"
               value={formData.description}
               onChange={handleChange}
-              className="mt-1 block w-full border border-gray-300 rounded-md p-2 h-32"
+              className="mt-1 block w-full border border-gray-300 rounded-md p-2 text-sm h-24 md:h-32"
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Product Image</label>
-            
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Product Image
+            </label>
+
             {formData.image ? (
               <div className="flex flex-col items-center gap-2">
-                <div className="w-32 h-32 rounded-full overflow-hidden">
-                  <img 
-                    src={formData.image} 
-                    alt="Product" 
+                <div className="w-20 h-20 md:w-32 md:h-32 rounded-full overflow-hidden">
+                  <img
+                    src={formData.image}
+                    alt="Product"
                     className="w-full h-full object-cover"
                   />
                 </div>
-                <button 
+                <button
                   type="button"
                   onClick={() => setFormData(prev => ({ ...prev, image: '' }))}
                   className="text-sm text-red-600 hover:text-red-800"
@@ -258,7 +257,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
                 </button>
               </div>
             ) : (
-              <div className="border-2 border-dashed border-gray-300 rounded-md p-6 flex flex-col items-center">
+              <div className="border-2 border-dashed border-gray-300 rounded-md p-4 flex flex-col items-center">
                 <input
                   type="file"
                   id="image-upload"
@@ -270,16 +269,18 @@ const ProductForm: React.FC<ProductFormProps> = ({
                   htmlFor="image-upload"
                   className="flex flex-col items-center justify-center cursor-pointer"
                 >
-                  <Upload className="w-10 h-10 text-purple-500 mb-2" />
-                  <span className="text-sm text-gray-600">Click to upload image</span>
+                  <Upload className="w-8 h-8 text-purple-500 mb-1" />
+                  <span className="text-sm text-gray-600">Click to upload</span>
                 </label>
-                
+
                 {isUploading && (
-                  <div className="w-full mt-4">
-                    <div 
-                      className="bg-purple-600 h-2.5 rounded-full" 
-                      style={{ width: `${uploadProgress}%` }}
-                    ></div>
+                  <div className="w-full mt-3">
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div
+                        className="bg-purple-600 h-2 rounded-full"
+                        style={{ width: `${uploadProgress}%` }}
+                      ></div>
+                    </div>
                     <p className="text-xs text-center mt-1 text-gray-500">
                       Uploading... {uploadProgress}%
                     </p>
@@ -292,7 +293,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
           <div className="flex justify-end">
             <button
               type="submit"
-              className="bg-white text-purple-600 px-4 py-2 rounded-full font-medium hover:bg-purple-50"
+              className="bg-white text-purple-600 px-4 py-2 rounded-full font-medium hover:bg-purple-50 text-sm"
               disabled={isUploading}
             >
               {editProduct ? 'Save Changes' : 'Add Product'}
