@@ -387,51 +387,26 @@ const BuyerCalendarPage: React.FC = () => {
     }
   };
 
-  // ────────────────────────────
-  // ============= ROLLING WEEKLY AVAILABILITY =============
-  useEffect(() => {
-    if (!authUser) return;
-    const buyerRef = doc(db, 'Buyers', authUser.uid);
 
-    const roll = async () => {
-      const s = await getDoc(buyerRef);
-      if (!s.exists()) return;
-      const all: AvailabilitySlot[] = s.data().availability || [];
-      const today = moment();
+// ============= FETCH ALL AVAILABILITY =============
+useEffect(() => {
+  if (!authUser) return;
+  const buyerRef = doc(db, 'Buyers', authUser.uid);
 
-      // Keep only this ISO‐week’s slots
-      const thisWeek = all.filter((slot) => {
-        const d = moment(slot.date);
-        return d.isoWeek() === today.isoWeek() && d.year() === today.year();
-      });
+  const fetchAvailability = async () => {
+    const s = await getDoc(buyerRef);
+    if (!s.exists()) return;
+    const all: AvailabilitySlot[] = s.data().availability || [];
 
-      if (thisWeek.length > 0) {
-        setAvailability(thisWeek);
-      } else if (all.length > 0) {
-        // If all availability is from a previous week,
-        // ask the user whether to copy it forward or clear it.
-        const carry = window.confirm(
-          'Your availability is from a past week. Carry it over to this week?'
-        );
-        if (carry) {
-          const newSlots = all.map((slot) => {
-            const old = moment(slot.date);
-            const rolled = moment()
-              .isoWeekday(old.isoWeekday())
-              .startOf('day');
-            return { ...slot, date: rolled.toISOString() };
-          });
-          await updateDoc(buyerRef, { availability: newSlots });
-          setAvailability(newSlots);
-        } else {
-          await updateDoc(buyerRef, { availability: [] });
-          setAvailability([]);
-        }
-      }
-    };
+    // Sort ascending by date, then set into state
+    const sortedAvail = all.sort((a, b) =>
+      moment(a.date).toDate().getTime() - moment(b.date).toDate().getTime()
+    );
+    setAvailability(sortedAvail);
+  };
 
-    roll();
-  }, [authUser]);
+  fetchAvailability();
+}, [authUser]);
 
   // Initial fetch
   useEffect(() => {
@@ -804,9 +779,7 @@ const BuyerCalendarPage: React.FC = () => {
                       {displayedAppointment.title || 'Unknown Vendor'}
                     </h4>
                     <div className="text-sm text-gray-500">
-                      {moment(displayedAppointment.start).format(
-                        'ddd, MMM Do, h:mm A'
-                      )}
+                      {moment(displayedAppointment.start).format('ddd, MMM Do, h:mm A')}
                     </div>
                   </div>
                   <Bell
@@ -868,48 +841,54 @@ const BuyerCalendarPage: React.FC = () => {
               </button>
             </div>
 
-            {/* My Availability */}
-            <div className="bg-white shadow rounded-lg p-4">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-md font-semibold text-gray-700">
-                  My Availability
-                </h3>
-                <button
-                  onClick={() => setShowAvailabilityForm(true)}
-                  className="bg-[#5F4B8B] text-white px-2 py-1 rounded shadow hover:bg-[#4A3971]"
-                >
-                  +
-                </button>
-              </div>
-              <ul className="text-sm text-gray-600 space-y-1">
-                {availability.length === 0 && (
-                  <li className="text-gray-500 italic">
-                    No availability set.
-                  </li>
-                )}
-                {availability.map((slot, idx) => {
-                  const start = slot.startTime
-                    ? moment(slot.startTime, 'HH:mm').format('h:mm A')
-                    : '';
-                  const end = slot.endTime
-                    ? moment(slot.endTime, 'HH:mm').format('h:mm A')
-                    : '';
-                  const day = slot.date
-                    ? moment(slot.date).format('MMM D, YYYY')
-                    : '';
-                  return (
-                    <li key={idx} className="flex justify-between">
-                      <span className="font-medium text-gray-700">
-                        {day}
-                      </span>
-                      <span>
-                        {start && end ? `${start} - ${end}` : ''}
-                      </span>
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
+    
+{/* My Availability List */}
+{/* My Availability List */}
+<div className="bg-white shadow rounded-lg p-4">
+  <div className="flex items-center justify-between mb-3">
+    <h3 className="text-md font-semibold text-gray-700">
+      My Availability
+    </h3>
+    <button
+      onClick={() => setShowAvailabilityForm(true)}
+      className="bg-[#5F4B8B] text-white px-2 py-1 rounded shadow hover:bg-[#4A3971]"
+    >
+      +
+    </button>
+  </div>
+  <ul className="text-sm text-gray-600 space-y-1">
+    {availability.length === 0 && (
+      <li className="text-gray-500 italic">
+        No availability set.
+      </li>
+    )}
+    {availability.map((slot, idx) => {
+      const formattedStart = slot.startTime
+        ? moment(slot.startTime, 'HH:mm').format('h:mm A')
+        : '';
+      const formattedEnd = slot.endTime
+        ? moment(slot.endTime, 'HH:mm').format('h:mm A')
+        : '';
+      const formattedDay = slot.date
+        ? moment(slot.date).format('MMM D, YYYY')
+        : '';
+      return (
+        <li key={idx} className="flex justify-between">
+          <span className="font-medium text-gray-700">
+            {formattedDay}
+          </span>
+          <span>
+            {formattedStart && formattedEnd
+              ? `${formattedStart} – ${formattedEnd}`
+              : ''}
+          </span>
+        </li>
+      );
+    })}
+  </ul>
+</div>
+
+
           </div>
         </div>
       </div>
@@ -951,9 +930,8 @@ const BuyerCalendarPage: React.FC = () => {
           onClose={() => setShowMeetingModal(false)}
           {...selectedMeeting}
           // ───────────────────────────────────────────────────────────────────────
-          // Modified onRescheduleSuccess: update local modal + re-fetch entire list
+          // 1) onRescheduleSuccess: update local modal’s state + re-fetch parent
           onRescheduleSuccess={(newStart, newSlot) => {
-            // 1) update the open modal’s displayed time immediately
             setSelectedMeeting((prev: any) =>
               prev
                 ? {
@@ -963,8 +941,16 @@ const BuyerCalendarPage: React.FC = () => {
                   }
                 : prev
             );
-            // 2) re-fetch the parent’s event list so the calendar grid re-renders
             fetchAppointmentsData();
+          }}
+          // 2) onDetailsSave: called after “Edit Details” is saved; re-fetch calendar
+          onDetailsSave={() => {
+            fetchAppointmentsData();
+          }}
+          // 3) onDeleteSuccess: called after “Cancel Appointment”; re-fetch + close modal
+          onDeleteSuccess={() => {
+            fetchAppointmentsData();
+            setShowMeetingModal(false);
           }}
         />
       )}
