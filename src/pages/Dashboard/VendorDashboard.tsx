@@ -23,9 +23,10 @@ interface Appointment {
   id: string;
   name: string;
   company: string;
-  date: string;
-  time: string;
+  description:string;
   image: string;
+  date: string;  
+  time: string; 
 }
 
 const VendorDashboard: React.FC = () => {
@@ -159,71 +160,69 @@ const VendorDashboard: React.FC = () => {
     const fetchAppointments = async () => {
       if (!vendorId) return;
       try {
-        const apptQ = query(
+        const now = moment();
+        const q = query(
           collection(db, 'appointments'),
           where('vendorId', '==', vendorId)
         );
-        const apptSnap = await getDocs(apptQ);
-
-        const items: Appointment[] = await Promise.all(
-          apptSnap.docs.map(async (docSnap) => {
-            const data = docSnap.data();
-            let name = 'Unknown',
-              company = '',
-              image = '';
-            if (data.buyerId) {
-              const buyerRef = doc(db, 'users', data.buyerId);
-              const buyerSnap = await getDoc(buyerRef);
-              if (buyerSnap.exists()) {
-                const bd = buyerSnap.data();
-                name = bd.firstName || 'Unknown';
-                company = bd.businessName || '';
-                image = bd.avatar || '';
-              }
+        const snap = await getDocs(q);
+  
+        // hydrate each appointment
+        const raw = await Promise.all(
+          snap.docs.map(async (ds) => {
+            const d = ds.data() as any;
+  
+            // 1) load buyer’s user & profile
+            const [userSnap, profileSnap] = await Promise.all([
+              getDoc(doc(db, 'users', d.buyerId)),
+              getDoc(doc(db, 'Vendors', d.buyerId))
+            ]);
+            const u = userSnap.exists() ? userSnap.data()! : {};
+            const p = profileSnap.exists() ? profileSnap.data()! : {};
+  
+            // 2) parse timestamp + time + duration
+            const baseTs = d.selectedDate?.toDate
+              ? d.selectedDate.toDate()
+              : new Date(d.selectedDate);
+            const startM = moment(baseTs);
+            if (d.selectedTime) {
+              const tm = moment(d.selectedTime, 'h:mm A');
+              startM.hour(tm.hour()).minute(tm.minute());
             }
-
-            const raw = data.selectedDate?.toDate
-              ? data.selectedDate.toDate()
-              : new Date(data.selectedDate);
-            const start = moment(raw);
-            if (data.selectedTime) {
-              const tm = moment(data.selectedTime, 'h:mm A');
-              start.hours(tm.hours()).minutes(tm.minutes());
-            }
-            const end = start.clone().add(30, 'minutes');
-
-            return {
-              id: docSnap.id,
-              name,
-              company,
-              image,
-              date: start.format('ddd D'),
-              time: `${start.format('h:mm A')} - ${end.format('h:mm A')}`,
-            };
+            const dur = d.durationMinutes ?? 30;
+            const endM = startM.clone().add(dur, 'minutes');
+  
+            return { ds, u, p, startM, endM,description: d.description || ''};
           })
         );
-
-        items.sort((a, b) => {
-          const aM = moment(
-            a.date + ' ' + a.time.split(' - ')[0],
-            'ddd D h:mm A'
-          );
-          const bM = moment(
-            b.date + ' ' + b.time.split(' - ')[0],
-            'ddd D h:mm A'
-          );
-          return aM.valueOf() - bM.valueOf();
-        });
-
-        setAppointments(items);
+  
+        // 3) filter out past + sort ascending
+        const upcomingRaw = raw
+          .filter(({ endM }) => endM.isSameOrAfter(now))
+          .sort((a, b) => a.startM.valueOf() - b.startM.valueOf());
+  
+        // 4) map into UI shape
+        const upcoming: Appointment[] = upcomingRaw.map(({ ds, u, p, startM, endM, description }) => ({
+          id: ds.id,
+          name: `${u.firstName || 'Unknown'} ${u.lastName || ''}`.trim(),
+          company: p.businessName || '',
+          image: u.avatar || '',
+          description,
+          date: startM.format('MMM D, YYYY'),
+          time: `${startM.format('h:mm A')} – ${endM.format('h:mm A')}`,
+        }));
+  
+        setAppointments(upcoming);
         setUpcomingIndex(0);
       } catch (err) {
         console.error('Error fetching appointments:', err);
       }
     };
-
+  
     fetchAppointments();
   }, [vendorId]);
+  
+  
 
   // Handlers for “Complete your profile” popup
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -372,42 +371,45 @@ const VendorDashboard: React.FC = () => {
             </div>
 
             {appointments.length ? (
-              (() => {
-                const appt = appointments[upcomingIndex];
-                return (
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
-                      {appt.image ? (
-                        <img
-                          src={appt.image}
-                          alt={appt.name}
-                          className="object-cover w-full h-full"
-                        />
-                      ) : (
-                        <UserIcon className="text-gray-400 w-6 h-6 m-2" />
-                      )}
-                    </div>
-                    <div className="flex-1 space-y-1 min-w-0">
-                      <p className="font-medium truncate">{appt.name}</p>
-                      <p className="text-purple-600 text-sm truncate">
-                        {appt.company || 'No company info'}
-                      </p>
-                      <p className="text-xs text-gray-500 truncate">
-                        {appt.date}, {appt.time}
-                      </p>
-                    </div>
-                    <Bell
-                      className="w-5 h-5 text-purple-600 cursor-pointer flex-shrink-0"
-                      onClick={() => alert(`Reminder set for ${appt.name}`)}
-                    />
-                  </div>
-                );
-              })()
-            ) : (
-              <p className="text-gray-500 text-sm">
-                No upcoming appointments.
-              </p>
-            )}
+  (() => {
+    const appt = appointments[upcomingIndex];
+    return (
+      <div className="flex items-center gap-3">
+        {/* 🖼️ Avatar */}
+        <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
+          {appt.image ? (
+            <img
+              src={appt.image}
+              alt={appt.name}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <UserIcon className="w-6 h-6 text-gray-400 m-2" />
+          )}
+        </div>
+
+        <div className="flex-1 space-y-1 min-w-0">
+          <p className="font-medium truncate">{appt.name}</p>
+          <p className="text-purple-600 text-sm truncate">
+            {appt.description || 'No Description'}
+          </p>
+          <p className="text-xs text-gray-500 truncate">
+            {appt.date}, {appt.time}
+          </p>
+        </div>
+
+        <Bell
+          className="w-5 h-5 text-purple-600 cursor-pointer flex-shrink-0"
+          onClick={() => alert(`Reminder set for ${appt.name}`)}
+        />
+      </div>
+    );
+  })()
+) : (
+  <p className="text-gray-500 text-sm">No upcoming appointments.</p>
+)}
+
+
           </section>
         </aside>
 
