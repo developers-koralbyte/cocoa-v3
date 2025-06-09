@@ -133,7 +133,8 @@ const LoginForm: React.FC = () => {
           toast.error("Unknown user role. Please contact support.");
         }
       } else {
-        toast.error("User role not found in 'users' collection.");
+        toast.error("User is not verified. Please Verify your email");
+        console.log('user not registered')
       }
     } catch (err: any) {
       console.error("Login error:", err.message);
