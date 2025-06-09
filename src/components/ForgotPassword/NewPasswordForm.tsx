@@ -1,13 +1,13 @@
 // src/pages/NewPasswordForm.tsx
 import React, { useState, useEffect } from "react";
 import { confirmPasswordReset } from "firebase/auth";
-import { auth } from "../utils/firebase";
+import { auth } from "../../utils/firebase";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "react-toastify";
 
 // THESE TWO IMAGES SHOULD BE THE SAME ONES YOU USED FOR YOUR FORGOT-PASSWORD SCREEN
-// import largeBubbleImg from "../assets/img/forgot-pass-large.png";
-// import smallBubbleImg from "../assets/img/forgot-pass-small.png";
+import largeBubbleImg from "../../assets/img/ForgotPassword/New_password.png";
+import smallBubbleImg from "../../assets/img/ForgotPassword/New_password.png";
 
 const NewPasswordForm: React.FC = () => {
   const [searchParams] = useSearchParams();
