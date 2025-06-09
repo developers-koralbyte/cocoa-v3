@@ -30,9 +30,35 @@ interface FormData {
 }
 
 const serviceOptions = [
-  { value: 'F&B', label: 'F&B' },
-  { value: 'Retail', label: 'Retail' },
-  // ... etc
+    { value: 'F&B', label: 'F&B' },
+    { value: 'Retail', label: 'Retail' },
+    { value: 'Ecommerce', label: 'Ecommerce' },
+    { value: 'Logistics', label: 'Logistics' },
+    { value: 'Manufacturing', label: 'Manufacturing' },
+    { value: 'Technology', label: 'Technology' },
+    { value: 'Wholesale', label: 'Wholesale' },
+    { value: 'Design', label: 'Design Services' },
+    { value: 'printing', label: 'Printing' },
+    { value: 'event', label: 'Event Services' },
+    { value: 'Consulting', label: 'Consulting' },
+    { value: 'Marketing', label: 'Marketing' },
+    { value: 'advertising', label: 'Advertising' },
+    { value: 'Packaging', label: 'Packaging' },
+    { value: 'Distribution', label: 'Distribution' },
+    { value: 'Supply Chain', label: 'Supply Chain' },
+    { value: 'Accounting', label: 'Accounting' },
+    { value: 'Legal', label: 'Legal' },
+    { value: 'Insurance', label: 'Insurance' },
+    { value: 'HR', label: 'HR' },
+    { value: 'IT', label: 'IT' },
+    { value: 'Security', label: 'Security' },
+    { value: 'Maintenance', label: 'Maintenance' },
+    { value: 'Transportation', label: 'Transportation' },
+    { value: 'Construction', label: 'Construction' },
+    { value: 'Real Estate', label: 'Real Estate' },
+    { value: 'Education', label: 'Education' },
+    { value: 'Healthcare', label: 'Healthcare' },
+    { value: 'Other', label: 'Other' },
 ]
 
 const passwordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[~!@#$%^&*_\-+=`|()[\]{}:;"'<>,.?\/]).+$/

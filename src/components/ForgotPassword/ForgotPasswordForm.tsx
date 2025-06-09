@@ -1,5 +1,8 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { sendPasswordResetEmail } from "firebase/auth";
+import { auth } from "../../utils/firebase";
+import { toast } from "react-toastify";
 
 const ForgotPasswordForm = () => {
   const navigate = useNavigate();
@@ -12,7 +15,8 @@ const ForgotPasswordForm = () => {
   const validateEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!email) return "Email is required";
-    if (!emailRegex.test(email)) return "Please enter a valid email address";
+    if (!emailRegex.test(email))
+      return "Please enter a valid email address";
     return "";
   };
 
@@ -36,19 +40,23 @@ const ForgotPasswordForm = () => {
       setError("");
       setSuccessMessage("");
 
-      // Simulate an API call for password reset
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      // Navigate to verification page with email passed in state
-      navigate("/verification", { state: { email } });
+      // ← NEW: send a real Firebase reset‐link
+      const actionCodeSettings = {
+        url: `${window.location.origin}/new-password`,
+        handleCodeInApp: true,
+      };
+      await sendPasswordResetEmail(auth, email, actionCodeSettings);
 
       setSuccessMessage(
         "A password reset link has been sent to your email address."
       );
-    } catch (err) {
+      toast.success("Reset link sent!");
+    } catch (err: any) {
+      console.error(err);
       setError(
         "An error occurred while sending the reset link. Please try again."
       );
+      toast.error("Failed to send reset link");
     } finally {
       setIsSubmitting(false);
     }
