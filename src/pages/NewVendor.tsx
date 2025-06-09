@@ -67,43 +67,25 @@ const NewVendor: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // enforce password rules
     if (!passwordPattern.test(formData.password)) {
       toast.error(
         "Password must include at least one uppercase letter, one lowercase letter, one number, and one special character."
       );
       return;
     }
+
     try {
-      // Create Auth user
-      const { user } = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
-      // Send verification email
+      // 1) create the Auth user
+      const { user } = await createUserWithEmailAndPassword(
+        auth,
+        formData.email,
+        formData.password
+      );
+      // 2) send them the verification email
       await sendEmailVerification(user);
       toast.info(`Verification email sent to ${user.email}`);
-      // Upload avatar
-      let avatarUrl = "";
-      if (avatarFile) avatarUrl = (await upload(avatarFile)) as string;
-      // Store in Firestore
-      await setDoc(doc(db, "users", user.uid), {
-        id: user.uid,
-        email: formData.email,
-        role: formData.role.toLowerCase(),
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        avatar: avatarUrl,
-        blocked: [],
-        createdAt: new Date(),
-      });
-      await setDoc(doc(db, "Vendors", user.uid), {
-        ...formData,
-        role: formData.role.toLowerCase(),
-        emailVerified: false,
-        uid: user.uid,
-        avatar: avatarUrl,
-        blocked: [],
-        createdAt: new Date(),
-        categories: formData.categories.split(',').map(cat => cat.trim().toLowerCase()),
-        documentUploaded: false,
-      });
+      // 3) defer all Firestore writes & avatar upload until after they verify
       setPendingUser(user);
       setPendingData({ formData, avatarFile });
     } catch (err: any) {
@@ -115,6 +97,8 @@ const NewVendor: React.FC = () => {
       }
     }
   };
+
+  
 
   if (pendingUser && pendingData) {
     return <VendorVerification user={pendingUser} formData={pendingData.formData} avatarFile={pendingData.avatarFile} />;
