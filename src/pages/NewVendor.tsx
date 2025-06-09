@@ -1,12 +1,12 @@
+// src/pages/NewVendor.tsx
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import cocoaLogo from "../assets/img/cocoa-logo-white.png";
 import VendorVerification from "./VerificationVendor";
 import { auth, db } from "../utils/firebase";
 import { createUserWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
-import { useLocation } from "react-router-dom";
-import upload from "../utils/upload"; 
-import { doc, setDoc } from "firebase/firestore";
+import { setDoc, doc } from "firebase/firestore";
+import upload from "../utils/upload";
 import { toast } from "react-toastify";
 
 type FormData = {
@@ -15,7 +15,7 @@ type FormData = {
   firstName: string;
   lastName: string;
   businessName: string;
-  companyAddress: string;  // new field
+  companyAddress: string;
   countryRegion: string;
   industry: string;
   categories: string;
@@ -23,7 +23,10 @@ type FormData = {
   role: string;
 };
 
-const NewVendor = () => {
+const passwordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[~!@#$%^&*_\-+=`|()[\]{}:;"'<>,.?\/]).+$/;
+
+
+const NewVendor: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const params = new URLSearchParams(location.search);
@@ -35,21 +38,23 @@ const NewVendor = () => {
     firstName: "",
     lastName: "",
     businessName: "",
-    companyAddress: "", // initializes to empty
+    companyAddress: "",
     countryRegion: "",
     industry: "",
     categories: "",
     services: "",
-    role, // default to "Vendor"
+    role,
   });
-
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string>("");
-  const [isSubmitted, setIsSubmitted] = useState(false);
+
+  // Hold pending user + data until email verification
+  const [pendingUser, setPendingUser] = useState<import("firebase/auth").User | null>(null);
+  const [pendingData, setPendingData] = useState<{ formData: FormData; avatarFile: File | null } | null>(null);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleAvatarSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -62,22 +67,20 @@ const NewVendor = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Submitting form:", formData);
+    if (!passwordPattern.test(formData.password)) {
+      toast.error(
+        "Password must include at least one uppercase letter, one lowercase letter, one number, and one special character."
+      );
+      return;
+    }
 
     try {
-      // 1) Create user in Firebase Auth
-      const userCredentials = await createUserWithEmailAndPassword(
-        auth,
-        formData.email,
-        formData.password
-      );
-      const user = userCredentials.user;
-
-      // 2) Send email verification
+      // Create Auth user
+      const { user } = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
+      // Send verification email
       await sendEmailVerification(user);
-      console.log("Verification email sent to:", user.email);
-
-      // 3) Upload the avatar (if any) and get its URL
+      toast.info(`Verification email sent to ${user.email}`);
+      // Upload avatar
       let avatarUrl = "";
       if (avatarFile) {
         avatarUrl = (await upload(avatarFile)) as string;
@@ -87,16 +90,13 @@ const NewVendor = () => {
       await setDoc(doc(db, "users", user.uid), {
         id: user.uid,
         email: formData.email,
-        role: formData.role.toLowerCase(), 
+        role: formData.role.toLowerCase(),
         firstName: formData.firstName,
         lastName: formData.lastName,
         avatar: avatarUrl,
         blocked: [],
         createdAt: new Date(),
       });
-
-      // 5) Store vendor data in the "Vendors" collection
-      //    This includes extra fields like companyAddress, categories, etc.
       await setDoc(doc(db, "Vendors", user.uid), {
         ...formData,
         role: formData.role.toLowerCase(),
@@ -105,25 +105,23 @@ const NewVendor = () => {
         avatar: avatarUrl,
         blocked: [],
         createdAt: new Date(),
-        categories: formData.categories.split(",").map((cat) => cat.trim().toLowerCase()),
+        categories: formData.categories.split(',').map(cat => cat.trim().toLowerCase()),
         documentUploaded: false,
       });
-
-      console.log("Vendor added successfully in both 'users' and 'Vendors'.");
-      setIsSubmitted(true);
-    } catch (error: any) {
-      console.error("Error adding vendor:", error);
-      if (error.code === "auth/email-already-in-use") {
+      setPendingUser(user);
+      setPendingData({ formData, avatarFile });
+    } catch (err: any) {
+      console.error(err);
+      if (err.code === "auth/email-already-in-use") {
         toast.error("A user with this email already exists. Please log in or use a different email.");
       } else {
-        toast.error("An error occurred during sign-up. Please try again or contact support.");
+        toast.error("An error occurred during sign-up. Please try again.");
       }
     }
   };
 
-  // Show vendor verification after successful submission
-  if (isSubmitted) {
-    return <VendorVerification />;
+  if (pendingUser && pendingData) {
+    return <VendorVerification user={pendingUser} formData={pendingData.formData} avatarFile={pendingData.avatarFile} />;
   }
 
   return (
