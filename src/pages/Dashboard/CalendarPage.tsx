@@ -909,12 +909,16 @@ useEffect(() => {
     </button>
   </div>
   <ul className="text-sm text-gray-600 space-y-1">
-    {availability.length === 0 && (
-      <li className="text-gray-500 italic">
-        No availability set.
-      </li>
-    )}
-    {availability.map((slot, idx) => {
+  {availability.length === 0 && (
+    <li className="text-gray-500 italic">No availability set.</li>
+  )}
+
+  {availability
+    .slice()  // copy so we don’t mutate original
+    .sort((a, b) => 
+      new Date(a.date).getTime() - new Date(b.date).getTime()
+    )
+    .map((slot, idx) => {
       const formattedStart = slot.startTime
         ? moment(slot.startTime, 'HH:mm').format('h:mm A')
         : '';
@@ -924,11 +928,10 @@ useEffect(() => {
       const formattedDay = slot.date
         ? moment(slot.date).format('MMM D, YYYY')
         : '';
+
       return (
         <li key={idx} className="flex justify-between">
-          <span className="font-medium text-gray-700">
-            {formattedDay}
-          </span>
+          <span className="font-medium text-gray-700">{formattedDay}</span>
           <span>
             {formattedStart && formattedEnd
               ? `${formattedStart} – ${formattedEnd}`
@@ -937,7 +940,7 @@ useEffect(() => {
         </li>
       );
     })}
-  </ul>
+</ul>
 </div>
 
 

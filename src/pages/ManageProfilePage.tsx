@@ -38,6 +38,8 @@ import BaseLayout from '../components/Dashboard/BaseLayout'
 
 const ACCENT = 'hsla(240,29%,54%,1)'
 
+const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[~!@#$%^&*_\-+=`|(){}\[\]:;"'<>,.?/]).{8,}$/
+
 type TabKey = 'personal' | 'security' | 'businesses'
 
 const TABS: { key: TabKey; label: string; icon: React.ReactNode }[] = [
@@ -186,6 +188,11 @@ export default function ManageProfilePage() {
     e.preventDefault()
     if (passForm.next !== passForm.confirm) {
       setStatus('New passwords do not match')
+      return
+    }
+
+    if (!PASSWORD_REGEX.test(passForm.next)) {
+      setStatus('Password must be at least 8 characters and include uppercase, lowercase, number & special character.')
       return
     }
     try {
@@ -555,7 +562,7 @@ export default function ManageProfilePage() {
               </>
             ) : (
               <form onSubmit={savePassword} className="space-y-6 max-w-md">
-                <h3 className="text-2xl font-semibold mb-4">Emails & Password</h3>
+                <h3 className="text-2xl font-semibold mb-4">Password</h3>
                 <div className="relative">
                   <label className="block mb-1">Current Password</label>
                   <input
