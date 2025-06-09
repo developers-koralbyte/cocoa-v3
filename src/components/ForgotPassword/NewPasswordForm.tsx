@@ -6,8 +6,8 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "react-toastify";
 
 // THESE TWO IMAGES SHOULD BE THE SAME ONES YOU USED FOR YOUR FORGOT-PASSWORD SCREEN
-import largeBubbleImg from "../assets/img/forgot-pass-large.png";
-import smallBubbleImg from "../assets/img/forgot-pass-small.png";
+// import largeBubbleImg from "../assets/img/forgot-pass-large.png";
+// import smallBubbleImg from "../assets/img/forgot-pass-small.png";
 
 const NewPasswordForm: React.FC = () => {
   const [searchParams] = useSearchParams();
