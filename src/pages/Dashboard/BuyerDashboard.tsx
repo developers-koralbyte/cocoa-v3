@@ -3,6 +3,8 @@ import { useAuth } from '../../utils/AuthContext'
 import { Search, RotateCcw, Bell, User } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import BaseLayout from '../../components/Dashboard/BaseLayout'
+// import moment from 'moment';
+
 import {
   doc,
   getDoc,
@@ -23,9 +25,10 @@ interface Appointment {
   id: string
   name: string
   company: string
+  description:string
+  image: string
   date: string
   time: string
-  image: string
 }
 
 const BuyerDashboard: React.FC = () => {
@@ -82,57 +85,76 @@ const BuyerDashboard: React.FC = () => {
   useEffect(() => {
     if (!buyerId) return
     const fetchAppointments = async () => {
-      const apptQ = query(
-        collection(db, 'appointments'),
-        where('buyerId', '==', buyerId)
-      )
-      const snap = await getDocs(apptQ)
-      const items: Appointment[] = await Promise.all(
-        snap.docs.map(async (ds) => {
-          const d = ds.data()
-          const vid = d.vendorId as string
-          // vendor user doc
-          const usnap = await getDoc(doc(db, 'users', vid))
-          const u = usnap.exists() ? usnap.data() : {}
-          // vendor business doc
-          const vsnap = await getDoc(doc(db, 'Vendors', vid))
-          const v = vsnap.exists() ? vsnap.data() : {}
-          // parse date/time
-          const raw = d.selectedDate?.toDate
-            ? d.selectedDate.toDate()
-            : new Date(d.selectedDate)
-          const start = moment(raw)
-          if (d.selectedTime) {
-            const tm = moment(d.selectedTime, 'h:mm A')
-            start.hours(tm.hours()).minutes(tm.minutes())
-          }
-          const end = start.clone().add(30, 'minutes')
-          return {
-            id: ds.id,
-            name: u.firstName || 'Unknown',
-            company: v.businessName || '',
-            image: u.avatar || '',
-            date: start.format('ddd D'),
-            time: `${start.format('h:mm A')} - ${end.format('h:mm A')}`,
-          }
-        })
-      )
-      items.sort((a, b) => {
-        const aM = moment(
-          a.date + ' ' + a.time.split(' - ')[0],
-          'ddd D h:mm A'
+      try {
+        const now = moment()
+        const q = query(
+          collection(db, 'appointments'),
+          where('buyerId', '==', buyerId)
         )
-        const bM = moment(
-          b.date + ' ' + b.time.split(' - ')[0],
-          'ddd D h:mm A'
+        const snap = await getDocs(q)
+
+        const raw = await Promise.all(
+          snap.docs.map(async (ds) => {
+            const d = ds.data() as any
+            // load vendor's user & profile
+            const [userSnap, vendorSnap] = await Promise.all([
+              getDoc(doc(db, 'users', d.vendorId)),
+              getDoc(doc(db, 'Vendors', d.vendorId)),
+            ])
+            const u = userSnap.exists() ? userSnap.data()! : {}
+            const v = vendorSnap.exists() ? vendorSnap.data()! : {}
+
+            // parse timestamp + duration
+            const ts = d.selectedDate?.toDate
+              ? d.selectedDate.toDate()
+              : new Date(d.selectedDate)
+            const startM = moment(ts)
+            if (d.selectedTime) {
+              const tm = moment(d.selectedTime, 'h:mm A')
+              startM.hour(tm.hour()).minute(tm.minute())
+            }
+            const dur = d.durationMinutes ?? 30
+            const endM = startM.clone().add(dur, 'minutes')
+
+            return {
+              id: ds.id,
+              name: `${u.firstName || 'Unknown'} ${u.lastName || ''}`.trim(),
+              company: v.businessName || '',
+              description: d.description || '',
+              image: u.avatar || '',
+              startM,
+              endM,
+            }
+          })
         )
-        return aM.valueOf() - bM.valueOf()
-      })
-      setAppointments(items)
-      setUpcomingIndex(0)
+
+        // filter out past + sort
+        const upcomingRaw = raw
+          .filter((a) => a.endM.isSameOrAfter(now))
+          .sort((a, b) => a.startM.valueOf() - b.startM.valueOf())
+
+        // map into Appointment[]
+        const upcoming: Appointment[] = upcomingRaw.map((a) => ({
+          id: a.id,
+          name: a.name,
+          company: a.company,
+          description: a.description,
+          image: a.image,
+          date: a.startM.format('ddd, MMM D'),
+          time: `${a.startM.format('h:mm A')} - ${a.endM.format('h:mm A')}`,
+        }))
+
+        setAppointments(upcoming)
+        setUpcomingIndex(0)
+      } catch (err) {
+        console.error('Error fetching appointments:', err)
+      }
     }
+
     fetchAppointments()
   }, [buyerId])
+  
+  
 
   /* ---------- profile completeness check ---------- */
   useEffect(() => {
@@ -424,7 +446,6 @@ const BuyerDashboard: React.FC = () => {
                   </button>
                 </div>
               </div>
-
               {appointments.length ? (
                 (() => {
                   const appt = appointments[upcomingIndex]
@@ -438,7 +459,7 @@ const BuyerDashboard: React.FC = () => {
                             className="object-cover w-full h-full"
                           />
                         ) : (
-                          <User className="text-gray-400 w-4 h-4 md:w-6 md:h-6 m-1 md:m-2" />
+                          <UserIcon className="text-gray-400 w-4 h-4 md:w-6 md:h-6 m-1 md:m-2" />
                         )}
                       </div>
                       <div className="flex-1 space-y-1 min-w-0">
@@ -446,7 +467,7 @@ const BuyerDashboard: React.FC = () => {
                           {appt.name}
                         </div>
                         <div className="text-purple-600 text-xs md:text-sm truncate">
-                          {appt.company || 'No company info'}
+                          {appt.description || 'No Description'}
                         </div>
                         <div className="text-xs md:text-sm text-gray-500">
                           {appt.date}, {appt.time}
@@ -454,9 +475,7 @@ const BuyerDashboard: React.FC = () => {
                       </div>
                       <Bell
                         className="w-4 h-4 text-purple-600 cursor-pointer flex-shrink-0"
-                        onClick={() =>
-                          alert(`Reminder set for ${appt.name}`)
-                        }
+                        onClick={() => alert(`Reminder set for ${appt.name}`)}
                       />
                     </div>
                   )
