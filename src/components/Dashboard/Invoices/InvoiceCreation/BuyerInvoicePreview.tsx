@@ -2,16 +2,16 @@ import React, { useEffect, useState } from 'react';
 import generateInvoicePdf from './InvoicePdfGenerator'; 
 // ^ Update this import path to wherever InvoicePdfGenerator is located in your project
 
-// Adjust this interface or import your existing Invoice interface as needed
-interface InvoiceItem {
+// Updated interfaces to match your buyer invoice data structure
+interface BuyerInvoiceItem {
   id: number;
   description: string;
   quantity: number;
-  price: number;
+  price: number; // This is the key difference - buyer invoices use 'rate' not 'price'
   tax: number;
 }
 
-interface InvoiceData {
+interface BuyerInvoiceData {
   invoiceNumber: string;
   invoiceDate: string;
   dueDate: string;
@@ -30,7 +30,7 @@ interface InvoiceData {
   iban: string;
   bic: string;
   companyLogo?: string;
-  items: InvoiceItem[];
+  items: BuyerInvoiceItem[];
   totals: {
     subtotal: number;
     tax: number;
@@ -38,17 +38,17 @@ interface InvoiceData {
   };
 }
 
-interface Invoice {
+interface BuyerInvoice {
   id: string;
   vendorId: string;
   buyerId: string;
   status: string;
-  invoiceData: InvoiceData;
+  invoiceData: BuyerInvoiceData;
 }
 
 interface BuyerInvoicePreviewProps {
   // The invoice object to preview
-  invoice: Invoice;
+  invoice: BuyerInvoice;
 
   // Optional: a callback if you want to handle "close" events in a modal, etc.
   onClose?: () => void;
@@ -62,8 +62,20 @@ const BuyerInvoicePreview: React.FC<BuyerInvoicePreviewProps> = ({ invoice, onCl
   useEffect(() => {
     const createPdfPreview = async () => {
       try {
-        // Generate a PDF blob from the invoice data
-        const pdfBlob = await generateInvoicePdf(invoice);
+        // Transform buyer invoice data to match what the PDF generator expects
+        const transformedInvoice = {
+          ...invoice,
+          invoiceData: {
+            ...invoice.invoiceData,
+            items: invoice.invoiceData.items.map(item => ({
+              ...item,
+              price: item.rate // Map 'rate' to 'price' for PDF generator
+            }))
+          }
+        };
+
+        // Generate a PDF blob from the transformed invoice data
+        const pdfBlob = await generateInvoicePdf(transformedInvoice);
 
         // Convert the blob to a URL for display in an iframe
         const url = URL.createObjectURL(pdfBlob);
@@ -109,7 +121,7 @@ const BuyerInvoicePreview: React.FC<BuyerInvoicePreviewProps> = ({ invoice, onCl
 
   return (
     <div className="relative">
-      {/* Optional close button if you’re using a modal */}
+      {/* Optional close button if you're using a modal */}
       {onClose && (
         <button
           onClick={onClose}

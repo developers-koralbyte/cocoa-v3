@@ -435,6 +435,7 @@ const NewBuyer: React.FC = () => {
                 classNamePrefix="select"
                 placeholder="Select or search services"
                 onChange={handleServiceChange}
+                menuPlacement="top"
               />
             </div>
             <button

@@ -18,12 +18,12 @@ interface BuyerInvoice {
     invoiceNumber: string
     invoiceDate: string
     dueDate: string
-    senderName: string
+    companyName: string // Changed from senderName to companyName to match your Firebase data
     items: Array<{
       id: number
       description: string
       quantity: number
-      rate: number
+      price: number // Changed from rate to price to match your Firebase data
       tax: number
     }>
     totals: {
@@ -36,7 +36,7 @@ interface BuyerInvoice {
 
 const InvoicesPage = () => {
   const navigate = useNavigate()
-  const { currentUser, fetchUserInfo } = useUserStore()
+  const { fetchUserInfo } = useUserStore() // Removed currentUser since it's not used
   const [isLoading, setIsLoading] = useState(true)
   const [invoices, setInvoices] = useState<BuyerInvoice[]>([])
   const [selectedInvoices, setSelectedInvoices] = useState<string[]>([])
@@ -45,41 +45,57 @@ const InvoicesPage = () => {
   const [deleteStatus, setDeleteStatus] = useState<string | null>(null)
   const [downloadStatus, setDownloadStatus] = useState<string | null>(null)
 
-  // Listen in real time to buyer invoices
+  // Simple real-time approach - Listen directly to vendor invoices
   useEffect(() => {
+    let unsubscribeInvoices: (() => void) | null = null
+
     const unsubscribeAuth = auth.onAuthStateChanged(async (user) => {
       if (user) {
         try {
           await fetchUserInfo(user.uid)
+          
+          // Listen directly to vendor invoices where this user is the buyer
+          // This gives you real-time updates when vendor changes status
           const q = query(
-            collection(db, 'buyerInvoices'),
+            collection(db, 'vendorInvoices'), // Listen to vendor invoices for real-time status updates
             where('buyerId', '==', user.uid)
           )
-          const unsubscribeInvoices = onSnapshot(
+          
+          unsubscribeInvoices = onSnapshot(
             q,
             (snapshot) => {
               const invoiceData = snapshot.docs.map((doc) => ({
                 id: doc.id,
                 ...doc.data(),
               })) as BuyerInvoice[]
+              
               // Filter out invoices marked as hidden
               const visibleInvoices = invoiceData.filter(invoice => !invoice.hiddenForBuyer)
               setInvoices(visibleInvoices)
+              setIsLoading(false) // Set loading to false here after data is loaded
             },
             (error) => {
-              console.error('Error listening to buyer invoices:', error)
+              console.error('Error listening to vendor invoices:', error)
+              setIsLoading(false) // Set loading to false even on error
             }
           )
         } catch (error) {
           console.error('Error fetching user info:', error)
+          setIsLoading(false)
           navigate('/login')
         }
       } else {
+        setIsLoading(false)
         navigate('/login')
       }
-      setIsLoading(false)
     })
-    return () => unsubscribeAuth()
+    
+    return () => {
+      unsubscribeAuth()
+      if (unsubscribeInvoices) {
+        unsubscribeInvoices()
+      }
+    }
   }, [fetchUserInfo, navigate])
 
   const handleDeleteSelected = async () => {
@@ -95,7 +111,8 @@ const InvoicesPage = () => {
     try {
       const batch = writeBatch(db)
       for (const invoiceId of selectedInvoices) {
-        const invoiceRef = doc(db, 'buyerInvoices', invoiceId)
+        // Since we're listening to vendor invoices, update the vendor invoice with hiddenForBuyer flag
+        const invoiceRef = doc(db, 'vendorInvoices', invoiceId)
         batch.update(invoiceRef, { hiddenForBuyer: true })
       }
       await batch.commit()
@@ -155,7 +172,7 @@ const InvoicesPage = () => {
       const { invoiceData } = invoice
       return (
         invoiceData.invoiceNumber?.toLowerCase().includes(lowerTerm) ||
-        invoiceData.senderName?.toLowerCase().includes(lowerTerm) ||
+        invoiceData.companyName?.toLowerCase().includes(lowerTerm) ||
         invoiceData.items?.[0]?.description?.toLowerCase().includes(lowerTerm)
       )
     })
