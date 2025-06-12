@@ -19,7 +19,7 @@ interface BuyerInvoiceItem {
   id: number;
   description: string;
   quantity: number;
-  rate: number;
+  price: number; // Change this from 'rate' to 'price' to match Firebase
   tax: number;
 }
 
@@ -32,7 +32,7 @@ interface BuyerInvoice {
     invoiceNumber: string;
     invoiceDate: string;
     dueDate: string;
-    senderName: string;
+    companyName: string;
     items: BuyerInvoiceItem[];
     totals: {
       subtotal: number;
@@ -99,7 +99,7 @@ const BuyerInvoiceTable: React.FC<BuyerInvoiceTableProps> = ({
       // Filter by sender
       if (senderFilter) {
         const lowerSender = senderFilter.toLowerCase();
-        const invSender = (invoiceData.senderName || '').toLowerCase();
+        const invSender = (invoiceData.companyName || '').toLowerCase();
         if (!invSender.includes(lowerSender)) {
           return false;
         }
@@ -339,7 +339,7 @@ const BuyerInvoiceTable: React.FC<BuyerInvoiceTableProps> = ({
                           .map((item) => item.description)
                           .join(', ') || 'N/A'}
                       </td>
-                      <td className="p-4 text-sm">{invoiceData.senderName || 'N/A'}</td>
+                      <td className="p-4 text-sm">{invoiceData.companyName || 'N/A'}</td>
                       {/* Status is read-only for buyer */}
                       <td className="p-4 text-sm">
                         <span
@@ -378,7 +378,7 @@ const BuyerInvoiceTable: React.FC<BuyerInvoiceTableProps> = ({
                                 invoiceNumber: invoiceData.invoiceNumber,
                                 invoiceDate: invoiceData.invoiceDate,
                                 dueDate: invoiceData.dueDate,
-                                companyName: '', // or fill if you store vendor info
+                                companyName: invoiceData.companyName, // Use the company name from the invoice
                                 companyEmail: '',
                                 companyAddress: '',
                                 companyLocation: '',
@@ -397,7 +397,7 @@ const BuyerInvoiceTable: React.FC<BuyerInvoiceTableProps> = ({
                                 id: bItem.id,
                                 description: bItem.description,
                                 quantity: bItem.quantity,
-                                price: bItem.rate, // or use bItem.rate if that's correct
+                                price: bItem.price, // Map rate to price for InvoicePreview
                                 tax: bItem.tax,
                               }))}
                               totals={{
