@@ -27,6 +27,18 @@ import { Link,useNavigate } from 'react-router-dom'
 import cocoaLogo from '../assets/img/cocoa-logo-white.png'
 import Footer from '../components/HomePage/Footer'
 
+import SyedImg from '../assets/img/Aboutus/Ali.png'              // Syed Ibn E Ali
+import PenkaImg from '../assets/img/Aboutus/Penka.png'    // Penka Sevova
+import BilalImg from '../assets/img/Aboutus/Bilal.png'           // Bilal Arif
+
+import HarshImg from '../assets/img/Aboutus/Harsh.png'           // Harsh Dugar
+import LucaImg from '../assets/img/Aboutus/Luca.png'             // Luca Garib
+import YihaoImg from '../assets/img/Aboutus/Yihao.png'     // Yihao Heliu
+import CristinaImg from '../assets/img/Aboutus/Cristina.png'     // Cristina Valencia
+import AbishekImg from '../assets/img/Aboutus/Abishek.png'       // Abishek Priyan Kabilan
+import KateImg from '../assets/img/Aboutus/Kate.png'             // Kate Nguyen
+import BinteZehraImg from '../assets/img/Aboutus/Binte-Zehra.png'// Binte Zehra
+
 
 
 import erpLogo from '../assets/img/Aboutus/erp-systems.png'
@@ -37,13 +49,33 @@ import commsLogo from '../assets/img/Aboutus/communication-platforms.png'
 // Tailwind color from your design: hsla(240,29%,54%,0.68)
 const purpleOverlay = { backgroundColor: 'hsla(240, 29%, 54%, 0.68)' }
 
-const FAQs = [
-  'Lorem ipsum dolor sit amet?',
-  'Consectetur adipiscing elit?',
-  'Sed do eiusmod tempor incididunt?',
-  'Ut labore et dolore magna aliqua?',
-]
+interface FAQItem {
+  question: string
+  answer: string
+}
 
+const faqData: FAQItem[] = [
+  {
+    question: 'What is COCOA?',
+    answer:
+      "COCOA is Canada's first chat-based procurement platform connecting enterprises with verified solution providers. Through real-time communication, we streamline procurement across corporate services, enterprise software, commercial equipment, and industry solutions - transforming traditional procurement into an efficient, integrated experience.",
+  },
+  {
+    question: 'Is COCOA a POS?',
+    answer:
+      'No, COCOA is not just a POS. It’s a comprehensive solution that connects buyers with vendors and streamlines the entire supply chain process.',
+  },
+  {
+    question: 'Is COCOA Free for businesses?',
+    answer:
+      'COCOA offers freemium version for businesses but with limited features. They can always upgrade to unlock advanced features with subscriptions.',
+  },
+  {
+    question: 'How can COCOA benefit vendors and buyers?',
+    answer:
+      "COCOA streamlines B2B procurement by connecting buyers and vendors through a unified platform. Buyers save time with AI-powered vendor matching and real-time analytics, while vendors reduce costs by accessing pre-qualified buyers and gaining market insights. The platform's direct communication tools and centralized features eliminate the typical frustrations of fragmented procurement processes.",
+  },
+]
 const AboutUs: React.FC = () => {
   // track which FAQ is open
   const [openFaq, setOpenFaq] = useState<number | null>(null)
@@ -414,9 +446,7 @@ const AboutUs: React.FC = () => {
       {/* ====================
           Leadership & Team
       ==================== */}
-      {/* ====================
-    Leadership Team
-==================== */}
+    
 <section className="bg-gray-100 py-16">
   <div className="max-w-5xl mx-auto px-6">
     <h2 className="text-4xl font-bold text-center mb-12">
@@ -424,19 +454,24 @@ const AboutUs: React.FC = () => {
     </h2>
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-12 justify-items-center">
       {[
-        ['Syed Ibn E Ali', 'CEO'],
-        ['Penka Sevova', 'Head of Partnerships'],
-        ['Bilal Arif', 'Engineering Head'],
-      ].map(([name, role]) => (
-        <div key={name} className="text-center">
-          <div className="w-32 h-32 bg-gray-200 rounded-full mb-4 mx-auto" />
-          <p className="font-semibold text-lg">{name}</p>
-          <p className="text-gray-600">{role}</p>
+        { img: SyedImg,     name: 'Syed Ibn E Ali',       role: 'CEO' },
+        { img: PenkaImg,    name: 'Penka Sevova',         role: 'Head of Partnerships' },
+        { img: BilalImg,    name: 'Bilal Arif',           role: 'Engineering Head' },
+      ].map(member => (
+        <div key={member.name} className="text-center">
+          <img
+            src={member.img}
+            alt={member.name}
+            className="w-32 h-32 rounded-full mb-4 mx-auto object-cover"
+          />
+          <p className="font-semibold text-lg">{member.name}</p>
+          <p className="text-gray-600">{member.role}</p>
         </div>
       ))}
     </div>
   </div>
 </section>
+
 
 {/* ====================
     Team Members
@@ -446,26 +481,29 @@ const AboutUs: React.FC = () => {
     <h2 className="text-4xl font-bold text-center mb-12">
       Team Members
     </h2>
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-12 justify-items-center">
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-12 justify-items-center">
       {[
-        ['Harsh Dugar', 'Junior Product Lead'],
-        ['Luca Garib', 'Graphic Designer & UI/UX Designer'],
-        ['Yihao Heliu', 'Graphic Designer & UI/UX Designer'],
-        ['Cristina Valencia', 'Videographer & Marketing Specialist'],
-        ['Abishek Priyan Kabilan', 'Software Developer'],
-        ['Kate Nguyen', 'Marketing Specialist'],
-        ['Binte Zehra', 'Content Writer'],
-      ].map(([name, role]) => (
-        <div key={name} className="text-center">
-          <div className="w-24 h-24 bg-gray-200 rounded-full mb-4 mx-auto" />
-          <p className="font-medium">{name}</p>
-          <p className="text-gray-600 text-sm">{role}</p>
+        { img: HarshImg,       name: 'Harsh Dugar',               role: 'Junior Product Lead' },
+        { img: LucaImg,        name: 'Luca Garib',                role: 'Graphic Designer & UI/UX Designer' },
+        { img: YihaoImg,       name: 'Yihao Heliu',               role: 'Graphic Designer & UI/UX Designer' },
+        { img: CristinaImg,    name: 'Cristina Valencia',         role: 'Videographer & Marketing Specialist' },
+        { img: AbishekImg,     name: 'Abishek Priyan Kabilan',    role: 'Software Developer' },
+        { img: KateImg,        name: 'Kate Nguyen',               role: 'Marketing Specialist' },
+       
+      ].map(member => (
+        <div key={member.name} className="text-center">
+          <img
+            src={member.img}
+            alt={member.name}
+            className="w-24 h-24 rounded-full mb-4 mx-auto object-cover"
+          />
+          <p className="font-medium">{member.name}</p>
+          <p className="text-gray-600 text-sm">{member.role}</p>
         </div>
       ))}
     </div>
   </div>
 </section>
-
       {/* ====================
           Global Impact
       ==================== */}
@@ -527,29 +565,31 @@ const AboutUs: React.FC = () => {
       {/* ====================
           FAQ accordion
       ==================== */}
-      <section className="bg-gray-100 py-16">
-        <div className="container mx-auto px-6 max-w-2xl">
-          <h2 className="text-4xl font-bold text-center mb-8">FAQ</h2>
-          {FAQs.map((q, i) => (
-            <div key={i} className="mb-4 border-b border-gray-300 pb-4">
-              <button
-                className="w-full text-left flex justify-between items-center font-medium"
-                onClick={() => toggleFaq(i)}
-              >
-                <span>{q}</span>
-                <span className="ml-2 text-2xl">
-                  {openFaq === i ? '–' : '+'}
-                </span>
-              </button>
-              {openFaq === i && (
-                <p className="mt-2 text-gray-700">
-                  This is the answer to "{q}"—you can fill in real content here.
-                </p>
-              )}
-            </div>
-          ))}
-        </div>
-      </section>
+    <section className="bg-gray-100 py-16">
+  <div className="container mx-auto px-6 max-w-2xl">
+    <h2 className="text-4xl font-bold text-center mb-8">FAQ</h2>
+
+    {faqData.map((item, i) => (
+      <div key={i} className="mb-4 border-b border-gray-300 pb-4">
+        <button
+          className="w-full text-left flex justify-between items-center font-medium"
+          onClick={() => toggleFaq(i)}
+        >
+          <span>{item.question}</span>
+          <span className="ml-2 text-2xl">
+            {openFaq === i ? '–' : '+'}
+          </span>
+        </button>
+
+        {openFaq === i && (
+          <p className="mt-2 text-gray-700">
+            {item.answer}
+          </p>
+        )}
+      </div>
+    ))}
+  </div>
+</section>
       <Footer/>
 
     </div>
