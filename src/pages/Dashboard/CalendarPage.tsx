@@ -65,6 +65,56 @@ const calendarOverrides = `
   }
 `;
 
+interface AllAvailProps {
+  availability: AvailabilitySlot[];
+  onClose: () => void;
+  onEdit: (slot: AvailabilitySlot) => void;
+}
+
+function AllAvailabilityModal({ availability, onClose, onEdit }: AllAvailProps) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+      <div className="bg-white w-[90%] max-w-2xl max-h-[80vh] overflow-auto rounded-lg p-6">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-xl font-bold">All Availability</h3>
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-800">&times;</button>
+        </div>
+
+        <ul className="space-y-3">
+          {availability.map((slot, i) => {
+            const day = moment(slot.date).format('dddd, MMM D');
+            const start = moment(slot.startTime, 'HH:mm').format('h:mm A');
+            const end   = moment(slot.endTime,   'HH:mm').format('h:mm A');
+            return (
+              <li key={i} className="flex justify-between items-center p-3 border rounded">
+                <div>
+                  <div className="font-medium">{day}</div>
+                  <div className="text-sm text-gray-600">{`${start} – ${end}`}</div>
+                </div>
+                <button
+                  onClick={() => onEdit(slot)}
+                  className="text-sm text-purple-600 hover:underline"
+                >
+                  Edit
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+
+        <div className="mt-6 text-right">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function MyToolbar(props: any) {
   const goToBack = () => props.onNavigate('PREV');
   const goToNext = () => props.onNavigate('NEXT');
@@ -244,6 +294,9 @@ const CalendarPage: React.FC = () => {
   const [oppositeUsers, setOppositeUsers] = useState<Record<string, UserInfo>>(
     {}
   );
+
+  const [showAllAvailModal, setShowAllAvailModal] = useState(false);
+const [editSlot, setEditSlot] = useState<AvailabilitySlot | null>(null);
 
   const [availability, setAvailability] = useState<AvailabilitySlot[]>([]);
   const [showAvailabilityForm, setShowAvailabilityForm] = useState(false);
@@ -448,122 +501,155 @@ useEffect(() => {
 
   // ────────────────────────────
   // ============= SAVE AVAILABILITY (with “copyPrevWeek” support) =============
-  const handleSaveAvailability = async (availabilityData: {
-    selectedDate?: Date;
-    startTime?: string;
-    endTime?: string;
-    duration?: number;
-    copyPrevWeek?: boolean;
-  }) => {
-    if (!authUser) return;
-    const vendorDocRef = doc(db, 'Vendors', authUser.uid);
+// inside CalendarPage component
+const handleSaveAvailability = async (availabilityData: {
+  selectedDate?: Date;
+  startTime?: string;
+  endTime?: string;
+  duration?: number;
+  copyPrevWeek?: boolean;
+}) => {
+  if (!authUser) return;
+  const vendorDocRef = doc(db, 'Vendors', authUser.uid);
 
-    // If user checked “copy from previous week,” do that logic:
-    if (availabilityData.copyPrevWeek) {
-      try {
-        const snap = await getDoc(vendorDocRef);
-        if (!snap.exists()) return;
+  // ─── 1️⃣ If editing an existing slot ───────────────────────────────
+  if (editSlot) {
+    const updatedSlot: AvailabilitySlot = {
+      date: availabilityData.selectedDate!.toISOString(),
+      startTime: availabilityData.startTime!,
+      endTime: availabilityData.endTime!,
+      duration: availabilityData.duration!,
+    };
 
-        const allAvail: AvailabilitySlot[] = snap.data().availability || [];
-        if (allAvail.length === 0) {
-          alert('No availability found in the previous week to copy.');
-          return;
-        }
+    // Build a new array, replacing only the slot we clicked “Edit” on
+    const newArray = availability.map(slot =>
+      slot.date === editSlot.date &&
+      slot.startTime === editSlot.startTime &&
+      slot.endTime === editSlot.endTime
+        ? updatedSlot
+        : slot
+    );
 
-        const lastWeekMoment = moment().subtract(1, 'weeks');
-        const lastWeekNum = lastWeekMoment.isoWeek();
-        const lastWeekYear = lastWeekMoment.year();
+    // Persist & update state
+    await updateDoc(vendorDocRef, { availability: newArray });
+    setAvailability(newArray);
+    setEditSlot(null);
+    setShowAvailabilityForm(false);
+    return;
+  }
 
-        const prevWeekSlots = allAvail.filter((slot) => {
-          const slotMoment = moment(slot.date);
-          return (
-            slotMoment.isoWeek() === lastWeekNum &&
-            slotMoment.year() === lastWeekYear
-          );
-        });
+  // ─── 2️⃣ Copy from previous week ────────────────────────────────────
+  if (availabilityData.copyPrevWeek) {
+    try {
+      const snap = await getDoc(vendorDocRef);
+      if (!snap.exists()) return;
 
-        if (prevWeekSlots.length === 0) {
-          alert('No availability was found for the previous week.');
-          return;
-        }
-
-        const thisWeekMoment = moment();
-        const thisWeekNum = thisWeekMoment.isoWeek();
-        const thisWeekYear = thisWeekMoment.year();
-
-        const newThisWeekSlots: AvailabilitySlot[] = prevWeekSlots.map((slot) => {
-          const oldDayOfWeek = moment(slot.date).isoWeekday();
-          const rolledDate = moment()
-            .year(thisWeekYear)
-            .isoWeek(thisWeekNum)
-            .isoWeekday(oldDayOfWeek)
-            .startOf('day');
-
-          return {
-            date: rolledDate.toISOString(),
-            startTime: slot.startTime,
-            endTime: slot.endTime,
-            duration: slot.duration,
-          };
-        });
-
-        await updateDoc(vendorDocRef, { availability: newThisWeekSlots });
-        setAvailability(newThisWeekSlots);
-        toast.success('Copied previous week’s availability into this week.');
-      } catch (err) {
-        console.error('Error copying availability from previous week:', err);
-        alert('Failed to copy availability. Please try again.');
+      const allAvail: AvailabilitySlot[] = snap.data().availability || [];
+      if (allAvail.length === 0) {
+        alert('No availability found in the previous week to copy.');
+        setShowAvailabilityForm(false);
+        return;
       }
 
-      setShowAvailabilityForm(false);
-      return;
-    }
+      // Determine last week’s slots
+      const lastWeekMoment = moment().subtract(1, 'weeks');
+      const lastWeekNum = lastWeekMoment.isoWeek();
+      const lastWeekYear = lastWeekMoment.year();
 
-    const newDateStr = availabilityData.selectedDate!.toISOString();
-    const newStart = availabilityData.startTime!;
-    const newEnd = availabilityData.endTime!;
-    const newDur = availabilityData.duration!;
-
-    const sameDateSlots = availability.filter((slot) =>
-      moment(slot.date).isSame(moment(newDateStr), 'day')
-    );
-    const toMinutes = (t: string) => {
-      const [hh, mm] = t.split(':').map(Number);
-      return hh * 60 + mm;
-    };
-    const newStartMin = toMinutes(newStart);
-    const newEndMin = toMinutes(newEnd);
-
-    const overlapFound = sameDateSlots.some((slot) => {
-      const existingStartMin = toMinutes(slot.startTime);
-      const existingEndMin = toMinutes(slot.endTime);
-      return newStartMin < existingEndMin && existingStartMin < newEndMin;
-    });
-
-    if (overlapFound) {
-      alert('This availability overlaps an existing slot.');
-      return;
-    }
-
-    const newAvail: AvailabilitySlot = {
-      date: newDateStr,
-      startTime: newStart,
-      endTime: newEnd,
-      duration: newDur,
-    };
-
-    try {
-      await updateDoc(vendorDocRef, {
-        availability: arrayUnion(newAvail),
+      const prevWeekSlots = allAvail.filter(slot => {
+        const slotMoment = moment(slot.date);
+        return (
+          slotMoment.isoWeek() === lastWeekNum &&
+          slotMoment.year() === lastWeekYear
+        );
       });
-      setAvailability((prev) => [...prev, newAvail]);
+
+      if (prevWeekSlots.length === 0) {
+        alert('No availability was found for the previous week.');
+        setShowAvailabilityForm(false);
+        return;
+      }
+
+      // Roll them forward into this week
+      const thisWeekMoment = moment();
+      const thisWeekNum = thisWeekMoment.isoWeek();
+      const thisWeekYear = thisWeekMoment.year();
+
+      const newThisWeekSlots: AvailabilitySlot[] = prevWeekSlots.map(slot => {
+        const oldDay = moment(slot.date).isoWeekday();
+        const rolledDate = moment()
+          .year(thisWeekYear)
+          .isoWeek(thisWeekNum)
+          .isoWeekday(oldDay)
+          .startOf('day');
+
+        return {
+          date: rolledDate.toISOString(),
+          startTime: slot.startTime,
+          endTime: slot.endTime,
+          duration: slot.duration,
+        };
+      });
+
+      await updateDoc(vendorDocRef, { availability: newThisWeekSlots });
+      setAvailability(newThisWeekSlots);
+      toast.success('Copied previous week’s availability into this week.');
     } catch (err) {
-      console.error('Error saving availability:', err);
-      alert('Failed to save availability. Please try again.');
+      console.error(err);
+      alert('Failed to copy availability. Please try again.');
     }
 
     setShowAvailabilityForm(false);
+    return;
+  }
+
+  // ─── 3️⃣ Otherwise it’s a brand-new slot ───────────────────────────
+  const newDateStr = availabilityData.selectedDate!.toISOString();
+  const newStart = availabilityData.startTime!;
+  const newEnd = availabilityData.endTime!;
+  const newDur = availabilityData.duration!;
+
+  // Prevent overlaps on the same day
+  const sameDateSlots = availability.filter(slot =>
+    moment(slot.date).isSame(newDateStr, 'day')
+  );
+  const toMinutes = (t: string) => {
+    const [hh, mm] = t.split(':').map(Number);
+    return hh * 60 + mm;
   };
+  const newStartMin = toMinutes(newStart);
+  const newEndMin = toMinutes(newEnd);
+
+  const overlap = sameDateSlots.some(slot => {
+    const startMin = toMinutes(slot.startTime);
+    const endMin = toMinutes(slot.endTime);
+    return newStartMin < endMin && startMin < newEndMin;
+  });
+  if (overlap) {
+    alert('This availability overlaps an existing slot.');
+    return;
+  }
+
+  const newAvail: AvailabilitySlot = {
+    date: newDateStr,
+    startTime: newStart,
+    endTime: newEnd,
+    duration: newDur,
+  };
+
+  try {
+    await updateDoc(vendorDocRef, {
+      availability: arrayUnion(newAvail),
+    });
+    setAvailability(prev => [...prev, newAvail]);
+  } catch (err) {
+    console.error(err);
+    alert('Failed to save availability. Please try again.');
+  }
+
+  setShowAvailabilityForm(false);
+};
+
 
   // ────────────────────────────
   // ============= SAVE APPOINTMENT =============
@@ -676,7 +762,16 @@ useEffect(() => {
       meetingLink: event.meetingLink,
     });
     setShowMeetingModal(true);
+
   }
+
+  const nextWeekSlots = availability.filter(slot =>
+    moment(slot.date).isBetween(
+      moment().startOf('day'),
+      moment().add(7, 'days').endOf('day'),
+      'day',
+      '[]'
+  ));
 
   return (
     <BaseLayout>
@@ -896,51 +991,44 @@ useEffect(() => {
 
               {/* My Availability List */}
 {/* My Availability List */}
+{/* My Availability List */}
 <div className="bg-white shadow rounded-lg p-4">
   <div className="flex items-center justify-between mb-3">
-    <h3 className="text-md font-semibold text-gray-700">
-      My Availability
-    </h3>
-    <button
-      onClick={() => setShowAvailabilityForm(true)}
-      className="bg-[#5F4B8B] text-white px-2 py-1 rounded shadow hover:bg-[#4A3971]"
-    >
-      +
-    </button>
+    <h3 className="text-md font-semibold text-gray-700">My Availability</h3>
+    <div className="flex gap-2">
+      <button
+        onClick={() => setShowAvailabilityForm(true)}
+        className="bg-[#5F4B8B] text-white px-2 py-1 rounded shadow hover:bg-[#4A3971]"
+      >
+        +
+      </button>
+      {availability.length > nextWeekSlots.length && (
+        <button
+          onClick={() => setShowAllAvailModal(true)}
+          className="text-sm text-purple-600 hover:underline"
+        >
+          Show more
+        </button>
+      )}
+    </div>
   </div>
+
   <ul className="text-sm text-gray-600 space-y-1">
-  {availability.length === 0 && (
-    <li className="text-gray-500 italic">No availability set.</li>
-  )}
-
-  {availability
-    .slice()  // copy so we don’t mutate original
-    .sort((a, b) => 
-      new Date(a.date).getTime() - new Date(b.date).getTime()
-    )
-    .map((slot, idx) => {
-      const formattedStart = slot.startTime
-        ? moment(slot.startTime, 'HH:mm').format('h:mm A')
-        : '';
-      const formattedEnd = slot.endTime
-        ? moment(slot.endTime, 'HH:mm').format('h:mm A')
-        : '';
-      const formattedDay = slot.date
-        ? moment(slot.date).format('MMM D, YYYY')
-        : '';
-
+    {nextWeekSlots.length === 0 && (
+      <li className="text-gray-500 italic">No availability set for next 7 days.</li>
+    )}
+    {nextWeekSlots.map((slot, idx) => {
+      const day = moment(slot.date).format('MMM D, YYYY');
+      const start = moment(slot.startTime, 'HH:mm').format('h:mm A');
+      const end   = moment(slot.endTime,   'HH:mm').format('h:mm A');
       return (
         <li key={idx} className="flex justify-between">
-          <span className="font-medium text-gray-700">{formattedDay}</span>
-          <span>
-            {formattedStart && formattedEnd
-              ? `${formattedStart} – ${formattedEnd}`
-              : ''}
-          </span>
+          <span className="font-medium text-gray-700">{day}</span>
+          <span>{`${start} – ${end}`}</span>
         </li>
       );
     })}
-</ul>
+  </ul>
 </div>
 
 
@@ -995,10 +1083,15 @@ useEffect(() => {
 
         {/* Modals */}
         {showAvailabilityForm && (
-          <AvailabilityFormModal
-            onClose={() => setShowAvailabilityForm(false)}
-            onSave={handleSaveAvailability}
-          />
+           <AvailabilityFormModal
+           initialSlot={editSlot}                                           // ← for prefilling on edit
+           onClose={() => {
+             setShowAvailabilityForm(false);
+             setEditSlot(null);                                             // ← clear edit state
+           }}
+           onSave={handleSaveAvailability}
+         />
+          
         )}
 
         {showAppointmentModal && (
@@ -1049,9 +1142,24 @@ useEffect(() => {
               fetchAppointmentsData();
               setShowMeetingModal(false);
             }}
+                
           />
         )}
+
+{showAllAvailModal && (
+  <AllAvailabilityModal
+    availability={availability}
+    onClose={() => setShowAllAvailModal(false)}
+    onEdit={(slot) => {
+      setEditSlot(slot);             // ← which slot we’re editing
+      setShowAllAvailModal(false);
+      setShowAvailabilityForm(true);  // ← open the same form you use for “+”
+    }}
+  />
+)}
       </div>
+
+      
     </BaseLayout>
   );
 };
