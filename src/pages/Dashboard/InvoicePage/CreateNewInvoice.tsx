@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   collection,
@@ -19,6 +19,7 @@ import InvoiceSummary from '../../../components/Dashboard/Invoices/InvoiceCreati
 import InvoiceActions from '../../../components/Dashboard/Invoices/InvoiceCreation/InvoiceAction'
 import HeaderProps from '../../../components/Dashboard/Invoices/HeaderProps'
 import { useUserStore } from '../../../utils/userStore'
+import { calculateCanadianTaxes } from '../../../utils/canadianTax'
 
 interface CatalogItem {
   id: string
@@ -40,27 +41,54 @@ export interface BuyerInfo {
 
 const CreateNewInvoice = () => {
   const navigate = useNavigate()
-  const { currentUser, fetchUserInfo } = useUserStore()
+  const { currentUser, fetchUserInfo } = useUserStore() as any
   const [loading, setLoading] = useState(true)
   const [isPreview, setIsPreview] = useState(false)
   const [companyLogo, setCompanyLogo] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
+  // UPDATED INVOICE DATA with Canadian requirements
   const [invoiceData, setInvoiceData] = useState({
     invoiceNumber: `INV-${Date.now()}`,
     invoiceDate: new Date().toISOString().split('T')[0],
     dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
       .toISOString()
       .split('T')[0],
+    
+    // EXISTING COMPANY INFO (keep for backward compatibility)
     companyName: '',
     companyEmail: '',
     companyAddress: '',
-    companyLocation: '',
-    recipientPhone: '',
-    recipientAddress: '',
-    recipientLocation: '',
+    companyLocation: '', // Keep this for backward compatibility
+    
+    // NEW CANADIAN REQUIRED FIELDS - Company
+    businessCity: '',
+    businessProvince: 'ON', // Default to Ontario, most common
+    businessPostalCode: '',
+    businessPhone: '',
+    
+    // GST/HST Registration - REQUIRED for tax
+    gstNumber: '',
+    isGstRegistered: false,
+    
+    // EXISTING RECIPIENT INFO  
     recipientName: '',
     recipientEmail: '',
+    recipientPhone: '',
+    recipientAddress: '',
+    recipientLocation: '', // Keep for backward compatibility
+    
+    // NEW CANADIAN REQUIRED FIELDS - Client
+    clientCity: '',
+    clientProvince: 'ON', // Default to Ontario
+    clientPostalCode: '',
+    
+    // PAYMENT INFO - REQUIRED by CRA
+    paymentTerms: 'Due upon receipt', // Default
+    paymentMethods: ['E-transfer'], // Default
+    notes: '',
+    
+    // EXISTING BANK INFO (optional)
     bankName: '',
     bankAddress: '',
     accountName: '',
@@ -68,19 +96,28 @@ const CreateNewInvoice = () => {
     bic: '',
   })
 
-  // For invoice items
+  // UPDATED ITEMS STRUCTURE - using unitPrice instead of price, but keeping backward compatibility
   const [items, setItems] = useState([
     {
       id: Date.now(),
       description: '',
       quantity: 1,
-      price: 0,
-      tax: 10,
+      price: 0, // Keep this for backward compatibility with existing components
+      unitPrice: 0, // Add this for Canadian compliance
+      tax: 0, // Keep this for backward compatibility, but will be calculated automatically
     },
   ])
 
-  // Totals (auto-calculated)
-  const [totals, setTotals] = useState({ subtotal: 0, tax: 0, total: 0 })
+  // UPDATED TOTALS - Canadian tax structure but keeping backward compatibility
+  const [totals, setTotals] = useState({ 
+    subtotal: 0, 
+    tax: 0, // Keep this for backward compatibility
+    gst: 0,
+    pst: 0, 
+    hst: 0,
+    totalTax: 0,
+    total: 0 
+  })
 
   // Combined catalog items for vendor
   const [catalogItems, setCatalogItems] = useState<CatalogItem[]>([])
@@ -89,8 +126,6 @@ const CreateNewInvoice = () => {
   const [chatBuyers, setChatBuyers] = useState<BuyerInfo[]>([])
 
   // Fetch buyer info from Firestore based on vendor's chat history.
-  // This query expects each vendor to have a "userchats" document keyed by vendor UID,
-  // whose "chats" array contains objects with a "receiverId" field.
   const fetchChatBuyers = async (vendorUid: string) => {
     try {
       const userChatsRef = doc(db, 'userchats', vendorUid)
@@ -137,6 +172,11 @@ const CreateNewInvoice = () => {
           ...prev,
           companyName: vendorData.businessName || prev.companyName,
           companyLocation: vendorData.countryRegion || prev.companyLocation,
+          // Map existing vendor data to new Canadian fields if available
+          businessCity: vendorData.city || prev.businessCity,
+          businessProvince: vendorData.province || prev.businessProvince,
+          businessPostalCode: vendorData.postalCode || prev.businessPostalCode,
+          businessPhone: vendorData.phone || prev.businessPhone,
         }))
       } else {
         console.warn('Vendor details not found in Vendors collection')
@@ -226,22 +266,48 @@ const CreateNewInvoice = () => {
     }
   }
 
-  // Recalculate totals whenever items change
+  // FIXED TOTALS CALCULATION - Only calculate totals, don't update items
   useEffect(() => {
-    const newTotals = items.reduce(
-      (acc, item) => {
-        const itemTotal = item.quantity * item.price
-        const itemTax = (itemTotal * item.tax) / 100
-        return {
-          subtotal: acc.subtotal + itemTotal,
-          tax: acc.tax + itemTax,
-          total: acc.total + itemTotal + itemTax,
-        }
-      },
-      { subtotal: 0, tax: 0, total: 0 }
-    )
-    setTotals(newTotals)
-  }, [items])
+    const subtotal = items.reduce((acc, item) => {
+      // Use unitPrice if available, otherwise fall back to price for backward compatibility
+      const itemPrice = item.unitPrice || item.price || 0
+      return acc + (item.quantity * itemPrice)
+    }, 0)
+    
+    // Calculate Canadian taxes
+    try {
+      const taxCalc = calculateCanadianTaxes(
+        subtotal, 
+        invoiceData.businessProvince,
+        invoiceData.isGstRegistered
+      )
+      
+      setTotals({
+        subtotal,
+        tax: taxCalc.totalTax, // Keep this for backward compatibility
+        gst: taxCalc.gst,
+        pst: taxCalc.pst,
+        hst: taxCalc.hst,
+        totalTax: taxCalc.totalTax,
+        total: taxCalc.total
+      })
+      
+      // REMOVED: Don't update items here - this was causing the infinite loop
+      
+    } catch (error) {
+      console.error('Error calculating Canadian taxes:', error)
+      // Fallback to simple calculation
+      setTotals({
+        subtotal,
+        tax: 0,
+        gst: 0,
+        pst: 0,
+        hst: 0,
+        totalTax: 0,
+        total: subtotal
+      })
+    }
+  }, [items, invoiceData.businessProvince, invoiceData.isGstRegistered])
 
   // When a buyer is selected from the dropdown, update recipient info
   const handleBuyerSelect = (buyer: BuyerInfo) => {
@@ -254,7 +320,49 @@ const CreateNewInvoice = () => {
     }))
   }
 
-  // Handler for saving or sending invoice remains the same...
+  // FIXED: Memoized item change handler to prevent unnecessary re-renders
+  const handleItemChange = useCallback((id: number, field: string, value: string | number) => {
+    setItems((prev) =>
+      prev.map((item) =>
+        item.id === id
+          ? {
+              ...item,
+              [field]:
+                field === 'description'
+                  ? value
+                  : typeof value === 'string'
+                  ? parseFloat(value) || 0
+                  : value,
+              // Sync price and unitPrice when either is changed
+              ...(field === 'price' && { unitPrice: typeof value === 'string' ? parseFloat(value) || 0 : value }),
+              ...(field === 'unitPrice' && { price: typeof value === 'string' ? parseFloat(value) || 0 : value }),
+            }
+          : item
+      )
+    )
+  }, [])
+
+  // FIXED: Memoized add item handler
+  const handleAddItem = useCallback(() => {
+    setItems((prev) => [
+      ...prev,
+      {
+        id: Date.now(),
+        description: '',
+        quantity: 1,
+        price: 0, // Keep for backward compatibility
+        unitPrice: 0, // New Canadian field
+        tax: 0, // Keep for backward compatibility
+      },
+    ])
+  }, [])
+
+  // FIXED: Memoized remove item handler
+  const handleRemoveItem = useCallback((id: number) => {
+    setItems((prev) => prev.filter((item) => item.id !== id))
+  }, [])
+
+  // Handler for saving or sending invoice
   const handleSaveInvoice = async (buyerId: string, status: 'Draft' | 'Unpaid') => {
     try {
       const storedUser = JSON.parse(localStorage.getItem('user') || '{}')
@@ -265,7 +373,7 @@ const CreateNewInvoice = () => {
       const invoiceDoc = {
         vendorId: uid,
         buyerId,
-        status: status, // Use the status directly
+        status: status,
         invoiceData: {
           ...invoiceData,
           items,
@@ -276,7 +384,7 @@ const CreateNewInvoice = () => {
         updatedAt: serverTimestamp(),
       }
       const docRef = await addDoc(collection(db, 'vendorInvoices'), invoiceDoc)
-      if (status !== 'Draft') { // Check if it's not Draft
+      if (status !== 'Draft') {
         const buyerInvoiceDoc = {
           ...invoiceDoc,
           status: 'Unpaid',
@@ -369,40 +477,9 @@ const CreateNewInvoice = () => {
                     [name]: value,
                   }))
                 }
-                onItemChange={(id, field, value) =>
-                  setItems((prev) =>
-                    prev.map((item) =>
-                      item.id === id
-                        ? {
-                            ...item,
-                            [field]:
-                              field === 'description'
-                                ? value
-                                : typeof value === 'string'
-                                ? parseFloat(value) || 0
-                                : value,
-                          }
-                        : item
-                    )
-                  )
-                }
-                onAddItem={() =>
-                  setItems((prev) => [
-                    ...prev,
-                    {
-                      id: Date.now(),
-                      description: '',
-                      quantity: 1,
-                      price: 0,
-                      tax: 10,
-                    },
-                  ])
-                }
-                onRemoveItem={(id) =>
-                  setItems((prev) =>
-                    prev.filter((item) => item.id !== id)
-                  )
-                }
+                onItemChange={handleItemChange}
+                onAddItem={handleAddItem}
+                onRemoveItem={handleRemoveItem}
                 chatBuyers={chatBuyers}
                 onBuyerSelect={handleBuyerSelect}
               />

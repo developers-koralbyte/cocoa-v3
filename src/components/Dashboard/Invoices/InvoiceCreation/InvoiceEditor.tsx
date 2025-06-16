@@ -1,6 +1,7 @@
 import React from 'react';
 import addLogoIcon from '../../../../assets/icons/addLogo.svg';
-import { BuyerInfo } from '../../../../pages/Dashboard/InvoicePage/CreateNewInvoice'; // adjust the path if needed
+import { BuyerInfo } from '../../../../pages/Dashboard/InvoicePage/CreateNewInvoice';
+import { getProvinceOptions, validateGstNumber, formatGstNumber } from '../../../../utils/canadianTax';
 
 interface InvoiceData {
   invoiceNumber: string;
@@ -10,11 +11,33 @@ interface InvoiceData {
   companyEmail: string;
   companyAddress: string;
   companyLocation: string;
+  
+  // NEW CANADIAN FIELDS - Business
+  businessCity: string;
+  businessProvince: string;
+  businessPostalCode: string;
+  businessPhone: string;
+  gstNumber: string;
+  isGstRegistered: boolean;
+  
+  // Recipient info
   recipientPhone: string;
   recipientAddress: string;
   recipientLocation: string;
   recipientName: string;
   recipientEmail: string;
+  
+  // NEW CANADIAN FIELDS - Client
+  clientCity: string;
+  clientProvince: string;
+  clientPostalCode: string;
+  
+  // Payment info
+  paymentTerms: string;
+  paymentMethods: string[];
+  notes: string;
+  
+  // Bank info
   bankName: string;
   bankAddress: string;
   accountName: string;
@@ -27,12 +50,17 @@ interface InvoiceItem {
   description: string;
   quantity: number;
   price: number;
+  unitPrice: number;
   tax: number;
 }
 
 interface Totals {
   subtotal: number;
   tax: number;
+  gst: number;
+  pst: number;
+  hst: number;
+  totalTax: number;
   total: number;
 }
 
@@ -51,11 +79,10 @@ interface Props {
   catalogItems: CatalogItem[];
   companyLogo?: string | null;
   onLogoChange?: (logo: string | null) => void;
-  onInvoiceDataChange: (name: string, value: string) => void;
+  onInvoiceDataChange: (name: string, value: string | boolean | string[]) => void;
   onItemChange?: (id: number, field: string, value: string | number) => void;
   onAddItem?: () => void;
   onRemoveItem?: (id: number) => void;
-  // New props for buyer selection:
   chatBuyers?: BuyerInfo[];
   onBuyerSelect?: (buyer: BuyerInfo) => void;
 }
@@ -74,42 +101,36 @@ const InvoiceEditor: React.FC<Props> = ({
   chatBuyers,
   onBuyerSelect,
 }) => {
-  const [localItems, setLocalItems] = React.useState<InvoiceItem[]>(items);
-
-  React.useEffect(() => {
-    setLocalItems(items);
-  }, [items]);
+  // Remove the problematic local state sync - just use items prop directly
+  const [activeTab, setActiveTab] = React.useState<'basic' | 'business' | 'payment'>('basic');
 
   const handleLocalItemChange = (
     id: number,
     field: string,
     value: string | number
   ) => {
-    setLocalItems((prevItems) =>
-      prevItems.map((item) =>
-        item.id === id
-          ? {
-              ...item,
-              [field]: field === 'description' ? value : Number(value),
-            }
-          : item
-      )
-    );
+    // Directly call parent's onItemChange instead of managing local state
     if (onItemChange) onItemChange(id, field, value);
   };
 
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
-    const { name, value } = e.target;
-    onInvoiceDataChange(name, value);
+    const { name, value, type } = e.target;
+    if (type === 'checkbox') {
+      const checked = (e.target as HTMLInputElement).checked;
+      onInvoiceDataChange(name, checked);
+    } else {
+      onInvoiceDataChange(name, value);
+    }
   };
 
   const handleSelectCatalogItem = (itemId: number, selectedId: string) => {
     const chosen = catalogItems.find((c) => c.id === selectedId);
-    if (chosen) {
-      handleLocalItemChange(itemId, 'description', chosen.name);
-      handleLocalItemChange(itemId, 'price', chosen.price);
+    if (chosen && onItemChange) {
+      onItemChange(itemId, 'description', chosen.name);
+      onItemChange(itemId, 'price', chosen.price);
+      onItemChange(itemId, 'unitPrice', chosen.price);
     }
   };
 
@@ -122,6 +143,17 @@ const InvoiceEditor: React.FC<Props> = ({
     }
   };
 
+  const handlePaymentMethodChange = (method: string, checked: boolean) => {
+    const currentMethods = invoiceData.paymentMethods || [];
+    if (checked) {
+      onInvoiceDataChange('paymentMethods', [...currentMethods, method]);
+    } else {
+      onInvoiceDataChange('paymentMethods', currentMethods.filter(m => m !== method));
+    }
+  };
+
+  const provinceOptions = getProvinceOptions();
+
   return (
     <div className="w-full p-6 border rounded-[3.5rem] shadow-2xl">
       {/* Header Section */}
@@ -129,7 +161,6 @@ const InvoiceEditor: React.FC<Props> = ({
         <div>
           <h1 className="text-[35px] font-bold text-[#5F4B8B]">Invoice</h1>
           <div className="space-y-2">
-            {/* Invoice Number (editable if you want, or read-only if needed) */}
             <input
               type="text"
               name="invoiceNumber"
@@ -138,8 +169,6 @@ const InvoiceEditor: React.FC<Props> = ({
               onChange={handleInputChange}
               className="bg-transparent border-b border-gray-300 focus:border-purple-600 outline-none w-full"
             />
-
-            {/* Invoice Date, read-only */}
             <input
               type="date"
               name="invoiceDate"
@@ -147,8 +176,6 @@ const InvoiceEditor: React.FC<Props> = ({
               readOnly
               className="bg-gray-100 border-b border-gray-300 text-gray-500 w-full cursor-not-allowed"
             />
-
-            {/* Due Date, read-only */}
             <input
               type="date"
               name="dueDate"
@@ -204,132 +231,299 @@ const InvoiceEditor: React.FC<Props> = ({
         </div>
       </div>
 
-      {/* Company & Client Info */}
-      <div className="grid grid-cols-2 gap-8 mb-8">
-        {/* Left Column: Vendor Info, set to read-only */}
-        <div>
-          <input
-            type="text"
-            name="companyName"
-            placeholder="Company Name"
-            value={invoiceData.companyName}
-            readOnly
-            className="w-full bg-gray-100 border-b border-gray-300 text-gray-600 
-                       cursor-not-allowed px-2 py-1 outline-none font-bold"
-          />
-
-          <input
-            type="email"
-            name="companyEmail"
-            placeholder="Company Email"
-            value={invoiceData.companyEmail}
-            readOnly
-            className="w-full bg-gray-100 border-b border-gray-300 text-gray-600 
-                       cursor-not-allowed px-2 py-1 outline-none"
-          />
-
-          <textarea
-            name="companyAddress"
-            placeholder="Company Address"
-            value={invoiceData.companyAddress}
-            readOnly
-            rows={2}
-            className="w-full bg-gray-100 border-b border-gray-300 text-gray-600 
-                       cursor-not-allowed px-2 py-1 outline-none font-bold"
-          />
-        </div>
-
-        {/* Right Column: Buyer Info, read-only except for dropdown selection */}
-        <div className="text-right space-y-2">
-          <h3 className="text-[25px] font-bold text-[#5F4B8B]">Invoice to</h3>
-
-          {/* Buyer dropdown if chatBuyers is available */}
-          {chatBuyers && chatBuyers.length > 0 && (
-            <select
-              className="w-full bg-transparent border-b border-gray-300 
-                         focus:border-purple-600 px-2 py-1 outline-none font-bold mb-2"
-              defaultValue=""
-              onChange={(e) => {
-                const selectedId = e.target.value;
-                const buyer = chatBuyers.find((b) => b.id === selectedId);
-                if (buyer && onBuyerSelect) {
-                  onBuyerSelect(buyer);
-                }
-              }}
+      {/* Tab Navigation - Simplified to 3 tabs */}
+      <div className="mb-6">
+        <div className="flex space-x-1 border-b border-gray-200">
+          {[
+            { key: 'basic', label: 'Basic Info' },
+            { key: 'business', label: 'Tax & Province' },
+            { key: 'payment', label: 'Payment & Notes' },
+          ].map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key as any)}
+              className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors ${
+                activeTab === tab.key
+                  ? 'bg-[#5F4B8B] text-white'
+                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+              }`}
             >
-              <option value="">-- Select Buyer from Chat --</option>
-              {chatBuyers.map((buyer) => (
-                <option key={buyer.id} value={buyer.id}>
-                  {buyer.firstName} {buyer.businessName ? `(${buyer.businessName})` : ''}
-                </option>
-              ))}
-            </select>
-          )}
-
-          {/* Once selected, these fields will update from Firestore, 
-              but remain read-only so the vendor can't manually change them */}
-          <input
-            type="text"
-            name="recipientName"
-            placeholder="Recipient Name"
-            value={invoiceData.recipientName}
-            readOnly
-            className="bg-gray-100 border-b border-gray-300 text-gray-600 
-                       cursor-not-allowed w-full font-bold outline-none"
-          />
-
-          <input
-            type="text"
-            name="recipientPhone"
-            placeholder="Phone Number"
-            value={invoiceData.recipientPhone}
-            readOnly
-            className="bg-gray-100 border-b border-gray-300 text-gray-600 
-                       cursor-not-allowed w-full font-bold outline-none"
-          />
-
-          <input
-            type="text"
-            name="recipientAddress"
-            placeholder="Address"
-            value={invoiceData.recipientAddress}
-            readOnly
-            className="bg-gray-100 border-b border-gray-300 text-gray-600 
-                       cursor-not-allowed w-full font-bold outline-none"
-          />
-
-          <input
-            type="text"
-            name="recipientEmail"
-            placeholder="Email"
-            value={invoiceData.recipientEmail}
-            readOnly
-            className="bg-gray-100 border-b border-gray-300 text-gray-600 
-                       cursor-not-allowed w-full font-bold outline-none"
-          />
+              {tab.label}
+            </button>
+          ))}
         </div>
       </div>
 
+      {/* Tab Content */}
+      {activeTab === 'basic' && (
+        <div className="grid grid-cols-2 gap-8 mb-8">
+          {/* Left Column: Basic Company Info */}
+          <div>
+            <h3 className="text-lg font-semibold text-[#5F4B8B] mb-4">Company Information</h3>
+            <div className="space-y-3">
+              <input
+                type="text"
+                name="companyName"
+                placeholder="Company Name"
+                value={invoiceData.companyName}
+                onChange={handleInputChange}
+                className="w-full border-b border-gray-300 focus:border-purple-600 px-2 py-1 outline-none font-bold"
+              />
+              <input
+                type="email"
+                name="companyEmail"
+                placeholder="Company Email"
+                value={invoiceData.companyEmail}
+                onChange={handleInputChange}
+                className="w-full border-b border-gray-300 focus:border-purple-600 px-2 py-1 outline-none"
+              />
+              <textarea
+                name="companyAddress"
+                placeholder="Company Address"
+                value={invoiceData.companyAddress}
+                onChange={handleInputChange}
+                rows={2}
+                className="w-full border-b border-gray-300 focus:border-purple-600 px-2 py-1 outline-none"
+              />
+            </div>
+          </div>
+
+          {/* Right Column: Basic Client Info */}
+          <div>
+            <h3 className="text-lg font-semibold text-[#5F4B8B] mb-4">Client Information</h3>
+            
+            {/* Buyer dropdown if chatBuyers is available */}
+            {chatBuyers && chatBuyers.length > 0 && (
+              <div className="mb-4">
+                <select
+                  className="w-full border-b border-gray-300 focus:border-purple-600 px-2 py-1 outline-none font-bold"
+                  defaultValue=""
+                  onChange={(e) => {
+                    const selectedId = e.target.value;
+                    const buyer = chatBuyers.find((b) => b.id === selectedId);
+                    if (buyer && onBuyerSelect) {
+                      onBuyerSelect(buyer);
+                    }
+                  }}
+                >
+                  <option value="">-- Select Buyer from Chat --</option>
+                  {chatBuyers.map((buyer) => (
+                    <option key={buyer.id} value={buyer.id}>
+                      {buyer.firstName} {buyer.businessName ? `(${buyer.businessName})` : ''}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            <div className="space-y-3">
+              <input
+                type="text"
+                name="recipientName"
+                placeholder="Recipient Name"
+                value={invoiceData.recipientName}
+                readOnly
+                className="w-full bg-gray-100 border-b border-gray-300 text-gray-600 
+                           cursor-not-allowed px-2 py-1 outline-none font-bold"
+              />
+              <input
+                type="text"
+                name="recipientPhone"
+                placeholder="Phone Number"
+                value={invoiceData.recipientPhone}
+                readOnly
+                className="w-full bg-gray-100 border-b border-gray-300 text-gray-600 
+                           cursor-not-allowed px-2 py-1 outline-none"
+              />
+              <input
+                type="email"
+                name="recipientEmail"
+                placeholder="Email"
+                value={invoiceData.recipientEmail}
+                readOnly
+                className="w-full bg-gray-100 border-b border-gray-300 text-gray-600 
+                           cursor-not-allowed px-2 py-1 outline-none"
+              />
+              <textarea
+                name="recipientAddress"
+                placeholder="Address"
+                value={invoiceData.recipientAddress}
+                readOnly
+                rows={2}
+                className="w-full bg-gray-100 border-b border-gray-300 text-gray-600 
+                           cursor-not-allowed px-2 py-1 outline-none resize-none"
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'business' && (
+        <div className="mb-8">
+          <h3 className="text-lg font-semibold text-[#5F4B8B] mb-4">Canadian Tax & Province Setup</h3>
+          <div className="grid grid-cols-2 gap-6">
+            {/* Province Selection */}
+            <div>
+              <h4 className="font-medium text-gray-700 mb-3">Business Province (Required for Tax Calculation)</h4>
+              <div className="space-y-3">
+                <select
+                  name="businessProvince"
+                  value={invoiceData.businessProvince}
+                  onChange={handleInputChange}
+                  className="w-full border border-gray-300 rounded px-3 py-2 focus:border-purple-600 outline-none"
+                >
+                  <option value="">Select Province/Territory</option>
+                  {provinceOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label} - {option.taxInfo}
+                    </option>
+                  ))}
+                </select>
+                <input
+                  type="text"
+                  name="businessPostalCode"
+                  placeholder="Postal Code (e.g., M5V 3A8)"
+                  value={invoiceData.businessPostalCode}
+                  onChange={handleInputChange}
+                  className="w-full border border-gray-300 rounded px-3 py-2 focus:border-purple-600 outline-none"
+                />
+              </div>
+            </div>
+
+            {/* GST/HST Registration */}
+            <div>
+              <h4 className="font-medium text-gray-700 mb-3">Tax Registration</h4>
+              <div className="space-y-3">
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="isGstRegistered"
+                    name="isGstRegistered"
+                    checked={invoiceData.isGstRegistered}
+                    onChange={handleInputChange}
+                    className="w-4 h-4 text-purple-600"
+                  />
+                  <label htmlFor="isGstRegistered" className="text-sm font-medium text-gray-700">
+                    I am registered for GST/HST
+                  </label>
+                </div>
+                
+                {invoiceData.isGstRegistered && (
+                  <div>
+                    <input
+                      type="text"
+                      name="gstNumber"
+                      placeholder="GST/HST Number (e.g., 123456789RT0001)"
+                      value={invoiceData.gstNumber}
+                      onChange={handleInputChange}
+                      className={`w-full border border-gray-300 rounded px-3 py-2 outline-none ${
+                        invoiceData.gstNumber && !validateGstNumber(invoiceData.gstNumber)
+                          ? 'border-red-500 focus:border-red-500'
+                          : 'focus:border-purple-600'
+                      }`}
+                    />
+                    {invoiceData.gstNumber && !validateGstNumber(invoiceData.gstNumber) && (
+                      <p className="text-red-500 text-xs mt-1">
+                        Invalid format. Should be: 123456789RT0001
+                      </p>
+                    )}
+                    {invoiceData.gstNumber && validateGstNumber(invoiceData.gstNumber) && (
+                      <p className="text-green-500 text-xs mt-1">
+                        ✓ Valid GST/HST number: {formatGstNumber(invoiceData.gstNumber)}
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                <div className="bg-blue-50 p-3 rounded text-xs text-blue-800">
+                  <strong>Note:</strong> If you're not registered for GST/HST, no tax will be applied to your invoices. 
+                  Businesses with annual revenue under $30,000 are not required to register.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'payment' && (
+        <div className="mb-8">
+          <h3 className="text-lg font-semibold text-[#5F4B8B] mb-4">Payment Terms & Information</h3>
+          <div className="grid grid-cols-2 gap-6">
+            {/* Payment Terms */}
+            <div>
+              <h4 className="font-medium text-gray-700 mb-3">Payment Terms</h4>
+              <div className="space-y-3">
+                <select
+                  name="paymentTerms"
+                  value={invoiceData.paymentTerms}
+                  onChange={handleInputChange}
+                  className="w-full border border-gray-300 rounded px-3 py-2 focus:border-purple-600 outline-none"
+                >
+                  <option value="Due upon receipt">Due upon receipt</option>
+                  <option value="Net 15">Net 15 (Pay within 15 days)</option>
+                  <option value="Net 30">Net 30 (Pay within 30 days)</option>
+                  <option value="Net 60">Net 60 (Pay within 60 days)</option>
+                  <option value="Net 90">Net 90 (Pay within 90 days)</option>
+                </select>
+
+                <div>
+                  <h5 className="font-medium text-gray-700 mb-2">Accepted Payment Methods</h5>
+                  <div className="space-y-2">
+                    {['E-transfer', 'Bank transfer', 'PayPal', 'Cheque', 'Cash', 'Credit card'].map((method) => (
+                      <label key={method} className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          checked={invoiceData.paymentMethods.includes(method)}
+                          onChange={(e) => handlePaymentMethodChange(method, e.target.checked)}
+                          className="w-4 h-4 text-purple-600"
+                        />
+                        <span className="text-sm">{method}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Notes */}
+            <div>
+              <h4 className="font-medium text-gray-700 mb-3">Additional Notes</h4>
+              <textarea
+                name="notes"
+                placeholder="Add any additional notes, terms, or instructions..."
+                value={invoiceData.notes}
+                onChange={handleInputChange}
+                rows={6}
+                className="w-full border border-gray-300 rounded px-3 py-2 focus:border-purple-600 outline-none"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                This will appear at the bottom of your invoice
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Items Table */}
       <div className="mb-6">
+        <h3 className="text-lg font-semibold text-[#5F4B8B] mb-4">Invoice Items</h3>
         <table className="w-full text-sm border-collapse">
           <thead className="bg-[#EDE9F5] text-[#5F4B8B] font-bold">
             <tr>
               <th className="p-2">Description</th>
               <th className="p-2 text-center">Qty</th>
-              <th className="p-2 text-center">Price</th>
-              <th className="p-2 text-center">Tax %</th>
-              <th className="p-2 text-center">Amount</th>
+              <th className="p-2 text-center">Unit Price</th>
+              <th className="p-2 text-center">Line Total</th>
               <th className="p-2 text-center">Action</th>
             </tr>
           </thead>
           <tbody>
-            {localItems.map((item) => (
+            {items.map((item) => (
               <tr key={item.id} className="bg-white hover:bg-gray-50">
                 <td className="p-2">
                   {/* Catalog-based selection */}
                   <select
-                    className="w-full bg-transparent border-b border-gray-300 focus:border-purple-600 px-2 py-1 outline-none"
+                    className="w-full bg-transparent border-b border-gray-300 focus:border-purple-600 px-2 py-1 outline-none mb-2"
                     value=""
                     onChange={(e) => handleSelectCatalogItem(item.id, e.target.value)}
                   >
@@ -339,7 +533,7 @@ const InvoiceEditor: React.FC<Props> = ({
                         .filter((cat) => cat.type === 'service')
                         .map((cat) => (
                           <option key={cat.id} value={cat.id}>
-                            {cat.name}
+                            {cat.name} - ${cat.price}
                           </option>
                         ))}
                     </optgroup>
@@ -348,7 +542,7 @@ const InvoiceEditor: React.FC<Props> = ({
                         .filter((cat) => cat.type === 'product')
                         .map((cat) => (
                           <option key={cat.id} value={cat.id}>
-                            {cat.name}
+                            {cat.name} - ${cat.price}
                           </option>
                         ))}
                     </optgroup>
@@ -361,7 +555,7 @@ const InvoiceEditor: React.FC<Props> = ({
                     onChange={(e) =>
                       handleLocalItemChange(item.id, 'description', e.target.value)
                     }
-                    className="mt-2 w-full bg-transparent border-b border-gray-300 
+                    className="w-full bg-transparent border-b border-gray-300 
                                focus:border-purple-600 px-2 py-1 outline-none"
                     placeholder="Item description"
                   />
@@ -382,30 +576,21 @@ const InvoiceEditor: React.FC<Props> = ({
                 <td className="p-2 text-center">
                   <input
                     type="number"
-                    value={item.price}
-                    onChange={(e) =>
+                    step="0.01"
+                    value={item.unitPrice || item.price}
+                    onChange={(e) => {
+                      handleLocalItemChange(item.id, 'unitPrice', e.target.value)
                       handleLocalItemChange(item.id, 'price', e.target.value)
-                    }
+                    }}
                     className="w-20 bg-transparent border-b border-gray-300 
                                focus:border-purple-600 px-2 py-1 text-center outline-none"
                   />
                 </td>
 
                 <td className="p-2 text-center">
-                  <input
-                    type="number"
-                    value={item.tax}
-                    onChange={(e) =>
-                      handleLocalItemChange(item.id, 'tax', e.target.value)
-                    }
-                    className="w-16 bg-transparent border-b border-gray-300 
-                               focus:border-purple-600 px-2 py-1 text-center outline-none"
-                  />
+                  CAD ${(item.quantity * (item.unitPrice || item.price || 0)).toFixed(2)}
                 </td>
-
-                <td className="p-2 text-center">
-                  CAD {(item.quantity * item.price * (1 + item.tax / 100)).toFixed(2)}
-                </td>
+                
                 <td className="p-2 text-center">
                   <button
                     onClick={() => onRemoveItem?.(item.id)}
@@ -419,36 +604,130 @@ const InvoiceEditor: React.FC<Props> = ({
           </tbody>
           <tfoot className="bg-[#F3F0FA]">
             <tr>
-              <td colSpan={4} className="text-right p-2">
+              <td colSpan={3} className="text-right p-2">
                 Subtotal:
               </td>
-              <td className="text-center p-2">CAD {totals.subtotal.toFixed(2)}</td>
+              <td className="text-center p-2">CAD ${totals.subtotal.toFixed(2)}</td>
               <td />
             </tr>
-            <tr>
-              <td colSpan={4} className="text-right p-2">
-                Tax:
-              </td>
-              <td className="text-center p-2">CAD {totals.tax.toFixed(2)}</td>
-              <td />
-            </tr>
+            {invoiceData.isGstRegistered && (
+              <>
+                {totals.gst > 0 && (
+                  <tr>
+                    <td colSpan={3} className="text-right p-2">
+                      GST (5%):
+                    </td>
+                    <td className="text-center p-2">CAD ${totals.gst.toFixed(2)}</td>
+                    <td />
+                  </tr>
+                )}
+                {totals.pst > 0 && (
+                  <tr>
+                    <td colSpan={3} className="text-right p-2">
+                      PST:
+                    </td>
+                    <td className="text-center p-2">CAD ${totals.pst.toFixed(2)}</td>
+                    <td />
+                  </tr>
+                )}
+                {totals.hst > 0 && (
+                  <tr>
+                    <td colSpan={3} className="text-right p-2">
+                      HST:
+                    </td>
+                    <td className="text-center p-2">CAD ${totals.hst.toFixed(2)}</td>
+                    <td />
+                  </tr>
+                )}
+              </>
+            )}
             <tr className="font-bold">
-              <td colSpan={4} className="text-right p-2">
+              <td colSpan={3} className="text-right p-2">
                 Total:
               </td>
-              <td className="text-center p-2">CAD {totals.total.toFixed(2)}</td>
+              <td className="text-center p-2">CAD ${totals.total.toFixed(2)}</td>
               <td />
             </tr>
           </tfoot>
         </table>
 
-        {/* "Add Item" button is still allowed */}
         <button
           onClick={onAddItem}
           className="mt-4 px-4 py-2 bg-buttonBg text-white rounded-full hover:bg-[#4a3a6d] transition-colors"
         >
           + Add Item
         </button>
+      </div>
+
+      {/* Tax Information Display */}
+      {invoiceData.isGstRegistered && (
+        <div className="bg-green-50 p-4 rounded mb-4">
+          <h4 className="font-medium text-green-800 mb-2">Tax Calculation Summary</h4>
+          <p className="text-sm text-green-700">
+            Business Province: <strong>{invoiceData.businessProvince}</strong> 
+            {totals.gst > 0 && ` • GST: $${totals.gst.toFixed(2)}`}
+            {totals.pst > 0 && ` • PST: $${totals.pst.toFixed(2)}`}
+            {totals.hst > 0 && ` • HST: $${totals.hst.toFixed(2)}`}
+            {` • Total Tax: $${totals.totalTax.toFixed(2)}`}
+          </p>
+          {invoiceData.gstNumber && (
+            <p className="text-sm text-green-700 mt-1">
+              GST/HST Registration: <strong>{invoiceData.gstNumber}</strong>
+            </p>
+          )}
+        </div>
+      )}
+
+      {!invoiceData.isGstRegistered && (
+        <div className="bg-blue-50 p-4 rounded mb-4">
+          <h4 className="font-medium text-blue-800 mb-2">No Tax Applied</h4>
+          <p className="text-sm text-blue-700">
+            Not registered for GST/HST. No tax will be applied to this invoice.
+          </p>
+        </div>
+      )}
+
+      {/* Compliance Notes */}
+      <div className="bg-gray-50 p-4 rounded">
+        <h4 className="font-medium text-gray-800 mb-2">CRA Compliance Checklist</h4>
+        <div className="grid grid-cols-2 gap-4 text-sm">
+          <div>
+            <div className="space-y-1">
+              <div className={`flex items-center ${invoiceData.companyName ? 'text-green-600' : 'text-red-600'}`}>
+                <span className="mr-2">{invoiceData.companyName ? '✓' : '✗'}</span>
+                Business name
+              </div>
+              <div className={`flex items-center ${invoiceData.companyAddress && invoiceData.businessProvince ? 'text-green-600' : 'text-red-600'}`}>
+                <span className="mr-2">{invoiceData.companyAddress && invoiceData.businessProvince ? '✓' : '✗'}</span>
+                Complete business address
+              </div>
+              <div className={`flex items-center ${invoiceData.invoiceNumber ? 'text-green-600' : 'text-red-600'}`}>
+                <span className="mr-2">{invoiceData.invoiceNumber ? '✓' : '✗'}</span>
+                Unique invoice number
+              </div>
+              <div className={`flex items-center ${invoiceData.invoiceDate ? 'text-green-600' : 'text-red-600'}`}>
+                <span className="mr-2">{invoiceData.invoiceDate ? '✓' : '✗'}</span>
+                Invoice date
+              </div>
+            </div>
+          </div>
+          <div>
+            <div className="space-y-1">
+              <div className={`flex items-center ${items.length > 0 && items[0].description ? 'text-green-600' : 'text-red-600'}`}>
+                <span className="mr-2">{items.length > 0 && items[0].description ? '✓' : '✗'}</span>
+                Description of goods/services
+              </div>
+              <div className={`flex items-center ${totals.subtotal > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                <span className="mr-2">{totals.subtotal > 0 ? '✓' : '✗'}</span>
+                Amount before tax
+              </div>
+              <div className={`flex items-center ${invoiceData.paymentTerms ? 'text-green-600' : 'text-red-600'}`}>
+                <span className="mr-2">{invoiceData.paymentTerms ? '✓' : '✗'}</span>
+                Payment terms
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
