@@ -1,10 +1,19 @@
 // src/components/calendar/AvailabilityFormModal.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Calendar from 'react-calendar';
 import moment from 'moment';
 import 'react-calendar/dist/Calendar.css';
 
+interface AvailabilitySlot {
+  date: string;       // ISO string
+  startTime: string;  // "HH:mm"
+  endTime: string;    // "HH:mm"
+  duration?: number;
+}
+
 interface AvailabilityFormModalProps {
+  /** If provided, form will prefill fields and act in "edit" mode */
+  initialSlot?: AvailabilitySlot | null;
   onClose: () => void;
   /**
    * onSave now accepts an optional `copyPrevWeek` flag.
@@ -81,24 +90,49 @@ const calendarStyle = `
   }
 `;
 
-const AvailabilityFormModal: React.FC<AvailabilityFormModalProps> = ({ onClose, onSave }) => {
+const AvailabilityFormModal: React.FC<AvailabilityFormModalProps> = ({
+  initialSlot = null,
+  onClose,
+  onSave,
+}) => {
+  const isEdit = Boolean(initialSlot);
+
   const [copyPrevWeek, setCopyPrevWeek] = useState<boolean>(false);
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const [startTime, setStartTime] = useState<string>('08:00');
-  const [endTime, setEndTime] = useState<string>('17:00');
-  const [duration, setDuration] = useState<number>(30);
+  const [selectedDate, setSelectedDate] = useState<Date>(
+    initialSlot ? new Date(initialSlot.date) : new Date()
+  );
+  const [startTime, setStartTime] = useState<string>(
+    initialSlot?.startTime || '08:00'
+  );
+  const [endTime, setEndTime] = useState<string>(
+    initialSlot?.endTime || '17:00'
+  );
+  const [duration, setDuration] = useState<number>(
+    initialSlot?.duration ?? 30
+  );
   const [error, setError] = useState<string>('');
+
+  // reset form when switching between slots
+  useEffect(() => {
+    if (initialSlot) {
+      setSelectedDate(new Date(initialSlot.date));
+      setStartTime(initialSlot.startTime);
+      setEndTime(initialSlot.endTime);
+      setDuration(initialSlot.duration ?? 30);
+      setCopyPrevWeek(false);
+    }
+  }, [initialSlot]);
 
   const handleSave = () => {
     setError('');
 
-    if (copyPrevWeek) {
-      // If user wants to copy from the previous week, we ignore the other fields
+    // In edit mode, we never copy
+    if (copyPrevWeek && !isEdit) {
       onSave({ copyPrevWeek: true });
       return;
     }
 
-    // Otherwise, do all the normal validations:
+    // Normal validations
     if (!selectedDate) {
       setError('Please select a date.');
       return;
@@ -108,26 +142,20 @@ const AvailabilityFormModal: React.FC<AvailabilityFormModalProps> = ({ onClose, 
       return;
     }
 
-    const startMoment = moment(startTime, 'HH:mm');
-    const endMoment = moment(endTime, 'HH:mm');
-    if (!endMoment.isAfter(startMoment)) {
+    const s = moment(startTime, 'HH:mm');
+    const e = moment(endTime, 'HH:mm');
+    if (!e.isAfter(s)) {
       setError('End time must be later than start time.');
       return;
     }
 
-    const diffMinutes = endMoment.diff(startMoment, 'minutes');
-    if (duration <= 0 || duration > diffMinutes) {
-      setError(`Duration must be positive and no more than ${diffMinutes} minutes.`);
+    const diff = e.diff(s, 'minutes');
+    if (duration <= 0 || duration > diff) {
+      setError(`Duration must be positive and no more than ${diff} minutes.`);
       return;
     }
 
-    onSave({
-      selectedDate,
-      startTime,
-      endTime,
-      duration,
-      copyPrevWeek: false,
-    });
+    onSave({ selectedDate, startTime, endTime, duration, copyPrevWeek: false });
   };
 
   return (
@@ -136,100 +164,82 @@ const AvailabilityFormModal: React.FC<AvailabilityFormModalProps> = ({ onClose, 
         <style dangerouslySetInnerHTML={{ __html: calendarStyle }} />
 
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold text-gray-800">Add Availability</h2>
+          <h2 className="text-xl font-bold text-gray-800">
+            {isEdit ? 'Edit Availability' : 'Add Availability'}
+          </h2>
           <button onClick={onClose} className="text-gray-500 hover:text-gray-700 text-2xl">
             &times;
           </button>
         </div>
 
-        {error && (
-          <p className="mb-2 text-sm text-red-600">{error}</p>
+        {error && <p className="mb-2 text-sm text-red-600">{error}</p>}
+
+        {/* Copy only when adding */}
+        {!isEdit && (
+          <div className="flex items-center mb-4">
+            <input
+              type="checkbox"
+              id="copyPrevWeek"
+              checked={copyPrevWeek}
+              onChange={(e) => { setCopyPrevWeek(e.target.checked); setError(''); }}
+              className="h-4 w-4 text-purple-600 border-gray-300 rounded"
+            />
+            <label htmlFor="copyPrevWeek" className="ml-2 text-sm text-gray-700">
+              Copy availability from previous week
+            </label>
+          </div>
         )}
 
-        {/* ‣ New checkbox: “Copy from previous week” */}
-        <div className="flex items-center mb-4">
-          <input
-            type="checkbox"
-            id="copyPrevWeek"
-            checked={copyPrevWeek}
-            onChange={(e) => {
-              setCopyPrevWeek(e.target.checked);
-              setError('');
-            }}
-            className="h-4 w-4 text-purple-600 border-gray-300 rounded"
-          />
-          <label htmlFor="copyPrevWeek" className="ml-2 text-sm text-gray-700">
-            Copy availability from previous week
-          </label>
-        </div>
-
         <div className="flex flex-col md:flex-row gap-6">
-          {/* Left: Calendar */}
+          {/* Calendar */}
           <div className="md:w-1/2">
             <Calendar
-              onChange={(date: Date) => {
-                setSelectedDate(date);
-                setError('');
-              }}
+              onChange={(date: Date) => { setSelectedDate(date); setError(''); }}
               value={selectedDate}
               tileDisabled={tileDisabled}
               minDetail="month"
               next2Label={null}
               prev2Label={null}
               className="rounded-lg border-0"
-              // If “copyPrevWeek” is true, disable the calendar entirely
-              tileClassName={() => (copyPrevWeek ? 'opacity-50 pointer-events-none' : '')}
+              tileClassName={() =>
+                copyPrevWeek && !isEdit ? 'opacity-50 pointer-events-none' : ''
+              }
             />
           </div>
 
-          {/* Right: Time / Duration Inputs */}
+          {/* Time / Duration Inputs */}
           <div className="md:w-1/2">
-            <label className="block text-sm font-semibold text-gray-700 mb-1">
-              Start Time
-            </label>
+            <label className="block text-sm font-semibold text-gray-700 mb-1">Start Time</label>
             <input
               type="time"
               className={`w-full p-2 border rounded mb-4 ${
-                copyPrevWeek ? 'opacity-50 pointer-events-none' : ''
+                copyPrevWeek && !isEdit ? 'opacity-50 pointer-events-none' : ''
               }`}
               value={startTime}
-              onChange={(e) => {
-                setStartTime(e.target.value);
-                setError('');
-              }}
-              disabled={copyPrevWeek}
+              onChange={(e) => { setStartTime(e.target.value); setError(''); }}
+              disabled={copyPrevWeek && !isEdit}
             />
 
-            <label className="block text-sm font-semibold text-gray-700 mb-1">
-              End Time
-            </label>
+            <label className="block text-sm font-semibold text-gray-700 mb-1">End Time</label>
             <input
               type="time"
               className={`w-full p-2 border rounded mb-4 ${
-                copyPrevWeek ? 'opacity-50 pointer-events-none' : ''
+                copyPrevWeek && !isEdit ? 'opacity-50 pointer-events-none' : ''
               }`}
               value={endTime}
-              onChange={(e) => {
-                setEndTime(e.target.value);
-                setError('');
-              }}
-              disabled={copyPrevWeek}
+              onChange={(e) => { setEndTime(e.target.value); setError(''); }}
+              disabled={copyPrevWeek && !isEdit}
             />
 
-            <label className="block text-sm font-semibold text-gray-700 mb-1">
-              Duration (minutes)
-            </label>
+            <label className="block text-sm font-semibold text-gray-700 mb-1">Duration (minutes)</label>
             <input
               type="number"
               className={`w-full p-2 border rounded mb-4 ${
-                copyPrevWeek ? 'opacity-50 pointer-events-none' : ''
+                copyPrevWeek && !isEdit ? 'opacity-50 pointer-events-none' : ''
               }`}
               value={duration}
-              onChange={(e) => {
-                setDuration(Number(e.target.value));
-                setError('');
-              }}
-              disabled={copyPrevWeek}
+              onChange={(e) => { setDuration(Number(e.target.value)); setError(''); }}
+              disabled={copyPrevWeek && !isEdit}
               min={1}
             />
           </div>
