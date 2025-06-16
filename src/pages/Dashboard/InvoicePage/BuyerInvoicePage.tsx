@@ -36,7 +36,7 @@ interface BuyerInvoice {
 
 const InvoicesPage = () => {
   const navigate = useNavigate()
-  const { fetchUserInfo } = useUserStore() // Removed currentUser since it's not used
+  const { fetchUserInfo } = useUserStore() as { fetchUserInfo: (uid: string) => Promise<void> }
   const [isLoading, setIsLoading] = useState(true)
   const [invoices, setInvoices] = useState<BuyerInvoice[]>([])
   const [selectedInvoices, setSelectedInvoices] = useState<string[]>([])
