@@ -13,6 +13,7 @@ import { toast } from 'react-toastify'
 import Select from 'react-select'
 import { doc, setDoc } from 'firebase/firestore'
 import { db } from '../utils/firebase'
+import { Upload, FileText, X } from 'lucide-react' // Added Lucide icons
 
 interface FormData {
   email: string
@@ -27,6 +28,12 @@ interface FormData {
   phone: string
   address: string
   role: string // "buyer" or "vendor"
+}
+
+interface UploadedFile {
+  file: File
+  name: string
+  id: string
 }
 
 const serviceOptions = [
@@ -85,6 +92,7 @@ const NewBuyer: React.FC = () => {
 
   const [avatarFile, setAvatarFile] = useState<File | null>(null)
   const [avatarPreview, setAvatarPreview] = useState<string>('')
+  const [uploadedDocuments, setUploadedDocuments] = useState<UploadedFile[]>([])
   const [pendingUser, setPendingUser] = useState<import('firebase/auth').User | null>(null)
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -98,6 +106,22 @@ const NewBuyer: React.FC = () => {
       setAvatarFile(file)
       setAvatarPreview(URL.createObjectURL(file))
     }
+  }
+
+  const handleDocumentUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files
+    if (files && files.length > 0) {
+      const newFiles = Array.from(files).map(file => ({
+        file,
+        name: file.name,
+        id: Math.random().toString(36).substring(2, 9)
+      }))
+      setUploadedDocuments(prev => [...prev, ...newFiles])
+    }
+  }
+
+  const removeDocument = (id: string) => {
+    setUploadedDocuments(prev => prev.filter(doc => doc.id !== id))
   }
 
   const handleServiceChange = (selected: any) => {
@@ -143,6 +167,7 @@ const NewBuyer: React.FC = () => {
         user={pendingUser}
         formData={formData}
         avatarFile={avatarFile}
+        documents={uploadedDocuments}
       />
     )
   }
@@ -311,7 +336,7 @@ const NewBuyer: React.FC = () => {
             <label className="block text-sm font-medium text-[#7C77C1] mb-1">
               Profile Picture
             </label>
-            <div className="mb-2">
+            <div className="mb-2 flex items-center gap-4">
               {avatarPreview ? (
                 <img
                   src={avatarPreview}
@@ -321,29 +346,17 @@ const NewBuyer: React.FC = () => {
               ) : (
                 <p className="text-sm text-gray-500">No image selected</p>
               )}
-            </div>
-            <label className="inline-flex items-center px-3 py-2 bg-[#7C77C1] text-white text-sm font-medium rounded-md cursor-pointer hover:bg-purple-700">
-              <svg
-                className="w-5 h-5 mr-2"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={2}
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M9 8l3-3m0 0l3 3m-3-3v12"
+              <label className="inline-flex items-center px-3 py-2 bg-[#7C77C1] text-white text-sm font-medium rounded-md cursor-pointer hover:bg-purple-700">
+                <Upload className="w-4 h-4 mr-2" />
+                Upload Avatar 
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleAvatarSelect}
+                  className="hidden"
                 />
-              </svg>
-              <span>Upload Avatar</span>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleAvatarSelect}
-                className="hidden"
-              />
-            </label>
+              </label>
+            </div>
           </div>
 
           {/* Business & Country */}
@@ -353,7 +366,7 @@ const NewBuyer: React.FC = () => {
                 htmlFor="businessName"
                 className="block text-sm font-medium text-[#7C77C1]"
               >
-                Business Name
+                Business Name *
               </label>
               <input
                 type="text"
@@ -361,6 +374,7 @@ const NewBuyer: React.FC = () => {
                 name="businessName"
                 value={formData.businessName}
                 onChange={handleInputChange}
+                required
                 className="w-full px-4 py-2 border border-gray-300 rounded"
               />
             </div>
@@ -369,7 +383,7 @@ const NewBuyer: React.FC = () => {
                 htmlFor="countryRegion"
                 className="block text-sm font-medium text-[#7C77C1]"
               >
-                Country/Region
+                Country/Region *
               </label>
               <input
                 type="text"
@@ -377,6 +391,7 @@ const NewBuyer: React.FC = () => {
                 name="countryRegion"
                 value={formData.countryRegion}
                 onChange={handleInputChange}
+                required
                 className="w-full px-4 py-2 border border-gray-300 rounded"
               />
             </div>
@@ -389,7 +404,7 @@ const NewBuyer: React.FC = () => {
                 htmlFor="industry"
                 className="block text-sm font-medium text-[#7C77C1]"
               >
-                Industry
+                Industry *
               </label>
               <input
                 type="text"
@@ -397,6 +412,7 @@ const NewBuyer: React.FC = () => {
                 name="industry"
                 value={formData.industry}
                 onChange={handleInputChange}
+                required
                 className="w-full px-4 py-2 border border-gray-300 rounded"
               />
             </div>
@@ -405,7 +421,7 @@ const NewBuyer: React.FC = () => {
                 htmlFor="categories"
                 className="block text-sm font-medium text-[#7C77C1]"
               >
-                Categories
+                Categories *
               </label>
               <input
                 type="text"
@@ -413,9 +429,49 @@ const NewBuyer: React.FC = () => {
                 name="categories"
                 value={formData.categories}
                 onChange={handleInputChange}
+                required
                 className="w-full px-4 py-2 border border-gray-300 rounded"
               />
             </div>
+          </div>
+
+          {/* Document Upload */}
+          <div className="col-span-2">
+            <h3 className="text-xl font-semibold text-[#7C77C1] mb-2">Business Documents</h3>
+            <p className="text-sm text-gray-500 mb-3">Upload any relevant business documents (licenses, certifications, etc.)</p>
+            
+            <label className="inline-flex items-center px-4 py-2 bg-[#7C77C1] text-white text-sm font-medium rounded-md cursor-pointer hover:bg-purple-700 mb-4">
+              <Upload className="w-4 h-4 mr-2" />
+              Upload Documents *
+              <input 
+                type="file" 
+                multiple 
+                onChange={handleDocumentUpload} 
+                required
+                className="hidden" 
+                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+              />
+            </label>
+
+            {uploadedDocuments.length > 0 && (
+              <div className="mt-4 space-y-2">
+                {uploadedDocuments.map((doc) => (
+                  <div key={doc.id} className="flex items-center justify-between p-3 bg-gray-50 rounded border">
+                    <div className="flex items-center">
+                      <FileText className="w-5 h-5 text-[#7C77C1] mr-3" />
+                      <span className="text-sm text-gray-700">{doc.name}</span>
+                    </div>
+                    <button 
+                      type="button" 
+                      onClick={() => removeDocument(doc.id)}
+                      className="text-gray-400 hover:text-red-500"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Services & Submit */}
@@ -425,7 +481,7 @@ const NewBuyer: React.FC = () => {
                 htmlFor="services"
                 className="block text-sm font-medium text-[#7C77C1]"
               >
-                Services
+                Services *
               </label>
               <Select
                 isMulti
@@ -435,6 +491,7 @@ const NewBuyer: React.FC = () => {
                 classNamePrefix="select"
                 placeholder="Select or search services"
                 onChange={handleServiceChange}
+                required
                 menuPlacement="top"
               />
             </div>

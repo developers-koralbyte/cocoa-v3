@@ -7,6 +7,7 @@ import { createUserWithEmailAndPassword, sendEmailVerification } from "firebase/
 import { setDoc, doc } from "firebase/firestore";
 import upload from "../utils/upload";
 import { toast } from "react-toastify";
+import { Upload, FileText, X } from "lucide-react"; // Import Lucide icons
 
 type FormData = {
   email: string;
@@ -22,8 +23,13 @@ type FormData = {
   role: string;
 };
 
-const passwordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[~!@#$%^&*_\-+=`|()[\]{}:;"'<>,.?\/]).+$/;
+type UploadedFile = {
+  file: File;
+  name: string;
+  id: string;
+};
 
+const passwordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[~!@#$%^&*_\-+=`|()[\]{}:;"'<>,.?\/]).+$/;
 
 const NewVendor: React.FC = () => {
   const navigate = useNavigate();
@@ -46,10 +52,11 @@ const NewVendor: React.FC = () => {
   });
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string>("");
+  const [uploadedDocuments, setUploadedDocuments] = useState<UploadedFile[]>([]);
 
   // Hold pending user + data until email verification
   const [pendingUser, setPendingUser] = useState<import("firebase/auth").User | null>(null);
-  const [pendingData, setPendingData] = useState<{ formData: FormData; avatarFile: File | null } | null>(null);
+  const [pendingData, setPendingData] = useState<{ formData: FormData; avatarFile: File | null; documents: UploadedFile[] } | null>(null);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -62,6 +69,22 @@ const NewVendor: React.FC = () => {
       setAvatarFile(file);
       setAvatarPreview(URL.createObjectURL(file));
     }
+  };
+
+  const handleDocumentUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      const newFiles = Array.from(files).map(file => ({
+        file,
+        name: file.name,
+        id: Math.random().toString(36).substring(2, 9)
+      }));
+      setUploadedDocuments(prev => [...prev, ...newFiles]);
+    }
+  };
+
+  const removeDocument = (id: string) => {
+    setUploadedDocuments(prev => prev.filter(doc => doc.id !== id));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -87,7 +110,7 @@ const NewVendor: React.FC = () => {
       toast.info(`Verification email sent to ${user.email}`);
       // 3) defer all Firestore writes & avatar upload until after they verify
       setPendingUser(user);
-      setPendingData({ formData, avatarFile });
+      setPendingData({ formData, avatarFile, documents: uploadedDocuments });
     } catch (err: any) {
       console.error(err);
       if (err.code === "auth/email-already-in-use") {
@@ -98,10 +121,8 @@ const NewVendor: React.FC = () => {
     }
   };
 
-  
-
   if (pendingUser && pendingData) {
-    return <VendorVerification user={pendingUser} formData={pendingData.formData} avatarFile={pendingData.avatarFile} />;
+    return <VendorVerification user={pendingUser} formData={pendingData.formData} avatarFile={pendingData.avatarFile} documents={pendingData.documents} />;
   }
 
   return (
@@ -167,19 +188,7 @@ const NewVendor: React.FC = () => {
                 <p className="text-sm text-gray-500">No image selected</p>
               )}
               <label className="inline-flex items-center px-3 py-2 bg-[#7C77C1] text-white text-sm font-medium rounded-md cursor-pointer hover:bg-purple-700">
-              <svg
-                    className="w-4 h-4 sm:w-5 sm:h-5 mr-2"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M9 8l3-3m0 0l3 3m-3-3v12"
-                    />
-                  </svg>
+                <Upload className="w-4 h-4 mr-2" />
                 Upload Avatar
                 <input type="file" accept="image/*" onChange={handleAvatarSelect} className="hidden" />
               </label>
@@ -189,18 +198,18 @@ const NewVendor: React.FC = () => {
           {/* Business & Address info */}
           <div className="col-span-2 grid grid-cols-3 gap-4">
             <div>
-              <label htmlFor="businessName" className="block text-sm font-medium text-[#7C77C1]">Business Name</label>
-              <input id="businessName" name="businessName" value={formData.businessName} onChange={handleInputChange}
+              <label htmlFor="businessName" className="block text-sm font-medium text-[#7C77C1]">Business Name *</label>
+              <input id="businessName" name="businessName" value={formData.businessName} onChange={handleInputChange} required
                 className="w-full px-4 py-2 border border-gray-300 rounded" />
             </div>
             <div>
-              <label htmlFor="companyAddress" className="block text-sm font-medium text-[#7C77C1]">Company Address</label>
-              <input id="companyAddress" name="companyAddress" value={formData.companyAddress} onChange={handleInputChange}
+              <label htmlFor="companyAddress" className="block text-sm font-medium text-[#7C77C1]">Company Address *</label>
+              <input id="companyAddress" name="companyAddress" value={formData.companyAddress} onChange={handleInputChange} required
                 className="w-full px-4 py-2 border border-gray-300 rounded" />
             </div>
             <div>
-              <label htmlFor="countryRegion" className="block text-sm font-medium text-[#7C77C1]">Country/Region</label>
-              <input id="countryRegion" name="countryRegion" value={formData.countryRegion} onChange={handleInputChange}
+              <label htmlFor="countryRegion" className="block text-sm font-medium text-[#7C77C1]">Country/Region *</label>
+              <input id="countryRegion" name="countryRegion" value={formData.countryRegion} onChange={handleInputChange} required
                 className="w-full px-4 py-2 border border-gray-300 rounded" />
             </div>
           </div>
@@ -208,22 +217,61 @@ const NewVendor: React.FC = () => {
           {/* Industry & Categories */}
           <div className="col-span-2 grid grid-cols-2 gap-4">
             <div>
-              <label htmlFor="industry" className="block text-sm font-medium text-[#7C77C1]">Industry</label>
-              <input id="industry" name="industry" value={formData.industry} onChange={handleInputChange}
+              <label htmlFor="industry" className="block text-sm font-medium text-[#7C77C1]">Industry *</label>
+              <input id="industry" name="industry" value={formData.industry} onChange={handleInputChange} required
                 className="w-full px-4 py-2 border border-gray-300 rounded" />
             </div>
             <div>
-              <label htmlFor="categoriess" className="block text-sm font-medium text-[#7C77C1]">Categories</label>
-              <input id="categories" name="categories" value={formData.categories} onChange={handleInputChange}
+              <label htmlFor="categories" className="block text-sm font-medium text-[#7C77C1]">Categories *</label>
+              <input id="categories" name="categories" value={formData.categories} onChange={handleInputChange} required
                 className="w-full px-4 py-2 border border-gray-300 rounded" />
             </div>
+          </div>
+
+          {/* Document Upload */}
+          <div className="col-span-2">
+            <h3 className="text-xl font-semibold text-[#7C77C1] mb-2">Business Documents</h3>
+            <p className="text-sm text-gray-500 mb-3">Upload any relevant business documents (licenses, certifications, etc.)</p>
+            
+            <label className="inline-flex items-center px-4 py-2 bg-[#7C77C1] text-white text-sm font-medium rounded-md cursor-pointer hover:bg-purple-700 mb-4">
+              <Upload className="w-4 h-4 mr-2" />
+              Upload Documents
+              <input 
+                type="file" 
+                multiple 
+                onChange={handleDocumentUpload} 
+                required
+                className="hidden" 
+                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+              />
+            </label>
+
+            {uploadedDocuments.length > 0 && (
+              <div className="mt-4 space-y-2">
+                {uploadedDocuments.map((doc) => (
+                  <div key={doc.id} className="flex items-center justify-between p-3 bg-gray-50 rounded border">
+                    <div className="flex items-center">
+                      <FileText className="w-5 h-5 text-[#7C77C1] mr-3" />
+                      <span className="text-sm text-gray-700">{doc.name}</span>
+                    </div>
+                    <button 
+                      type="button" 
+                      onClick={() => removeDocument(doc.id)}
+                      className="text-gray-400 hover:text-red-500"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Services & submit */}
           <div className="col-span-2 flex items-end">
             <div className="flex-1">
               <label htmlFor="services" className="block text-sm font-medium text-[#7C77C1]">Services</label>
-              <input id="services" name="services" value={formData.services} onChange={handleInputChange}
+              <input id="services" name="services" value={formData.services} onChange={handleInputChange} required
                 className="w-full px-4 py-2 border border-gray-300 rounded" />
             </div>
             <button type="submit" className="px-6 py-2 bg-[#7C77C1] text-white rounded-lg hover:bg-[#5F5A9F] transition">Submit</button>
@@ -234,4 +282,4 @@ const NewVendor: React.FC = () => {
   );
 };
 
-export default NewVendor; 
+export default NewVendor;
