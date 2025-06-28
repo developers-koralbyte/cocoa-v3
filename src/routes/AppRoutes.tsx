@@ -11,6 +11,8 @@ const LoginPage = React.lazy(() => import('../pages/LoginPage'));
 const NewBuyer = React.lazy(() => import('../pages/NewBuyer'));
 const NewVendor = React.lazy(() => import('../pages/NewVendor'));
 const ForgotPasswordPage = React.lazy(() => import('../pages/Forgot_Password/ForgotPasswordPage'));
+const AdminLoginPage =React.lazy(()=>import("../pages/AdminDashboard/AdminLoginPage"));
+const AdminDashboard =React.lazy(()=>import("../pages/AdminDashboard/AdminDashboard"));
 const NewPasswordPage = React.lazy(() => import('../pages/Forgot_Password/NewPasswordPage'));
 const VerificationPage = React.lazy(() => import('../pages/Forgot_Password/VerificationPage'));
 const SignupSelectionPage = React.lazy(() => import('../pages/SignUpSelectionPage'));
@@ -118,6 +120,14 @@ const AppRoutes: React.FC = () => {
                 <Route path='/commerical-equipment' element={<CommercialEquipment />} />
                  {/* F and B Suppliers*/}
                 <Route path='/f-b-suppliers' element={<FandBSuppliers />} />
+
+                   {/* Public login for admins */}
+        <Route path="/admin-login" element={<AdminLoginPage />} />
+
+    {/* Admin-protected */}
+    <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>
+      <Route path="/admin-dashboard" element={<AdminDashboard />} />
+    </Route>
                 
             </Routes>
         </Suspense>

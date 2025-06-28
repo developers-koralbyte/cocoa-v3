@@ -20,24 +20,29 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ allowedRoles }) => {
     );
   }
 
+  // If not signed in, send admins to /admin-login, others to /login
   if (!user) {
-    console.warn("[ProtectedRoute] No user found => Redirecting to /login");
-    return <Navigate to="/login" replace />;
+    const redirectTo = allowedRoles.includes("admin") ? "/admin-login" : "/login";
+    console.warn(`[ProtectedRoute] No user found => Redirecting to ${redirectTo}`);
+    return <Navigate to={redirectTo} replace />;
   }
 
-  const userRole = user.role; // Now this should be defined if your Firestore doc has it
+  const userRole = user.role; // e.g. "admin" | "vendor" | "buyer"
   if (!allowedRoles.includes(userRole)) {
     console.warn(
       `[ProtectedRoute] Role mismatch: user.role = ${userRole}, allowedRoles = [${allowedRoles.join(
         ", "
       )}]. Redirecting...`
     );
-    return (
-      <Navigate
-        to={userRole === "vendor" ? "/vendor-dashboard" : "/buyer-dashboard"}
-        replace
-      />
-    );
+    // Redirect each role to its dashboard
+    if (userRole === "admin") {
+      return <Navigate to="/admin-dashboard" replace />;
+    } else if (userRole === "vendor") {
+      return <Navigate to="/vendor-dashboard" replace />;
+    } else {
+      // fallback for buyers or any other
+      return <Navigate to="/buyer-dashboard" replace />;
+    }
   }
 
   console.log("[ProtectedRoute] Access granted => Rendering child route");
