@@ -1,5 +1,5 @@
 import { useNavigate, useLocation } from 'react-router-dom';
-import logo from '../../assets/img/Dashboard/CocoaLogo.png';
+import logo from '../../../assets/img/cocoa-logo.png';
 import { useAuth } from "../../../utils/AuthContext";
 
 interface MenuItem {
@@ -19,7 +19,7 @@ const SideBarAdmin = ({ isOpen, toggleSidebar }: SideBarProps) => {
 
   if (isLoading) {
     return (
-      <div className="fixed top-0 left-0 z-50 h-screen w-64 bg-[#D6CFF0] flex items-center justify-center">
+      <div className="fixed top-0 left-0 z-50 h-screen w-64 bg-[#D4CDF4] flex items-center justify-center">
         <div className="text-white">Loading...</div>
       </div>
     );
@@ -34,7 +34,7 @@ const SideBarAdmin = ({ isOpen, toggleSidebar }: SideBarProps) => {
   const menuItems: MenuItem[] = [
     { label: 'User & Access Management', path: '/admin/user-access' },
     { label: 'Vendors & Service Oversight', path: '/admin/vendors' },
-    { label: 'Analytics & Performance', path: '/admin/analytics' },
+    { label: 'Analytics & Performance', path: '/admin-analytics' },
     { label: 'Appointments & Chats', path: '/admin/appointments' },
     { label: 'Tools & Utilities', path: '/admin/tools' },
   ];
@@ -48,7 +48,7 @@ const SideBarAdmin = ({ isOpen, toggleSidebar }: SideBarProps) => {
 
   return (
     <div
-      className={`fixed top-0 left-0 z-50 h-screen w-64 bg-[#D6CFF0] text-white p-6  
+      className={`fixed top-0 left-0 z-50 h-screen w-64 bg-[#D4CDF4] text-white p-6  
         transition-transform duration-300 ease-in-out 
         ${isOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}
     >
@@ -72,7 +72,7 @@ const SideBarAdmin = ({ isOpen, toggleSidebar }: SideBarProps) => {
               role="button"
               tabIndex={0}
               className={`px-5 py-3 rounded-lg cursor-pointer text-lg font-medium transition-all 
-                ${isActive ? 'bg-white text-[#9082C6] shadow-md' : 'hover:bg-white/10 text-white'}`}
+                ${isActive ? 'bg-[#8B85C1] text-white shadow-md' : 'hover:bg-[#8B85C1] text-white'}`}
             >
               {label}
             </div>

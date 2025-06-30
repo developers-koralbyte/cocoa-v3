@@ -1,7 +1,7 @@
 import React, { ReactNode, useState, useEffect } from "react";
 import SideBarAdmin from "./SideBarAdmin";
 import { FiMenu } from "react-icons/fi";
-import logo from "../../assets/img/Dashboard/CocoaLogo.png";
+import logo from "../../../assets/img/Dashboard/CocoaLogo.png";
 
 interface BaseLayoutProps {
   children: ReactNode;
@@ -26,10 +26,10 @@ const BaseLayout = ({ children }: BaseLayoutProps) => {
   };
 
   return (
-    <div className="flex min-h-screen bg-white md:bg-[#9082C6]">
+    <div className="flex min-h-screen bg-white md:bg-[#D6CFF0]">
       {/* SIDEBAR */}
       <div
-        className={`fixed inset-y-0 left-0 z-40 w-64 transform bg-[#8B85C1] 
+        className={`fixed inset-y-0 left-0 z-40 w-64 transform bg-[#D6CFF0] 
         transition-transform duration-300 ease-in-out 
         ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} 
         md:static md:translate-x-0`}

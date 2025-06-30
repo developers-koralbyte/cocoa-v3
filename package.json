@@ -27,6 +27,7 @@
     "react-router-dom": "^7.5.2",
     "react-select": "^5.10.1",
     "react-toastify": "^11.0.3",
+    "recharts": "^3.0.2",
     "timeago.js": "^4.0.2",
     "wavesurfer.js": "^7.9.0",
     "zustand": "^5.0.3"

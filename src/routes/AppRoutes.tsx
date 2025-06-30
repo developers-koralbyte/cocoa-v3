@@ -11,8 +11,8 @@ const LoginPage = React.lazy(() => import('../pages/LoginPage'));
 const NewBuyer = React.lazy(() => import('../pages/NewBuyer'));
 const NewVendor = React.lazy(() => import('../pages/NewVendor'));
 const ForgotPasswordPage = React.lazy(() => import('../pages/Forgot_Password/ForgotPasswordPage'));
-const AdminLoginPage =React.lazy(()=>import("../pages/AdminDashboard/AdminLoginPage"));
-const AdminDashboard =React.lazy(()=>import("../pages/AdminDashboard/AdminDashboard"));
+const AdminLoginPage = React.lazy(() => import("../pages/AdminDashboard/AdminLoginPage"));
+const AdminDashboard = React.lazy(() => import("../pages/AdminDashboard/AdminDashboard"));
 const NewPasswordPage = React.lazy(() => import('../pages/Forgot_Password/NewPasswordPage'));
 const VerificationPage = React.lazy(() => import('../pages/Forgot_Password/VerificationPage'));
 const SignupSelectionPage = React.lazy(() => import('../pages/SignUpSelectionPage'));
@@ -28,7 +28,7 @@ const BecomingAVendor = React.lazy(() => import('../components/BecomeAVendor/Bec
 const VendorPricingVerification = React.lazy(() => import('../components/VendorPricing&Verification/VendorPricing&Verification'));
 const ManageProfilePage = React.lazy(() => import('../pages/ManageProfilePage'));
 const AboutUs = React.lazy(() => import('../pages/AboutUs'));
-const News= React.lazy(() => import('../components/News/NewsPage'));
+const News = React.lazy(() => import('../components/News/NewsPage'));
 const CataloguePage = React.lazy(() => import('../pages/Dashboard/Catalogue/CataloguePage'));
 const ServiceDetailPage = React.lazy(() => import('../pages/Dashboard/Catalogue/ServiceDetailPage'));
 const ProductDetailPage = React.lazy(() => import('../pages/Dashboard/Catalogue/ProductDetailPage'));
@@ -39,100 +39,72 @@ const CommercialEquipment = React.lazy(() => import('../components/CommericalEqu
 const FandBSuppliers = React.lazy(() => import('../components/FandBSupplier/FandBSupplier'));
 const ServiceProductsPage = React.lazy(() => import('../pages/Dashboard/ServiceProductPage'));
 
-
+//Admin Protected Routes
+const AnalytiicsPage = React.lazy(() => import('../pages/AdminDashboard/AnalyticsPage/AnalyticsPage'));
 const AppRoutes: React.FC = () => {
-    
     return (
         <Suspense fallback={<div>Loading...</div>}>
             <Routes>
                 {/* Public Routes */}
                 <Route path="/" element={<HomePage />} />
                 <Route path="/login" element={<LoginPage />} />
-                <Route
-                    path="/create-account"
-                    element={<SignupSelectionPage />}
-                />
+                <Route path="/create-account" element={<SignupSelectionPage />} />
                 <Route path="/new-buyer" element={<NewBuyer />} />
                 <Route path="/new-vendor" element={<NewVendor />} />
-                <Route
-                    path="/forgot-password"
-                    element={<ForgotPasswordPage />}
-                />
+                <Route path="/forgot-password" element={<ForgotPasswordPage />} />
                 <Route path="/new-password" element={<NewPasswordPage />} />
                 <Route path="/verification" element={<VerificationPage />} />
                 <Route path="/product/:productId" element={<ProductDetailPage />} />
+                <Route path="/service/:serviceId" element={<ServiceDetailPage />} />
 
-                <Route element={<ProtectedRoute allowedRoles={['vendor','buyer']} />}>
-                 <Route path="/settings" element={<ManageProfilePage />} />
-               </Route>
+                {/* Public admin login */}
+                <Route path="/admin-login" element={<AdminLoginPage />} />
 
-                {/* Protected Routes for Vendors */}
+                {/* Shared protected routes */}
+                <Route element={<ProtectedRoute allowedRoles={['vendor', 'buyer']} />}>
+                    <Route path="/settings" element={<ManageProfilePage />} />
+                </Route>
+
+                {/* Admin protected routes */}
+                <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>
+                    <Route path="/admin-dashboard" element={<AdminDashboard />} />
+                    <Route path="/admin-analytics" element={<AnalytiicsPage />} />
+                </Route>
+
+                {/* Vendor protected routes */}
                 <Route element={<ProtectedRoute allowedRoles={['vendor']} />}>
-                    <Route
-                        path="/vendor-dashboard"
-                        element={<VendorDashboard />}
-                    />
+                    <Route path="/vendor-dashboard" element={<VendorDashboard />} />
                     <Route path="/invoices" element={<VendorInvoicePage />} />
                     <Route path="/calendar" element={<CalendarPage />} />
                     <Route path="/inbox" element={<InboxPage />} />
-                    <Route path='/catalogue' element={<CataloguePage/>} />
-                    <Route
-                        path="/accounting-software"
-                        element={<AccountingSoftware />}
-                    />
-                    <Route
-                        path="/create-new-invoice"
-                        element={<CreateNewInvoice />}
-                    />
+                    <Route path='/catalogue' element={<CataloguePage />} />
+                    <Route path="/accounting-software" element={<AccountingSoftware />} />
+                    <Route path="/create-new-invoice" element={<CreateNewInvoice />} />
                     <Route path="/edit-invoice/:invoiceId" element={<EditInvoicePage />} />
                 </Route>
-                <Route path="/service/:serviceId" element={<ServiceDetailPage />} />
-                {/* Protected Routes for Buyers */}
+
+                {/* Buyer protected routes */}
                 <Route element={<ProtectedRoute allowedRoles={['buyer']} />}>
-                    <Route
-                        path="/buyer-dashboard"
-                        element={<BuyerDashboard />}
-                    />
-                    <Route
-                        path="/buyer-calendar"
-                        element={<BuyerCalendarPage />}
-                    />
+                    <Route path="/buyer-dashboard" element={<BuyerDashboard />} />
+                    <Route path="/buyer-calendar" element={<BuyerCalendarPage />} />
                     <Route path="/buyer-invoices" element={<BuyerInvoicePage />} />
                     <Route path="/buyer-inbox" element={<InboxPage />} />
                 </Route>
-                <Route path="/search" element={<ServiceProductsPage />} />
 
-                {/* Becoming a Vendor*/}
+                {/* Other public routes */}
+                <Route path="/search" element={<ServiceProductsPage />} />
                 <Route path="/become-a-vendor" element={<BecomingAVendor />} />
-                {/* Vendor Pricing & Verification*/}
                 <Route path="/vendor-prices" element={<VendorPricingVerification />} />
-                {/* Becoming a Buyer*/}
                 <Route path="/become-a-buyer" element={<BecomingABuyer />} />
-                {/* About us*/}
-             
                 <Route path="/about-us" element={<AboutUs />} />
                 <Route path="/news" element={<News />} />
-                {/* Corporate Solutions*/}
                 <Route path='/corporate-solutions' element={<CorporateSolutions />} />
-                {/* SaaS and ERP*/}
                 <Route path='/saas-erp' element={<SaaSandERP />} />
-                {/* Commercial Equipment*/}
                 <Route path='/commerical-equipment' element={<CommercialEquipment />} />
-                 {/* F and B Suppliers*/}
                 <Route path='/f-b-suppliers' element={<FandBSuppliers />} />
-
-                   {/* Public login for admins */}
-        <Route path="/admin-login" element={<AdminLoginPage />} />
-
-    {/* Admin-protected */}
-    <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>
-      <Route path="/admin-dashboard" element={<AdminDashboard />} />
-    </Route>
-                
             </Routes>
         </Suspense>
-    )
+    );
 };
-
 
 export default AppRoutes;

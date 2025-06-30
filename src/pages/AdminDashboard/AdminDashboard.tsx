@@ -1,15 +1,14 @@
 import React from 'react';
+import BaseLayout from "../../components/AdminDashboard/layout/BaseLayout";
 
 const AdminDashboard: React.FC = () => {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="text-center p-8 bg-white rounded-lg shadow">
-        <h1 className="text-3xl font-bold text-gray-700 mb-4">
-          Admin Dashboard
-        </h1>
-        <p className="text-gray-500">Coming soon… 🚀</p>
+    <BaseLayout>
+      <div className="p-6">
+        <h1 className="text-2xl font-bold text-gray-800 mb-4">Admin Dashboard</h1>
+        <p className="text-gray-600">Welcome to the admin panel. Use the sidebar to navigate to different admin functions.</p>
       </div>
-    </div>
+    </BaseLayout>
   );
 };
 
