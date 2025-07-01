@@ -8,6 +8,7 @@ import { doc, setDoc } from 'firebase/firestore'
 import upload from '../utils/upload'
 import { toast } from 'react-toastify'
 
+// Mirror your FormData type
 interface FormData {
   email: string
   password: string
@@ -23,13 +24,26 @@ interface FormData {
   role: string
 }
 
+// Newly passed in uploaded files
+interface UploadedFile {
+  file: File
+  name: string
+  id: string
+}
+
 interface Props {
   user: import('firebase/auth').User
   formData: FormData
   avatarFile: File | null
+  documents: UploadedFile[]
 }
 
-const VerificationWaitTime: React.FC<Props> = ({ user, formData, avatarFile }) => {
+const VerificationWaitTime: React.FC<Props> = ({
+  user,
+  formData,
+  avatarFile,
+  documents,
+}) => {
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -37,15 +51,19 @@ const VerificationWaitTime: React.FC<Props> = ({ user, formData, avatarFile }) =
       await user.reload()
       if (user.emailVerified) {
         clearInterval(interval)
-
         try {
-          // 1. upload avatar if provided
+          // 1) upload avatar if provided
           let avatarUrl = ''
           if (avatarFile) {
             avatarUrl = (await upload(avatarFile)) as string
           }
 
-          // 2. write to "users" collection
+          // 2) upload all business docs
+          const docUrls = await Promise.all(
+            documents.map(d => upload(d.file) as Promise<string>)
+          )
+
+          // 3) write shared users doc
           await setDoc(doc(db, 'users', user.uid), {
             id: user.uid,
             email: formData.email,
@@ -54,65 +72,59 @@ const VerificationWaitTime: React.FC<Props> = ({ user, formData, avatarFile }) =
             lastName: formData.lastName,
             avatar: avatarUrl,
             blocked: [],
+            status: 'pending',            // ← mark pending review
             createdAt: new Date(),
           })
 
-          // 3. write to "Buyers" collection
+          // 4) write Buyers doc
           await setDoc(doc(db, 'Buyers', user.uid), {
             ...formData,
-            role: formData.role.toLowerCase(),
-            emailVerified: true,
             uid: user.uid,
+            emailVerified: true,
             avatar: avatarUrl,
             blocked: [],
+            documents: docUrls,           // ← store uploaded URLs
+            documentUploaded: false,      // ← stays false until admin flips
+            status: 'pending',            // ← mark pending review
             createdAt: new Date(),
             categories: formData.categories
               .split(',')
-              .map(cat => cat.trim().toLowerCase()),
+              .map((c) => c.trim().toLowerCase()),
           })
 
-          // 4. redirect based on role
-          if (formData.role.toLowerCase() === 'vendor') {
-            navigate('/vendor-dashboard', { replace: true })
-          } else {
-            navigate('/buyer-dashboard', { replace: true })
-          }
+          // 5) notify & redirect
+          toast.info('Your profile is under review. We’ll notify you once approved.')
+          navigate('/buyer-dashboard', { replace: true })
         } catch (err: any) {
-          console.error('Error writing Firestore after verification:', err)
+          console.error('Error during verification:', err)
           toast.error('An error occurred. Please contact support.')
         }
       }
     }, 3000)
 
     return () => clearInterval(interval)
-  }, [user, formData, avatarFile, navigate])
+  }, [user, formData, avatarFile, documents, navigate])
 
   return (
-    <div className="min-h-screen bg-white flex flex-col items-center justify-center p-4 relative">
-      <div className="absolute top-4 left-4 mb-6">
+    <div className="min-h-screen bg-white flex flex-col items-center justify-center p-4 relative overflow-hidden">
+      <div className="absolute top-4 left-4">
         <a href="https://cocoa-app.com/" target="_blank" rel="noopener noreferrer">
           <img src={cocoaImg} alt="Cocoa Logo" className="w-[180px] h-[90px]" />
         </a>
       </div>
-      <div className="mb-8">
+      <div className="max-w-xl w-full text-center">
         <img
           src={verificationWait}
-          alt="Verification Wait"
-          className="max-w-[150px] h-auto mb-6"
+          alt="Verification in progress"
+          className="mx-auto mb-6 max-w-[150px] h-auto"
         />
+        <h1 className="text-3xl font-bold text-gray-900 mb-4">
+          Verification in Progress
+        </h1>
+        <p className="text-gray-600 mb-8">
+          We’re uploading your info and documents. You’ll be able to access your dashboard once your profile is approved.
+        </p>
       </div>
-      <h1 className="text-3xl font-bold text-gray-900 mb-4 text-center">
-        Verification in Progress
-      </h1>
-      <p className="text-gray-600 text-center max-w-md mb-12 font-nunito">
-        Thanks for signing up! We're reviewing your account information and email verification.
-      </p>
-      <button
-        className="px-8 py-3 bg-[#7C77C1] text-white rounded-full hover:bg-[#6661B0] transition-colors"
-        onClick={() => (window.location.href = '/')}
-      >
-        Explore Homepage
-      </button>
     </div>
   )
 }

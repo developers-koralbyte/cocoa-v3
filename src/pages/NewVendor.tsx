@@ -23,11 +23,7 @@ type FormData = {
   role: string;
 };
 
-type UploadedFile = {
-  file: File;
-  name: string;
-  id: string;
-};
+
 
 const passwordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[~!@#$%^&*_\-+=`|()[\]{}:;"'<>,.?\/]).+$/;
 
@@ -52,11 +48,10 @@ const NewVendor: React.FC = () => {
   });
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string>("");
-  const [uploadedDocuments, setUploadedDocuments] = useState<UploadedFile[]>([]);
 
   // Hold pending user + data until email verification
   const [pendingUser, setPendingUser] = useState<import("firebase/auth").User | null>(null);
-  const [pendingData, setPendingData] = useState<{ formData: FormData; avatarFile: File | null; documents: UploadedFile[] } | null>(null);
+  const [pendingData, setPendingData] = useState<{ formData: FormData; avatarFile: File  } | null>(null);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -71,21 +66,7 @@ const NewVendor: React.FC = () => {
     }
   };
 
-  const handleDocumentUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (files && files.length > 0) {
-      const newFiles = Array.from(files).map(file => ({
-        file,
-        name: file.name,
-        id: Math.random().toString(36).substring(2, 9)
-      }));
-      setUploadedDocuments(prev => [...prev, ...newFiles]);
-    }
-  };
 
-  const removeDocument = (id: string) => {
-    setUploadedDocuments(prev => prev.filter(doc => doc.id !== id));
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -110,7 +91,7 @@ const NewVendor: React.FC = () => {
       toast.info(`Verification email sent to ${user.email}`);
       // 3) defer all Firestore writes & avatar upload until after they verify
       setPendingUser(user);
-      setPendingData({ formData, avatarFile, documents: uploadedDocuments });
+      setPendingData({ formData, avatarFile });
     } catch (err: any) {
       console.error(err);
       if (err.code === "auth/email-already-in-use") {
@@ -122,7 +103,7 @@ const NewVendor: React.FC = () => {
   };
 
   if (pendingUser && pendingData) {
-    return <VendorVerification user={pendingUser} formData={pendingData.formData} avatarFile={pendingData.avatarFile} documents={pendingData.documents} />;
+    return <VendorVerification user={pendingUser} formData={pendingData.formData} avatarFile={pendingData.avatarFile}  />;
   }
 
   return (
@@ -228,44 +209,9 @@ const NewVendor: React.FC = () => {
             </div>
           </div>
 
-          {/* Document Upload */}
-          <div className="col-span-2">
-            <h3 className="text-xl font-semibold text-[#7C77C1] mb-2">Business Documents</h3>
-            <p className="text-sm text-gray-500 mb-3">Upload any relevant business documents (licenses, certifications, etc.)</p>
-            
-            <label className="inline-flex items-center px-4 py-2 bg-[#7C77C1] text-white text-sm font-medium rounded-md cursor-pointer hover:bg-purple-700 mb-4">
-              <Upload className="w-4 h-4 mr-2" />
-              Upload Documents
-              <input 
-                type="file" 
-                multiple 
-                onChange={handleDocumentUpload} 
-                required
-                className="hidden" 
-                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-              />
-            </label>
+     
 
-            {uploadedDocuments.length > 0 && (
-              <div className="mt-4 space-y-2">
-                {uploadedDocuments.map((doc) => (
-                  <div key={doc.id} className="flex items-center justify-between p-3 bg-gray-50 rounded border">
-                    <div className="flex items-center">
-                      <FileText className="w-5 h-5 text-[#7C77C1] mr-3" />
-                      <span className="text-sm text-gray-700">{doc.name}</span>
-                    </div>
-                    <button 
-                      type="button" 
-                      onClick={() => removeDocument(doc.id)}
-                      className="text-gray-400 hover:text-red-500"
-                    >
-                      <X className="w-5 h-5" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+           
 
           {/* Services & submit */}
           <div className="col-span-2 flex items-end">
