@@ -1,6 +1,7 @@
 import React from 'react';
 import BaseLayout from "../../components/AdminDashboard/layout/BaseLayout";
 
+
 const AdminDashboard: React.FC = () => {
   return (
     <BaseLayout>
