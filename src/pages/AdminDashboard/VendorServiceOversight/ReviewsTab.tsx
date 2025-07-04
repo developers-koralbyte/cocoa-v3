@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, doc, updateDoc } from 'firebase/firestore';
 import { db } from '../../../utils/firebase';
 import BaseLayout from '../../../components/AdminDashboard/layout/BaseLayout';
 
@@ -53,9 +53,21 @@ const ReviewsTab: React.FC = () => {
   ];
 
   const filteredReviews = reviews.filter(review => {
-    if (activeTab === 'Reviews') return true; // Show all reviews
+    if (activeTab === 'Reviews') return true;
     return review.status === tabs.find(tab => tab.label === activeTab)?.filter;
   });
+
+  const handleStatusChange = async (id: string, newStatus: string) => {
+    try {
+      const reviewRef = doc(db, 'reviews', id); // Reference to the specific document
+      await updateDoc(reviewRef, { status: newStatus }); // Update the status in Firestore
+      setReviews(reviews.map(review =>
+        review.id === id ? { ...review, status: newStatus } : review
+      )); // Update local state
+    } catch (err) {
+      setError('Failed to update status');
+    }
+  };
 
   if (loading) return <div className="text-center py-4">Loading...</div>;
   if (error) return <div className="text-center py-4 text-red-500">{error}</div>;
@@ -93,9 +105,23 @@ const ReviewsTab: React.FC = () => {
                     <td className="py-2 px-4">{review.product}</td>
                     <td className="py-2 px-4">{review.date}</td>
                     <td className="py-2 px-4">
-                      <span className={`inline-block px-4 py-1 rounded-full ${getStatusColor(review.status)}`}>
-                        {review.status}
-                      </span>
+                      {activeTab === 'Reviews' && (
+                        <select
+                          value={review.status}
+                          onChange={(e) => handleStatusChange(review.id, e.target.value)}
+                          className={`inline-block px-4 py-1 rounded-full ${getStatusColor(review.status)}`}
+                        >
+                          <option value="Review">Review</option>
+                          <option value="Approved">Approved</option>
+                          <option value="Rejected">Rejected</option>
+                          <option value="Pending">Pending</option>
+                        </select>
+                      )}
+                      {activeTab !== 'Reviews' && (
+                        <span className={`inline-block px-4 py-1 rounded-full ${getStatusColor(review.status)}`}>
+                          {review.status}
+                        </span>
+                      )}
                     </td>
                   </tr>
                 ))}
