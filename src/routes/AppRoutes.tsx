@@ -17,6 +17,7 @@ const AdminDashboard = React.lazy(() => import("../pages/AdminDashboard/AdminDas
 const UserAccessManagement = React.lazy(() => import("../pages/AdminDashboard/UserAcessManagement/UserAccessManagement"));
 const UserDetailsPage = React.lazy(() => import("../pages/AdminDashboard/UserAcessManagement/UserDetailsPage"));
 
+const VendorServiceOversight = React.lazy(() => import('../pages/AdminDashboard/VendorServiceOversight/ReviewsTab'));
 const NewPasswordPage = React.lazy(() => import('../pages/Forgot_Password/NewPasswordPage'));
 const VerificationPage = React.lazy(() => import('../pages/Forgot_Password/VerificationPage'));
 const SignupSelectionPage = React.lazy(() => import('../pages/SignUpSelectionPage'));
@@ -78,6 +79,7 @@ const AppRoutes: React.FC = () => {
                     
         />
 
+                    <Route path="/admin/vendors" element= {<VendorServiceOversight />} />
                 </Route>
 
                 {/* Vendor protected routes */}
