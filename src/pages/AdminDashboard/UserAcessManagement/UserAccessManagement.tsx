@@ -1,9 +1,10 @@
 // src/pages/admin/UserAccessManagement.tsx
 import React, { useState, useEffect, useMemo } from 'react';
-import { FiSearch } from 'react-icons/fi';
+import { FiDownload, FiRefreshCcw, FiSearch, FiUpload } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
 import BaseLayout from '../../../components/AdminDashboard/layout/BaseLayout';
 import { db } from '../../../utils/firebase';
+
 import {
   collection,
   query,
@@ -12,7 +13,8 @@ import {
   updateDoc,
   doc,
   QueryDocumentSnapshot,
-  DocumentData
+  DocumentData,
+  setDoc
 } from 'firebase/firestore';
 import { UserRecord } from './UserDetailsPage';
 
@@ -44,6 +46,8 @@ const UserAccessManagement: React.FC = () => {
   const [search, setSearch]           = useState<string>('');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const navigate                      = useNavigate();
+  const [lastUpdated, setLastUpdated] = useState<string>(new Date().toLocaleTimeString());
+
 
   const fetchData = async () => {
     const qV = query(collection(db,'users'), where('role','==','vendor'));
@@ -75,6 +79,8 @@ const UserAccessManagement: React.FC = () => {
       })
     );
     setSelectedIds(new Set());
+
+    setLastUpdated(new Date().toLocaleTimeString());
   };
 
   useEffect(() => {
@@ -117,6 +123,66 @@ const UserAccessManagement: React.FC = () => {
     setSelectedIds(newSet);
   };
 
+  const handleImport = () => {
+    // 1) create a hidden file input
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.csv';
+  
+    input.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+  
+      // 2) read as text
+      const text = await file.text();
+  
+      // 3) simple CSV parse: split lines & commas
+      const rows = text.trim().split('\n');
+      // assume first row is header: firstName,lastName,email,role,status
+      for (let i = 1; i < rows.length; i++) {
+        const [firstName, lastName, email, role, status] = rows[i].split(',').map(s => s.trim());
+        if (!email) continue;
+  
+        // 4) upsert into Firestore (key by email or some other ID)
+        const userRef = doc(db, 'users', email);
+        await setDoc(userRef, { firstName, lastName, email, role, status }, { merge: true });
+      }
+  
+      // 5) refresh the table
+      fetchData();
+    };
+  
+    // trigger the OS file picker
+    input.click();
+  };
+
+  const handleExport = async () => {
+    // 1) grab every user
+    const snap = await getDocs(collection(db, 'users'));
+  
+    // 2) prepare CSV headers and rows
+    const headers = ['firstName', 'lastName', 'email', 'role', 'status'];
+    const rows = snap.docs.map(doc => {
+      const d = doc.data() as Record<string,string>;
+      return headers.map(h => JSON.stringify(d[h] || '')).join(',');
+    });
+  
+    // 3) assemble full CSV text
+    const csvContent = [headers.join(','), ...rows].join('\r\n');
+  
+    // 4) create a Blob and trigger download
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', 'users_export.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+  
+
   const handleBulkAction = async (newStatus: 'active'|'suspended'|'rejected') => {
     if (selectedIds.size === 0) return;
     if (!confirm(`Are you sure you want to ${newStatus} ${selectedIds.size} user(s)?`)) return;
@@ -134,9 +200,68 @@ const UserAccessManagement: React.FC = () => {
 
   return (
     <BaseLayout>
-      <h1 className="text-2xl font-extrabold mb-6" style={{ color: ACCENT }}>
-        User &amp; Access Management
-      </h1>
+    <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-6">
+  {/* Title + Subtitle */}
+  <div>
+    <h1 className="text-2xl font-extrabold text-[#7C77C1]">
+      User &amp; Access Management
+    </h1>
+    <p className="text-sm text-gray-500 mt-1">
+      Manage roles, statuses, and permissions • Last updated: {lastUpdated /* e.g. 8:14:59 AM */}
+    </p>
+  </div>
+
+  {/* Action Controls */}
+  <div className="flex flex-wrap items-center space-x-2 mt-4 md:mt-0">
+    {/* Invite New User */}
+    <button
+    disabled
+      onClick={() => navigate('/admin/users/invite')}
+      className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 text-sm 
+      disabled:bg-gray-300 
+      disabled:text-gray-500 
+      disabled:cursor-not-allowed 
+      disabled:opacity-50"
+    >
+      Invite User
+    </button>
+
+    {/* Import / Export */}
+    <button
+      onClick={handleImport}
+      className="px-3 py-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 text-sm flex items-center"
+    >
+      <FiUpload className="mr-1" /> Import CSV
+    </button>
+    <button
+      onClick={handleExport}
+      className="px-3 py-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 text-sm flex items-center"
+    >
+      <FiDownload className="mr-1" /> Export CSV
+    </button>
+
+    {/* Refresh */}
+    <button
+      onClick={fetchData}
+      className="p-2 bg-blue-100 text-blue-600 rounded hover:bg-blue-200"
+      title="Refresh data"
+    >
+      <FiRefreshCcw />
+    </button>
+
+    {/* Search */}
+    <div className="relative text-gray-400">
+      <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2" />
+      <input
+        type="text"
+        placeholder="Search by name or email…"
+        value={search}
+        onChange={e => setSearch(e.target.value)}
+        className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring focus:ring-[#7C77C1]/40 focus:border-[#7C77C1] text-sm"
+      />
+    </div>
+  </div>
+</div>
 
       {/* Metrics */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-4">

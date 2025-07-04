@@ -1,3 +1,4 @@
+// src/components/AdminDashboard/layout/BaseLayout.tsx
 import React, { ReactNode, useState, useEffect } from "react";
 import SideBar from "../Dashboard/SideBar";
 import { FiMenu, FiUser } from "react-icons/fi";
@@ -120,8 +121,8 @@ const BaseLayout = ({ children }: BaseLayoutProps) => {
         <div className="flex-1 bg-white md:mt-4 lg:mt-6 md:mr-3 lg:mr-4 xl:mr-5 md:rounded-t-2xl lg:rounded-t-3xl xl:rounded-t-[3.5rem] md:shadow-lg overflow-hidden p-4">
           {profileStatus === "pending" ? (
             <UnderReview />
-          ) : profileStatus === "rejected" ? (
-            <RejectedNotice reason="Unfortunately your submitted documents didn't meet our requirements.Please Contact Support for more details" />
+          ) : (profileStatus === "rejected" || profileStatus === "suspended") ? (
+            <RejectedNotice reason="Unfortunately your submitted documents didn't meet our requirements. Please contact Support for more details" />
           ) : (
             children
           )}
