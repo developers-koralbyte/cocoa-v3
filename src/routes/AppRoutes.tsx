@@ -3,6 +3,7 @@ import { Routes, Route } from 'react-router-dom';
 import BuyerCalendarPage from '../pages/Dashboard/BuyerCalendarPage';
 import ProtectedRoute from "../utils/ProtectedRoute";
 import BecomingABuyer from '../components/BecomingABuyer/BecomingABuyer';
+
 // import ProfilePage from '../pages/ManageProfilePage';
 
 // Lazy load all the components
@@ -13,6 +14,9 @@ const NewVendor = React.lazy(() => import('../pages/NewVendor'));
 const ForgotPasswordPage = React.lazy(() => import('../pages/Forgot_Password/ForgotPasswordPage'));
 const AdminLoginPage = React.lazy(() => import("../pages/AdminDashboard/AdminLoginPage"));
 const AdminDashboard = React.lazy(() => import("../pages/AdminDashboard/AdminDashboard"));
+const UserAccessManagement = React.lazy(() => import("../pages/AdminDashboard/UserAcessManagement/UserAccessManagement"));
+const UserDetailsPage = React.lazy(() => import("../pages/AdminDashboard/UserAcessManagement/UserDetailsPage"));
+
 const VendorServiceOversight = React.lazy(() => import('../pages/AdminDashboard/VendorServiceOversight/ReviewsTab'));
 const NewPasswordPage = React.lazy(() => import('../pages/Forgot_Password/NewPasswordPage'));
 const VerificationPage = React.lazy(() => import('../pages/Forgot_Password/VerificationPage'));
@@ -70,6 +74,11 @@ const AppRoutes: React.FC = () => {
                 <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>
                     <Route path="/admin-dashboard" element={<AdminDashboard />} />
                     <Route path="/admin-analytics" element={<AnalytiicsPage />} />
+                    <Route path="/admin/user-access" element={<UserAccessManagement />} />
+                    <Route  path="/admin/users/:id"  element={<UserDetailsPage />}
+                    
+        />
+
                     <Route path="/admin/vendors" element= {<VendorServiceOversight />} />
                 </Route>
 

@@ -134,6 +134,11 @@ const NewBuyer: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
+    if (uploadedDocuments.length === 0) {
+      toast.error('Please upload at least one business document before submitting.')
+      return
+    }
+
     if (!passwordPattern.test(formData.password)) {
       toast.error(
         'Password must include uppercase, lowercase, number & special character.'
@@ -497,7 +502,12 @@ const NewBuyer: React.FC = () => {
             </div>
             <button
               type="submit"
-              className="px-6 py-2 bg-[#7C77C1] text-white rounded-lg hover:bg-[#5F5A9F] transition"
+              disabled={uploadedDocuments.length === 0}
+              className={`px-6 py-2 rounded-lg font-medium transition ${
+                uploadedDocuments.length > 0
+                  ? 'bg-[#7C77C1] text-white hover:bg-[#5F5A9F]'
+                  : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+              }`}
             >
               Submit
             </button>

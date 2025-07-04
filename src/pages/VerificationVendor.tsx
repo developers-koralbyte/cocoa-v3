@@ -6,7 +6,7 @@ import cocoaImg from "../assets/img/cocoa-logo.png";
 import verificationCheck from "../assets/img/Verification/VerificationCheck.png";
 import verificationWait from "../assets/img/Verification/verificationWait.png";
 import { auth, db } from "../utils/firebase";
-import { doc, setDoc, updateDoc } from "firebase/firestore";
+import { arrayUnion, doc, setDoc, updateDoc } from "firebase/firestore";
 import { toast } from "react-toastify";
 import upload from "../utils/upload";
 
@@ -64,6 +64,7 @@ const VendorVerification: React.FC<Props> = ({ user, formData, avatarFile }) => 
             avatar: avatarUrl,
             blocked: [],
             createdAt: new Date(),
+            status: 'pending',              // ← mark pending for admin
           });
           // write Vendors doc
           await setDoc(vendorRef, {
@@ -77,7 +78,9 @@ const VendorVerification: React.FC<Props> = ({ user, formData, avatarFile }) => 
             categories: formData.categories
               .split(',')
               .map(c => c.trim().toLowerCase()),
-            documentUploaded: false,
+              documentUploaded: false,        // ← stays false until admin approves
+              status: 'pending',              // ← mark pending
+              documents: [],                  // ← initialize empty array
           });
           toast.success('Email verified! Please upload your business proof.');
           setPhase('upload');
@@ -111,20 +114,25 @@ const VendorVerification: React.FC<Props> = ({ user, formData, avatarFile }) => 
     if (sel) setFile(sel);
   };
 
-  // handle proof upload
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!file) return;
+
     try {
-      await updateDoc(vendorRef, { documentUploaded: true });
-      toast.success('Document uploaded! Verifying...');
-      setPhase('verifying');
-      setTimeout(() => {
-        navigate('/vendor-dashboard', { replace: true });
-      }, 2000);
+      // 1) upload this proof file
+      const url = (await upload(file)) as string;
+
+      // 2) append it into a "documents" array—leave documentUploaded: false
+      await updateDoc(vendorRef, {
+        documents: arrayUnion(url),
+      });
+
+      // 3) notify user & redirect immediately
+      toast.info('Thank you! Your documents are under review.');
+      navigate('/vendor-dashboard', { replace: true });
     } catch (err) {
       console.error(err);
-      toast.error('Failed to update document status.');
+      toast.error('Failed to upload document. Please try again.');
     }
   };
 
