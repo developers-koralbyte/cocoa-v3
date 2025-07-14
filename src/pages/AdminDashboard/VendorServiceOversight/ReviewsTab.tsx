@@ -3,36 +3,49 @@ import { collection, getDocs, doc, updateDoc } from 'firebase/firestore';
 import { db } from '../../../utils/firebase';
 import BaseLayout from '../../../components/AdminDashboard/layout/BaseLayout';
 
-interface Review {
+interface Item {
   id: string;
   name: string;
-  product: string;
+  price: number;
   date: string;
   status: string;
+  type: 'service' | 'product'; // To differentiate between services and products
 }
 
 const ReviewsTab: React.FC = () => {
-  const [reviews, setReviews] = useState<Review[]>([]);
+  const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('Reviews');
 
   useEffect(() => {
-    const fetchReviews = async () => {
+    const fetchItems = async () => {
       try {
-        const querySnapshot = await getDocs(collection(db, 'reviews'));
-        const reviewsData = querySnapshot.docs.map(doc => ({
+        // Fetch services
+        const servicesSnapshot = await getDocs(collection(db, 'services'));
+        const servicesData = servicesSnapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data(),
-        })) as Review[];
-        setReviews(reviewsData);
+          type: 'service' as const,
+        })) as Item[];
+
+        // Fetch products
+        const productsSnapshot = await getDocs(collection(db, 'products'));
+        const productsData = productsSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+          type: 'product' as const,
+        })) as Item[];
+
+        // Combine services and products
+        setItems([...servicesData, ...productsData]);
       } catch (err) {
-        setError('Failed to fetch reviews');
+        setError('Failed to fetch items');
       } finally {
         setLoading(false);
       }
     };
-    fetchReviews();
+    fetchItems();
   }, []);
 
   const getStatusColor = (status: string) => {
@@ -52,17 +65,21 @@ const ReviewsTab: React.FC = () => {
     { label: 'Flagged Content', filter: 'Rejected' },
   ];
 
-  const filteredReviews = reviews.filter(review => {
+  const filteredItems = items.filter(item => {
     if (activeTab === 'Reviews') return true;
-    return review.status === tabs.find(tab => tab.label === activeTab)?.filter;
+    return item.status === tabs.find(tab => tab.label === activeTab)?.filter;
   });
 
   const handleStatusChange = async (id: string, newStatus: string) => {
     try {
-      const reviewRef = doc(db, 'reviews', id); // Reference to the specific document
-      await updateDoc(reviewRef, { status: newStatus }); // Update the status in Firestore
-      setReviews(reviews.map(review =>
-        review.id === id ? { ...review, status: newStatus } : review
+      // Determine the collection based on the item type
+      const item = items.find(i => i.id === id);
+      if (!item) throw new Error('Item not found');
+      const collectionName = item.type === 'service' ? 'services' : 'products';
+      const itemRef = doc(db, collectionName, id); // Reference to the specific document
+      await updateDoc(itemRef, { status: newStatus }); // Update the status in Firestore
+      setItems(items.map(item =>
+        item.id === id ? { ...item, status: newStatus } : item
       )); // Update local state
     } catch (err) {
       setError('Failed to update status');
@@ -71,7 +88,7 @@ const ReviewsTab: React.FC = () => {
 
   if (loading) return <div className="text-center py-4">Loading...</div>;
   if (error) return <div className="text-center py-4 text-red-500">{error}</div>;
-  if (!reviews.length && !loading) return <div className="text-center py-4">No reviews available.</div>;
+  if (!items.length && !loading) return <div className="text-center py-4">No items available.</div>;
 
   return (
     <BaseLayout>
@@ -93,23 +110,23 @@ const ReviewsTab: React.FC = () => {
               <thead>
                 <tr className="bg-white">
                   <th className="py-2 px-4 text-left">Name</th>
-                  <th className="py-2 px-4 text-left">Product</th>
+                  <th className="py-2 px-4 text-left">Price</th>
                   <th className="py-2 px-4 text-left">Date</th>
                   <th className="py-2 px-4 text-left">Status</th>
                 </tr>
               </thead>
               <tbody>
-                {filteredReviews.map((review) => (
-                  <tr key={review.id} className="border-b">
-                    <td className="py-2 px-4">{review.name}</td>
-                    <td className="py-2 px-4">{review.product}</td>
-                    <td className="py-2 px-4">{review.date}</td>
+                {filteredItems.map((item) => (
+                  <tr key={item.id} className="border-b">
+                    <td className="py-2 px-4">{item.name}</td>
+                    <td className="py-2 px-4">${item.price}</td>
+                    <td className="py-2 px-4">{item.date}</td>
                     <td className="py-2 px-4">
                       {activeTab === 'Reviews' && (
                         <select
-                          value={review.status}
-                          onChange={(e) => handleStatusChange(review.id, e.target.value)}
-                          className={`inline-block px-4 py-1 rounded-full ${getStatusColor(review.status)}`}
+                          value={item.status}
+                          onChange={(e) => handleStatusChange(item.id, e.target.value)}
+                          className={`inline-block px-4 py-1 rounded-full ${getStatusColor(item.status)}`}
                         >
                           <option value="Review">Review</option>
                           <option value="Approved">Approved</option>
@@ -118,8 +135,8 @@ const ReviewsTab: React.FC = () => {
                         </select>
                       )}
                       {activeTab !== 'Reviews' && (
-                        <span className={`inline-block px-4 py-1 rounded-full ${getStatusColor(review.status)}`}>
-                          {review.status}
+                        <span className={`inline-block px-4 py-1 rounded-full ${getStatusColor(item.status)}`}>
+                          {item.status}
                         </span>
                       )}
                     </td>
