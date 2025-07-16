@@ -28,7 +28,7 @@ jobs:
               uses: SamKirkland/FTP-Deploy-Action@v4.3.5
               with:
                   server: ftp.koralbyte.com
-                  username: dev-koralbyte@dev.koralbyte.com
+                  username: dev.cocoa-app@dev.cocoa-app.com
                   password: ${{ secrets.DEV_FTP_COCOA }}
                   protocol: ftps
                   port: 21
