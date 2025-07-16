@@ -1,9 +1,9 @@
 on:
     push:
         branches:
-            - Development
+            - Staging
 
-name: 🚀 Deploy the website on push
+name: 🚀 Deploy on Staging
 
 jobs:
     web-deploy:
