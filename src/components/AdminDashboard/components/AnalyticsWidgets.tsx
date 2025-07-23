@@ -470,7 +470,7 @@ export const SystemHealthWidget: React.FC<SystemHealthProps> = ({
           color: 'text-red-600 bg-red-100',
           icon: <X className="w-5 h-5" />,
           msg: 'Service disruption detected',
-        };
+        };  
       default:
         return {
           color: 'text-gray-600 bg-gray-100',
