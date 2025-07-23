@@ -1,9 +1,9 @@
 on:
     push:
         branches:
-            - Development
+            - Staging
 
-name: 🚀 Deploy website on push
+name: 🚀 Deploy on Staging
 
 jobs:
     web-deploy:
@@ -28,8 +28,8 @@ jobs:
               uses: SamKirkland/FTP-Deploy-Action@v4.3.5
               with:
                   server: ftp.koralbyte.com
-                  username: dev-koralbyte@dev.koralbyte.com
-                  password: ${{ secrets.PROD_FTP_PASSWORD }}
+                  username: staging@staging.cocoa-app.com
+                  password: ${{ secrets.STAGING_COCOA_FTP }}
                   protocol: ftps
                   port: 21
                   local-dir: ./dist/
