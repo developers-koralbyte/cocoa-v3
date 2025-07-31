@@ -9,7 +9,7 @@ import ProcurementSection from "../components/HomePage/ProcurementSection";
 import TopSuppliers from "../components/HomePage/TopSuppliers";
 import BusinessFeatures from "../components/HomePage/BusinessFeatures";
 import Pricing from "../components/HomePage/Pricing";
-
+import OurPartners from "../components/HomePage/OurPartners";
 
 function App() {
   return (
@@ -23,7 +23,9 @@ function App() {
       <LatestNews />
       {/* <Pricing/> */}
       <HowItWorks />
+      <OurPartners />
       <FAQ />
+
       <footer>
         <Footer />
       </footer>
