@@ -1,15 +1,14 @@
-import { useRef, useState, useEffect, useState as useResponsiveState } from 'react'
+import { useRef, useState, useEffect } from 'react'
 import { FaPlay, FaPause, FaVolumeMute, FaVolumeUp } from 'react-icons/fa'
 import cocoaimg from '../../components/HomePage/cocoaImageVid.jpeg'
-// You can use any video file here 
+import CocoaVideo from '../../assets/CocoaVideo.mp4'
 
 const HowItWorks = () => {
     const videoRef = useRef<HTMLVideoElement | null>(null)
     const [isPlaying, setIsPlaying] = useState(false)
     const [isMuted, setIsMuted] = useState(true)
     const [showPlaceholder, setShowPlaceholder] = useState(true)
-
-    const [isMobile, setIsMobile] = useResponsiveState(false)
+    const [isMobile, setIsMobile] = useState(false)
 
     const togglePlay = () => {
         if (videoRef.current) {
@@ -59,7 +58,7 @@ const HowItWorks = () => {
                     {/* Video Element (Always Present) */}
                     <video
                         ref={videoRef}
-                        src={'cocoavidcomp'}
+                        src={CocoaVideo}
                         className="w-full max-h-[75vh] rounded-xl shadow-xl object-cover"
                         muted={isMuted}
                         onPlay={() => setIsPlaying(true)}

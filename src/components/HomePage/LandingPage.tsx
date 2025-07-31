@@ -15,9 +15,9 @@ import bgWaveMobile from '../../assets/img/MainSection/bgWaveMobile.png'
 
 const LandingPage = () => {
     const navigate = useNavigate() // Hook for navigation
-    const [activeDropdown, setActiveDropdown] = useState(null)
+    const [activeDropdown, setActiveDropdown] = useState<string | null>(null)
 
-    const toggleDropdown = (type) => {
+    const toggleDropdown = (type: string) => {
         setActiveDropdown((prev) => (prev === type ? null : type))
     }
 
