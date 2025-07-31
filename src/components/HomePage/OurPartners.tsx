@@ -61,7 +61,6 @@ const OurPartners = () => {
             <div className="max-w-7xl mx-auto px-4">
                 {/* Header */}
                 <div className="text-center mb-16">
-
                     <h2 className="text-4xl md:text-5xl font-bold mb-4 font-nunito">
                         Our <span className="text-[#6868AC]">Partners</span>
                     </h2>
@@ -70,7 +69,7 @@ const OurPartners = () => {
                     </p>
                 </div>
 
-                {/* Running Strip Container */}
+                {/* Single Running Strip Container */}
                 <div className="relative">
                     {/* Gradient Masks for fade effect */}
                     <div className="absolute left-0 top-0 w-32 h-full bg-gradient-to-r from-white via-white/80 to-transparent z-10 pointer-events-none"></div>
@@ -102,40 +101,6 @@ const OurPartners = () => {
                         </div>
                     </div>
                 </div>
-
-                {/* Second Strip - Reverse Direction */}
-                <div className="relative mt-8">
-                    {/* Gradient Masks */}
-                    <div className="absolute left-0 top-0 w-32 h-full bg-gradient-to-r from-white via-white/80 to-transparent z-10 pointer-events-none"></div>
-                    <div className="absolute right-0 top-0 w-32 h-full bg-gradient-to-l from-white via-white/80 to-transparent z-10 pointer-events-none"></div>
-                    
-                    <div className="overflow-hidden py-4">
-                        <div 
-                            className="flex gap-16 animate-scroll-reverse"
-                            style={{
-                                animation: 'scroll-reverse 45s linear infinite',
-                                width: 'fit-content'
-                            }}
-                        >
-                            {extendedPartners.reverse().map((partner) => (
-                                <div
-                                    key={`reverse-${partner.uniqueId}`}
-                                    className="flex-shrink-0 group"
-                                >
-                                    <div className="w-40 h-24 bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 flex items-center justify-center p-4 transform group-hover:scale-105 border border-gray-50">
-                                        <img
-                                            src={partner.logo}
-                                            alt={`${partner.name} logo`}
-                                            className="max-h-12 max-w-full object-contain transition-all duration-300 opacity-80 group-hover:opacity-100"
-                                        />
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-
-                
             </div>
 
             <style>{`
@@ -148,21 +113,8 @@ const OurPartners = () => {
                     }
                 }
                 
-                @keyframes scroll-reverse {
-                    0% {
-                        transform: translateX(-50%);
-                    }
-                    100% {
-                        transform: translateX(0);
-                    }
-                }
-                
                 .animate-scroll {
                     animation: scroll 40s linear infinite;
-                }
-                
-                .animate-scroll-reverse {
-                    animation: scroll-reverse 45s linear infinite;
                 }
             `}</style>
         </section>

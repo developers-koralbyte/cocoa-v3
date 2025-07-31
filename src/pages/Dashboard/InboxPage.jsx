@@ -19,7 +19,6 @@ import BaseLayout from '../../components/Dashboard/BaseLayout'
 import upload from '../../utils/upload'
 import { format } from 'timeago.js'
 import Header from '../../components/Dashboard/Invoices/HeaderProps'
-import AddBuyerChat from '../../components/chat/AddBuyerChat'
 import { useLocation } from 'react-router-dom';
 import DefaultAvatar from '../../components/Dashboard/Invoices/DefaultAvatar'
 import defaultimg from "../../assets/chat/default.png"
@@ -50,7 +49,6 @@ const InboxPage = () => {
     const [searchQuery, setSearchQuery] = useState('')
     const [img, setImg] = useState({ file: null, url: '' })
     const endRef = useRef(null)
-    const [showNewChatModal, setShowNewChatModal] = useState(false)
     // At the top with your other state declarations:
     const [documentFile, setDocumentFile] = useState(null)
     const [documentPreview, setDocumentPreview] = useState(null)
@@ -590,39 +588,6 @@ const InboxPage = () => {
             `${username} ${firstName} ${lastName} ${businessName}`.toLowerCase()
         return searchableText.includes(searchQuery.toLowerCase())
     })
-
-    // Handle new buyer chat selection
-    const handleNewBuyerSelect = (chatData) => {
-        if (!chatData || !chatData.chatId || !chatData.user) {
-            console.error('Invalid chat data')
-            return
-        }
-
-        try {
-            console.log('New buyer selected:', chatData.user)
-
-            // Make sure the user has a name for display
-            const userWithDefaults = {
-                ...chatData.user,
-                firstName:
-                    chatData.user.firstName ||
-                    chatData.user.name ||
-                    chatData.user.username ||
-                    'Unknown',
-                businessName: chatData.user.businessName || 'User',
-                role: chatData.user.role || 'user',
-            }
-
-            // Change to the selected chat with enhanced user data
-            changeChat(chatData.chatId, userWithDefaults)
-
-            if (isMobile) {
-                setShowChatList(false)
-            }
-        } catch (error) {
-            console.error('Error changing chat:', error)
-        }
-    }
     
     const combineDateAndTime = (date, timeString) => {
         // Set the date to start of day (local)
@@ -776,7 +741,7 @@ const InboxPage = () => {
                             }}
                         >
                             <div className="bg-white rounded-xl sm:rounded-2xl flex-1 overflow-hidden">
-                                {/* Search and New Chat Button */}
+                                {/* Search Bar Only */}
                                 <div className="p-3 sm:p-4 border-b border-gray-200">
                                     <div className="relative mb-2 sm:mb-3">
                                         <input
@@ -789,23 +754,6 @@ const InboxPage = () => {
                                             }
                                         />
                                     </div>
-
-                                    <button
-                                        onClick={() =>
-                                            setShowNewChatModal(true)
-                                        }
-                                        className="w-full py-2 sm:py-2.5 mt-2 rounded-full bg-buttonBg text-white text-sm sm:text-base flex items-center justify-center hover:bg-[#4A3B7A] transition-colors"
-                                    >
-                                        <span className="mr-2">+</span>
-                                        <span className="hidden xs:inline">
-                                            {currentUser?.role === 'vendor'
-                                                ? 'Chat with Buyer'
-                                                : 'Chat with Vendor'}
-                                        </span>
-                                        <span className="xs:hidden">
-                                            New Chat
-                                        </span>
-                                    </button>
                                 </div>
 
                                 {/* Chat List */}
@@ -1170,20 +1118,6 @@ const InboxPage = () => {
                     onSchedule={handleSaveAppointment}
                     selectedPartner={selectedPartner}
                 />
-            )}
-
-            {/* New Chat Modal */}
-            {showNewChatModal && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                    <div className="w-full max-w-md sm:max-w-lg md:max-w-xl">
-                        <AddBuyerChat
-                            onClose={() => setShowNewChatModal(false)}
-                            onBuyerSelect={handleNewBuyerSelect}
-                            userRole={currentUser?.role}
-                            searchRole={currentUser?.role === 'vendor' ? 'buyer' : 'vendor'}
-                        />
-                    </div>
-                </div>
             )}
         </BaseLayout>
     )
