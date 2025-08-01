@@ -1,35 +1,36 @@
 on:
-    push:
-        branches:
-            - Production
+  push:
+    branches:
+      - Production
 
 name: 🚀 Deploy on Production
 
 jobs:
-    web-deploy:
-        name: 🎉 Deploy
-        runs-on: ubuntu-latest
-        steps:
-            - name: 🚚 Get latest code
-              uses: actions/checkout@v4
+  web-deploy:
+    name: 🎉 Deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🚚 Get latest code
+        uses: actions/checkout@v4
 
-            - name: Use Node.js 20
-              uses: actions/setup-node@v2
-              with:
-                  node-version: '20.13.1'
+      - name: Use Node.js 20
+        uses: actions/setup-node@v2
+        with:
+          node-version: '20.13.1'
 
-            - name: 🔨 Build Project
-              run: |
-                  npm config set legacy-peer-deps true
-                  npm install 
-                  CI=false npm run build
+      - name: 🔨 Build Project
+        run: |
+          npm config set legacy-peer-deps true
+          npm install
+          CI=false npm run build
 
-            - name: 📂 Sync files
-              uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-              with:
-                  server: ftp.koralbyte.com
-                  username: cocoa-app@cocoa-app.com
-                  password: ${{ secrets.PROD_FTP_PASSWORD }}
-                  protocol: ftps
-                  port: 21
-                  local-dir: ./dist/
+      - name: 📂 Sync files to Production
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.PROD_FTP_SERVER }}
+          username: ${{ secrets.PROD_FTP_USERNAME }}
+          password: ${{ secrets.PROD_FTP_PASSWORD }}
+          protocol: ftps
+          port: 21
+          local-dir: ./dist/
+          target-dir: public_html

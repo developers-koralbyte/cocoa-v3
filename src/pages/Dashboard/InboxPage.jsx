@@ -19,7 +19,6 @@ import BaseLayout from '../../components/Dashboard/BaseLayout'
 import upload from '../../utils/upload'
 import { format } from 'timeago.js'
 import Header from '../../components/Dashboard/Invoices/HeaderProps'
-import AddBuyerChat from '../../components/chat/AddBuyerChat'
 import { useLocation } from 'react-router-dom';
 import DefaultAvatar from '../../components/Dashboard/Invoices/DefaultAvatar'
 import defaultimg from "../../assets/chat/default.png"
@@ -40,8 +39,7 @@ import {
     findOrCreateChat,
     fetchUserBasic,
     sendSystemMessage
-  } from '../../utils/chatHelpers';
-  
+} from '../../utils/chatHelpers';
 
 const InboxPage = () => {
     // States
@@ -51,7 +49,6 @@ const InboxPage = () => {
     const [searchQuery, setSearchQuery] = useState('')
     const [img, setImg] = useState({ file: null, url: '' })
     const endRef = useRef(null)
-    const [showNewChatModal, setShowNewChatModal] = useState(false)
     // At the top with your other state declarations:
     const [documentFile, setDocumentFile] = useState(null)
     const [documentPreview, setDocumentPreview] = useState(null)
@@ -67,25 +64,15 @@ const InboxPage = () => {
     const { currentUser, fetchUserInfo } = useUserStore()
     const { chatId, user, changeChat, resetChat } = useChatStore()
 
-    // Responsive state
-    const [isMobile, setIsMobile] = useState(window.innerWidth <= 768)
+    // Enhanced responsive state
+    const [isMobile, setIsMobile] = useState(window.innerWidth <= 640)
     const [isTablet, setIsTablet] = useState(
-        window.innerWidth > 768 && window.innerWidth <= 1024
+        window.innerWidth > 640 && window.innerWidth <= 1024
     )
     const [showChatList, setShowChatList] = useState(true)
 
-    // const vendorAvailabilityData = [
-    //     { day: 'Monday', start: '08:00', end: '17:00' },
-    //     { day: 'Tuesday', start: '08:00', end: '17:00' },
-    //     { day: 'Wednesday', start: '08:00', end: '17:00' },
-    //     { day: 'Thursday', start: '08:00', end: '17:00' },
-    //     { day: 'Friday', start: '08:00', end: '17:00' },
-    //     { day: 'Saturday', start: '10:00', end: '14:00' },
-    //     { day: 'Sunday', start: '00:00', end: '00:00' }, // No availability on Sunday
-    //   ]
-
-      // Fetch availability from Firestore (using the correct collection based on role)
-      useEffect(() => {
+    // Fetch availability from Firestore (using the correct collection based on role)
+    useEffect(() => {
         const { vendorId, context } = location.state || {};
         if (!vendorId) return;                               // opened Inbox normally
       
@@ -93,35 +80,33 @@ const InboxPage = () => {
         if (!currentUserId) return;                          // still loading auth?
       
         (async () => {
-          const activeChatId = await findOrCreateChat(currentUserId, vendorId);
-          const vendorProfile = await fetchUserBasic(vendorId);
-          changeChat(activeChatId, vendorProfile);           // updates sidebar + pane
+            const activeChatId = await findOrCreateChat(currentUserId, vendorId);
+            const vendorProfile = await fetchUserBasic(vendorId);
+            changeChat(activeChatId, vendorProfile);           // updates sidebar + pane
       
-          if (context?.productId) {
-            await sendSystemMessage(
-              activeChatId,
-              `[Product] Buyer is asking about “${context.productName}”`
-            );
-          } else if (context?.serviceId) {
-            await sendSystemMessage(
-              activeChatId,
-              `[Service] Buyer is asking about “${context.serviceName}”`
-            );
-          }
+            if (context?.productId) {
+                await sendSystemMessage(
+                    activeChatId,
+                    `[Product] Buyer is asking about "${context.productName}"`
+                );
+            } else if (context?.serviceId) {
+                await sendSystemMessage(
+                    activeChatId,
+                    `[Service] Buyer is asking about "${context.serviceName}"`
+                );
+            }
         })();
         
         // we only want this to run once when the component mounts with that state
         // eslint-disable-next-line react-hooks/exhaustive-deps
-      }, [location.state]);
-      
-      
-     
-    // Handle window resize for responsive design
+    }, [location.state]);
+    
+    // Enhanced responsive handling
     useEffect(() => {
         const handleResize = () => {
             const width = window.innerWidth
-            const mobile = width <= 768
-            const tablet = width > 768 && width <= 1024
+            const mobile = width <= 640
+            const tablet = width > 640 && width <= 1024
 
             setIsMobile(mobile)
             setIsTablet(tablet)
@@ -336,25 +321,24 @@ const InboxPage = () => {
         const collectionName = role === 'vendor' ? 'Vendors' : 'Buyers';
         const userDocRef = doc(db, collectionName, userId);
         try {
-          const userDocSnap = await getDoc(userDocRef);
-          if (userDocSnap.exists()) {
-            const data = userDocSnap.data();
-            return data.availability || [];
-          } else {
-            console.warn('No availability found for user in collection', collectionName);
-            return [];
-          }
+            const userDocSnap = await getDoc(userDocRef);
+            if (userDocSnap.exists()) {
+                const data = userDocSnap.data();
+                return data.availability || [];
+            } else {
+                console.warn('No availability found for user in collection', collectionName);
+                return [];
+            }
         } catch (error) {
-          console.error('Error fetching availability for user:', error);
-          return [];
+            console.error('Error fetching availability for user:', error);
+            return [];
         }
-      };
+    };
 
     // Scroll to bottom when messages update
     useEffect(() => {
         endRef.current?.scrollIntoView({ behavior: 'smooth' })
     }, [messages])
-
 
     // Handle selecting a chat
     const handleSelectChat = async (chat) => {
@@ -365,16 +349,12 @@ const InboxPage = () => {
                 // *** ADD THIS LINE ***
                 setSelectedPartner(chat.user.id);
                 console.log("Selected partner ID:", chat.user.id);
-              }
-          
-
+            }
 
             // Mark as seen
             const updatedChats = chats.map((c) =>
                 c.chatId === chat.chatId ? { ...c, isSeen: true } : c
             )
-
-            
 
             const userId = getCurrentUserId()
 
@@ -608,39 +588,7 @@ const InboxPage = () => {
             `${username} ${firstName} ${lastName} ${businessName}`.toLowerCase()
         return searchableText.includes(searchQuery.toLowerCase())
     })
-
-    // Handle new buyer chat selection
-    const handleNewBuyerSelect = (chatData) => {
-        if (!chatData || !chatData.chatId || !chatData.user) {
-            console.error('Invalid chat data')
-            return
-        }
-
-        try {
-            console.log('New buyer selected:', chatData.user)
-
-            // Make sure the user has a name for display
-            const userWithDefaults = {
-                ...chatData.user,
-                firstName:
-                    chatData.user.firstName ||
-                    chatData.user.name ||
-                    chatData.user.username ||
-                    'Unknown',
-                businessName: chatData.user.businessName || 'User',
-                role: chatData.user.role || 'user',
-            }
-
-            // Change to the selected chat with enhanced user data
-            changeChat(chatData.chatId, userWithDefaults)
-
-            if (isMobile) {
-                setShowChatList(false)
-            }
-        } catch (error) {
-            console.error('Error changing chat:', error)
-        }
-    }
+    
     const combineDateAndTime = (date, timeString) => {
         // Set the date to start of day (local)
         const dateMoment = moment(date).startOf('day')
@@ -650,167 +598,165 @@ const InboxPage = () => {
         dateMoment.hours(timeMoment.hours())
         dateMoment.minutes(timeMoment.minutes())
         return dateMoment.toDate()
-      }
-
-      const { user: authUser } = useAuth();
-  // Updated saveAppointment using selectedDate directly
-  const saveAppointment = async (appointmentData) => {
-    console.log("Saving appointment with data:", appointmentData)
-    try {
-
-
-    const isBuyer = authUser?.role === 'buyer';
-    const buyerId = isBuyer ? authUser?.uid : selectedPartner;
-    const vendorId = isBuyer ? selectedPartner : authUser?.uid;
-
-    console.log('buyerid',buyerId)
-    console.log('vendorid',vendorId)
-    
-    if (!buyerId || !vendorId) {
-        alert("Missing buyer or vendor information.")
-        return
-      }
-      
-      // Combine selectedDate and selectedTime into a single Date object
-      const combinedDateTime = combineDateAndTime(
-        appointmentData.selectedDate,
-        appointmentData.selectedTime
-      )
-      
-      const appointmentId = new Date().getTime().toString()
-      
-      // Create the data to store, using the combined date/time.
-      const safeData = {
-        ...appointmentData,
-        buyerId,
-        vendorId,
-        createdAt: new Date(),
-        // Save the combined Date (Firestore will store it as a Timestamp)
-        selectedDate: combinedDateTime,
-      }
-      
-      // Run a transaction to check for conflicts and create the appointment atomically.
-      await runTransaction(db, async (transaction) => {
-        // Build a query to check for any existing appointment for this vendor on the same day.
-        const startOfDay = moment(combinedDateTime).startOf('day').toDate()
-        const endOfDay = moment(combinedDateTime).endOf('day').toDate()
-        const appointmentsRef = collection(db, "appointments")
-        const q = query(
-          appointmentsRef,
-          where("vendorId", "==", vendorId),
-          where("selectedDate", ">=", startOfDay),
-          where("selectedDate", "<=", endOfDay)
-        )
-        const querySnapshot = await getDocs(q)
-        
-        // Check if any appointment exists with the same selectedTime.
-        let conflict = false
-        querySnapshot.forEach(docSnap => {
-          const data = docSnap.data()
-          // For a strict equality check on the time string.
-          if (data.selectedTime === appointmentData.selectedTime) {
-            conflict = true
-          }
-        })
-        
-        if (conflict) {
-          throw new Error("This time slot is already booked.")
-        }
-        
-        // If no conflict, create the appointment document.
-        const appointmentDocRef = doc(db, "appointments", appointmentId)
-        transaction.set(appointmentDocRef, safeData)
-      })
-      
-      // Optionally update the chat with a notification message.
-      if (chatId) {
-        const notificationMessage = {
-          senderId: "system",
-          text: `Appointment scheduled for ${moment(combinedDateTime).format("ddd, MMM Do, h:mm A")}`,
-          createdAt: new Date(),
-          isNotification: true,
-        }
-        await updateDoc(doc(db, "chats", chatId), {
-          messages: arrayUnion(notificationMessage),
-        })
-      }
-      
-      toast.success("Appointment scheduled successfully!")
-    } catch (error) {
-      console.error("Error scheduling appointment:", error)
-      toast.error(error.message || "Failed to schedule appointment.")
     }
-  }
-      
-  // Handler to open appointment modal
-  const handleOpenAppointmentModal = () => {
-    setShowAppointmentModal(true)
-  }
 
-  // Handler for appointment modal save
-  const handleSaveAppointment = (appointmentData) => {
-    console.log("Received appointment data in parent:", appointmentData);
-    saveAppointment(appointmentData);
-    setShowAppointmentModal(false);
-  }
+    const { user: authUser } = useAuth();
+    // Updated saveAppointment using selectedDate directly
+    const saveAppointment = async (appointmentData) => {
+        console.log("Saving appointment with data:", appointmentData)
+        try {
+            const isBuyer = authUser?.role === 'buyer';
+            const buyerId = isBuyer ? authUser?.uid : selectedPartner;
+            const vendorId = isBuyer ? selectedPartner : authUser?.uid;
+
+            console.log('buyerid',buyerId)
+            console.log('vendorid',vendorId)
+    
+            if (!buyerId || !vendorId) {
+                alert("Missing buyer or vendor information.")
+                return
+            }
+      
+            // Combine selectedDate and selectedTime into a single Date object
+            const combinedDateTime = combineDateAndTime(
+                appointmentData.selectedDate,
+                appointmentData.selectedTime
+            )
+      
+            const appointmentId = new Date().getTime().toString()
+      
+            // Create the data to store, using the combined date/time.
+            const safeData = {
+                ...appointmentData,
+                buyerId,
+                vendorId,
+                createdAt: new Date(),
+                // Save the combined Date (Firestore will store it as a Timestamp)
+                selectedDate: combinedDateTime,
+            }
+      
+            // Run a transaction to check for conflicts and create the appointment atomically.
+            await runTransaction(db, async (transaction) => {
+                // Build a query to check for any existing appointment for this vendor on the same day.
+                const startOfDay = moment(combinedDateTime).startOf('day').toDate()
+                const endOfDay = moment(combinedDateTime).endOf('day').toDate()
+                const appointmentsRef = collection(db, "appointments")
+                const q = query(
+                    appointmentsRef,
+                    where("vendorId", "==", vendorId),
+                    where("selectedDate", ">=", startOfDay),
+                    where("selectedDate", "<=", endOfDay)
+                )
+                const querySnapshot = await getDocs(q)
+        
+                // Check if any appointment exists with the same selectedTime.
+                let conflict = false
+                querySnapshot.forEach(docSnap => {
+                    const data = docSnap.data()
+                    // For a strict equality check on the time string.
+                    if (data.selectedTime === appointmentData.selectedTime) {
+                        conflict = true
+                    }
+                })
+        
+                if (conflict) {
+                    throw new Error("This time slot is already booked.")
+                }
+        
+                // If no conflict, create the appointment document.
+                const appointmentDocRef = doc(db, "appointments", appointmentId)
+                transaction.set(appointmentDocRef, safeData)
+            })
+      
+            // Optionally update the chat with a notification message.
+            if (chatId) {
+                const notificationMessage = {
+                    senderId: "system",
+                    text: `Appointment scheduled for ${moment(combinedDateTime).format("ddd, MMM Do, h:mm A")}`,
+                    createdAt: new Date(),
+                    isNotification: true,
+                }
+                await updateDoc(doc(db, "chats", chatId), {
+                    messages: arrayUnion(notificationMessage),
+                })
+            }
+      
+            toast.success("Appointment scheduled successfully!")
+        } catch (error) {
+            console.error("Error scheduling appointment:", error)
+            toast.error(error.message || "Failed to schedule appointment.")
+        }
+    }
+      
+    // Handler to open appointment modal
+    const handleOpenAppointmentModal = () => {
+        setShowAppointmentModal(true)
+    }
+
+    // Handler for appointment modal save
+    const handleSaveAppointment = (appointmentData) => {
+        console.log("Received appointment data in parent:", appointmentData);
+        saveAppointment(appointmentData);
+        setShowAppointmentModal(false);
+    }
 
     return (
         <BaseLayout>
             <div className="flex flex-col h-screen">
-                <div className="flex justify-between items-center px-3 sm:px-6 pt-3 sm:pt-6 pb-2 sm:pb-4">
+                {/* Header - Responsive */}
+                <div className="flex justify-between items-center px-3 sm:px-4 md:px-6 pt-3 sm:pt-4 md:pt-6 pb-2 sm:pb-3 md:pb-4 flex-shrink-0">
                     <div className="flex items-center">
-                        <h1 className="mt-4 text-3xl sm:text-4xl md:text-2xl lg:text-[60px] font-bold font-nunito">
+                        <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold font-nunito">
                             Inbox
                         </h1>
                     </div>
                 </div>
 
-                <div className={`flex flex-1 mx-2 ${isMobile ? '' : 'sm:mx-4 md:mx-6 mb-2 sm:mb-4 md:mb-6 rounded-2xl border-2 border-[#5F4B8B] overflow-hidden shadow-lg'} bg-white`}>
-                {/* Chat List - Left Sidebar */}
+                {/* Main Chat Container - Responsive */}
+                <div className={`flex flex-1 ${isMobile ? 'mx-2' : 'mx-3 sm:mx-4 md:mx-6'} ${!isMobile ? 'mb-2 sm:mb-4 md:mb-6 rounded-2xl border-2 border-[#5F4B8B] overflow-hidden shadow-lg' : ''} bg-white`}>
+                    {/* Chat List - Left Sidebar */}
                     {(showChatList || !isMobile) && (
                         <div
-                            className={`${isMobile ? 'w-full bg-[#9082C6] rounded-tr-3xl' : isTablet ? 'w-2/5' : 'w-1/3'} border-r-2 border-[#5F4B8B] flex flex-col p-4 rounded-tl-3xl`}
+                            className={`${
+                                isMobile 
+                                    ? 'w-full bg-[#9082C6] rounded-tr-2xl sm:rounded-tr-3xl' 
+                                    : isTablet 
+                                        ? 'w-2/5' 
+                                        : 'w-1/3'
+                            } ${!isMobile ? 'border-r-2 border-[#5F4B8B]' : ''} flex flex-col ${
+                                isMobile ? 'p-3 sm:p-4' : 'p-4'
+                            } ${!isMobile ? 'rounded-tl-3xl' : 'rounded-tl-2xl sm:rounded-tl-3xl'}`}
                             style={{
                                 minWidth: isMobile
                                     ? '100%'
                                     : isTablet
-                                      ? '40%'
-                                      : '250px',
+                                        ? '40%'
+                                        : '280px',
                                 maxWidth: isMobile
                                     ? '100%'
                                     : isTablet
-                                      ? '40%'
-                                      : '33.333%',
+                                        ? '40%'
+                                        : '33.333%',
                                 overflow: 'hidden',
                             }}
                         >
-                            <div className="bg-white rounded-2xl flex-1 overflow-hidden">
+                            <div className="bg-white rounded-xl sm:rounded-2xl flex-1 overflow-hidden">
+                                {/* Search Bar Only */}
                                 <div className="p-3 sm:p-4 border-b border-gray-200">
-                                    <div className="relative mb-2">
+                                    <div className="relative mb-2 sm:mb-3">
                                         <input
                                             type="text"
                                             placeholder="Search"
-                                            className="w-full py-2 px-4 rounded-[3.75rem] border border-[#5F4B8B] focus:outline-none focus:ring-2 focus:ring-purple-300"
+                                            className="w-full py-2 sm:py-2.5 px-3 sm:px-4 text-sm sm:text-base rounded-full border border-[#5F4B8B] focus:outline-none focus:ring-2 focus:ring-purple-300"
                                             value={searchQuery}
                                             onChange={(e) =>
                                                 setSearchQuery(e.target.value)
                                             }
                                         />
                                     </div>
-
-                                    <button
-                                        onClick={() =>
-                                            setShowNewChatModal(true)
-                                        }
-                                        className="w-full py-2 mt-2 rounded-lg bg-buttonBg rounded-[2.5rem] text-white flex items-center justify-center hover:bg-[#4A3B7A] transition-colors"
-                                    >
-                                        <span className="mr-2">+</span>
-                                        {currentUser?.role === 'vendor'
-                                            ? 'Chat with Buyer'
-                                            : 'Chat with Vendor'}
-                                    </button>
                                 </div>
 
+                                {/* Chat List */}
                                 <div
                                     className="border-t-2 border-[#5F4B8B] overflow-y-auto flex-1"
                                     style={{ maxWidth: '100%' }}
@@ -819,7 +765,7 @@ const InboxPage = () => {
                                         filteredChats.map((chat) => (
                                             <div
                                                 key={chat.chatId}
-                                                className={`flex items-center p-3 sm:p-4 md:p-6 border-b-2 border-[#5F4B8B] cursor-pointer hover:bg-gray-50 ${
+                                                className={`flex items-center p-3 sm:p-4 md:p-5 lg:p-6 border-b-2 border-[#5F4B8B] cursor-pointer hover:bg-gray-50 transition-colors ${
                                                     chatId === chat.chatId
                                                         ? 'bg-[#F4F1FA]'
                                                         : ''
@@ -833,18 +779,17 @@ const InboxPage = () => {
                                                     overflow: 'hidden',
                                                 }}
                                             >
-                                               <DefaultAvatar     
-  user={chat.user}     
-  size="md"     
-  className="flex-shrink-0 mr-2 sm:mr-3"     
-  defaultImage={defaultimg} 
-/>
+                                                <DefaultAvatar     
+                                                    user={chat.user}     
+                                                    size={isMobile ? "sm" : "md"}
+                                                    className="flex-shrink-0 mr-2 sm:mr-3"     
+                                                    defaultImage={defaultimg} 
+                                                />
                                                 <div
-                                                    className="overflow-hidden"
+                                                    className="overflow-hidden flex-1 min-w-0"
                                                     style={{
                                                         width: 'calc(100% - 55px)',
-                                                        maxWidth:
-                                                            'calc(100% - 55px)',
+                                                        maxWidth: 'calc(100% - 55px)',
                                                         flexShrink: 1,
                                                     }}
                                                 >
@@ -852,40 +797,30 @@ const InboxPage = () => {
                                                         className="font-semibold truncate text-sm sm:text-base"
                                                         style={{
                                                             overflow: 'hidden',
-                                                            textOverflow:
-                                                                'ellipsis',
-                                                            whiteSpace:
-                                                                'nowrap',
+                                                            textOverflow: 'ellipsis',
+                                                            whiteSpace: 'nowrap',
                                                             display: 'block',
                                                             width: '100%',
                                                         }}
                                                     >
                                                         {chat.user?.firstName ||
                                                             chat.user?.name ||
-                                                            chat.user
-                                                                ?.username ||
-                                                            chat.user
-                                                                ?.businessName ||
+                                                            chat.user?.username ||
+                                                            chat.user?.businessName ||
                                                             `User ${chat.receiverId?.substring(0, 6) || ''}`}
                                                     </h4>
                                                     <p
                                                         className="text-xs sm:text-sm text-gray-500 truncate"
                                                         style={{
-                                                            whiteSpace:
-                                                                'nowrap',
+                                                            whiteSpace: 'nowrap',
                                                             overflow: 'hidden',
-                                                            textOverflow:
-                                                                'ellipsis',
+                                                            textOverflow: 'ellipsis',
                                                             maxWidth: '100%',
                                                         }}
                                                     >
                                                         {chat.lastMessage
-                                                            ? chat.lastMessage
-                                                                  .length > 30
-                                                                ? chat.lastMessage.substring(
-                                                                      0,
-                                                                      30
-                                                                  ) + '...'
+                                                            ? chat.lastMessage.length > (isMobile ? 20 : 30)
+                                                                ? chat.lastMessage.substring(0, isMobile ? 20 : 30) + '...'
                                                                 : chat.lastMessage
                                                             : 'No messages yet'}
                                                     </p>
@@ -896,7 +831,7 @@ const InboxPage = () => {
                                             </div>
                                         ))
                                     ) : (
-                                        <div className="p-4 text-center text-gray-500">
+                                        <div className="p-4 text-center text-gray-500 text-sm sm:text-base">
                                             No conversations found
                                         </div>
                                     )}
@@ -905,17 +840,17 @@ const InboxPage = () => {
                         </div>
                     )}
 
+                    {/* Chat Area - Right Side */}
                     {(!showChatList || !isMobile || (isMobile && chatId)) && (
-                        <div className="flex-1 flex flex-col">
+                        <div className="flex-1 flex flex-col min-w-0">
                             {chatId ? (
                                 <>
-                                    <div className="bg-[#5F4B8B] text-white p-3 sm:p-4 md:p-5 flex items-center">
+                                    {/* Chat Header */}
+                                    <div className="bg-[#5F4B8B] text-white p-3 sm:p-4 md:p-5 flex items-center flex-shrink-0">
                                         {isMobile && (
                                             <button
-                                                className="mr-2 sm:mr-3 text-white font-bold"
-                                                onClick={() =>
-                                                    setShowChatList(true)
-                                                }
+                                                className="mr-2 sm:mr-3 text-white font-bold text-lg hover:bg-white/20 rounded px-2 py-1 transition-colors"
+                                                onClick={() => setShowChatList(true)}
                                             >
                                                 ←
                                             </button>
@@ -923,30 +858,28 @@ const InboxPage = () => {
                                         <img
                                             src={user?.avatar || './avatar.png'}
                                             alt=""
-                                            className="w-10 h-10 sm:w-12 sm:h-12 md:w-16 md:h-16 rounded-full object-cover mr-2 sm:mr-3"
+                                            className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 lg:w-16 lg:h-16 rounded-full object-cover mr-2 sm:mr-3 flex-shrink-0"
                                         />
-                                        <div>
-                                            <h3 className="font-semibold text-base sm:text-xl md:text-[25px]">
+                                        <div className="min-w-0 flex-1">
+                                            <h3 className="font-semibold text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl truncate">
                                                 {user?.firstName ||
                                                     user?.name ||
                                                     user?.username ||
                                                     user?.businessName ||
                                                     'Unknown User'}
                                             </h3>
-                                            <p className="text-[10px] sm:text-xs">
+                                            <p className="text-xs sm:text-sm opacity-80">
                                                 {user?.role || 'User'}
                                             </p>
                                         </div>
                                     </div>
 
-                                    <div className="flex-1 p-3 sm:p-4 overflow-y-auto bg-gray-50">
+                                    {/* Messages Area */}
+                                    <div className="flex-1 p-3 sm:p-4 overflow-y-auto bg-gray-50 min-h-0">
                                         {messages.length > 0 ? (
                                             messages.map((message, index) => {
-                                                const currentUserId =
-                                                    getCurrentUserId()
-                                                const isCurrentUser =
-                                                    message.senderId ===
-                                                    currentUserId
+                                                const currentUserId = getCurrentUserId()
+                                                const isCurrentUser = message.senderId === currentUserId
                                                 return (
                                                     <div
                                                         key={index}
@@ -954,117 +887,71 @@ const InboxPage = () => {
                                                     >
                                                         {!isCurrentUser && (
                                                             <img
-                                                                src={
-                                                                    user?.avatar ||
-                                                                    './avatar.png'
-                                                                }
+                                                                src={user?.avatar || './avatar.png'}
                                                                 alt=""
                                                                 className="flex-shrink-0 w-6 h-6 sm:w-8 sm:h-8 rounded-full mr-2 sm:mr-3 self-start mt-1"
                                                             />
                                                         )}
                                                         <div
-                                                            className={`w-auto max-w-[75%] sm:max-w-xs md:max-w-md px-3 sm:px-4 py-2 sm:py-3 ${isCurrentUser ? 'bg-[#5F4B8BB0] text-white rounded-[20px] rounded-br-none' : 'bg-[#AFAFAF9C] text-gray-800 rounded-[20px] rounded-bl-none'} overflow-hidden`}
+                                                            className={`w-auto max-w-[85%] sm:max-w-[75%] md:max-w-[65%] lg:max-w-md xl:max-w-lg px-3 sm:px-4 py-2 sm:py-3 ${
+                                                                isCurrentUser 
+                                                                    ? 'bg-[#5F4B8BB0] text-white rounded-[20px] rounded-br-none' 
+                                                                    : 'bg-[#AFAFAF9C] text-gray-800 rounded-[20px] rounded-bl-none'
+                                                            } overflow-hidden`}
                                                             style={{
-                                                                wordBreak:
-                                                                    'break-word',
-                                                                overflowWrap:
-                                                                    'break-word',
+                                                                wordBreak: 'break-word',
+                                                                overflowWrap: 'break-word',
                                                             }}
                                                         >
                                                             {message.document && (
                                                                 <ImprovedPdfViewer
-                                                                    pdfUrl={
-                                                                        message.document
-                                                                    }
-                                                                    filename={
-                                                                        message.documentName
-                                                                    }
-                                                                    isCurrentUser={
-                                                                        isCurrentUser
-                                                                    }
+                                                                    pdfUrl={message.document}
+                                                                    filename={message.documentName}
+                                                                    isCurrentUser={isCurrentUser}
                                                                 />
                                                             )}
 
                                                             {message.img && (
                                                                 <img
-                                                                    src={
-                                                                        message.img
-                                                                    }
+                                                                    src={message.img}
                                                                     alt="Attachment"
                                                                     className="rounded mb-2 max-w-full h-auto object-contain"
                                                                     style={{
-                                                                        maxHeight:
-                                                                            '200px',
+                                                                        maxHeight: isMobile ? '150px' : '200px',
                                                                     }}
                                                                 />
                                                             )}
 
                                                             {message.text && (
                                                                 <p className="text-sm sm:text-base overflow-hidden">
-                                                                    {
-                                                                        message.text
-                                                                    }
+                                                                    {message.text}
                                                                 </p>
                                                             )}
 
                                                             <div className="flex justify-between items-center mt-1">
                                                                 <div
-                                                                    className={`text-[10px] sm:text-xs ${isCurrentUser ? 'text-purple-200' : 'text-gray-500'}`}
+                                                                    className={`text-xs ${isCurrentUser ? 'text-purple-200' : 'text-gray-500'}`}
                                                                 >
                                                                     {message.createdAt &&
                                                                         (() => {
                                                                             try {
-                                                                                if (
-                                                                                    typeof message
-                                                                                        .createdAt
-                                                                                        .toDate ===
-                                                                                    'function'
-                                                                                ) {
-                                                                                    return format(
-                                                                                        message.createdAt.toDate()
-                                                                                    )
-                                                                                } else if (
-                                                                                    message.createdAt instanceof
-                                                                                    Date
-                                                                                ) {
-                                                                                    return format(
-                                                                                        message.createdAt
-                                                                                    )
-                                                                                } else if (
-                                                                                    typeof message.createdAt ===
-                                                                                        'object' &&
-                                                                                    message
-                                                                                        .createdAt
-                                                                                        .seconds
-                                                                                ) {
-                                                                                    return format(
-                                                                                        new Date(
-                                                                                            message
-                                                                                                .createdAt
-                                                                                                .seconds *
-                                                                                                1000
-                                                                                        )
-                                                                                    )
+                                                                                if (typeof message.createdAt.toDate === 'function') {
+                                                                                    return format(message.createdAt.toDate())
+                                                                                } else if (message.createdAt instanceof Date) {
+                                                                                    return format(message.createdAt)
+                                                                                } else if (typeof message.createdAt === 'object' && message.createdAt.seconds) {
+                                                                                    return format(new Date(message.createdAt.seconds * 1000))
                                                                                 } else {
-                                                                                    return format(
-                                                                                        new Date(
-                                                                                            message.createdAt
-                                                                                        )
-                                                                                    )
+                                                                                    return format(new Date(message.createdAt))
                                                                                 }
                                                                             } catch (e) {
-                                                                                console.error(
-                                                                                    'Error formatting date:',
-                                                                                    e
-                                                                                )
+                                                                                console.error('Error formatting date:', e)
                                                                                 return 'Just now'
                                                                             }
                                                                         })()}
                                                                 </div>
-                                                                <div className="text-[10px] sm:text-xs ml-2">
-                                                                    {isCurrentUser
-                                                                        ? '(You)'
-                                                                        : ''}
+                                                                <div className="text-xs ml-2">
+                                                                    {isCurrentUser ? '(You)' : ''}
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -1072,30 +959,26 @@ const InboxPage = () => {
                                                 )
                                             })
                                         ) : (
-                                            <div className="text-center py-6 sm:py-8 text-gray-500">
-                                                No messages yet. Start the
-                                                conversation!
+                                            <div className="text-center py-6 sm:py-8 text-gray-500 text-sm sm:text-base">
+                                                No messages yet. Start the conversation!
                                             </div>
                                         )}
                                         <div ref={endRef} />
                                     </div>
 
-                                    <div className="border-t border-gray-200 p-2 sm:p-3 bg-white">
+                                    {/* Message Input Area */}
+                                    <div className="border-t border-gray-200 p-2 sm:p-3 bg-white flex-shrink-0">
+                                        {/* File Previews */}
                                         {img.url && (
                                             <div className="mb-2 relative inline-block">
                                                 <img
                                                     src={img.url}
                                                     alt="Preview"
-                                                    className="max-h-16 sm:max-h-20 rounded"
+                                                    className="max-h-12 sm:max-h-16 md:max-h-20 rounded"
                                                 />
                                                 <button
-                                                    className="absolute top-0 right-0 bg-red-500 text-white rounded-full w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center"
-                                                    onClick={() =>
-                                                        setImg({
-                                                            file: null,
-                                                            url: '',
-                                                        })
-                                                    }
+                                                    className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center text-xs"
+                                                    onClick={() => setImg({ file: null, url: '' })}
                                                 >
                                                     ×
                                                 </button>
@@ -1114,58 +997,57 @@ const InboxPage = () => {
                                             </div>
                                         )}
 
-                                        <div className="flex items-center">
-                                            <div className="flex space-x-2 sm:space-x-3 mr-2 sm:mr-3">
-                                                <label className="cursor-pointer p-1 sm:p-2 hover:bg-gray-100 rounded-full">
+                                        {/* Input Area */}
+                                        <div className="flex items-center gap-2 sm:gap-3">
+                                            {/* Action Buttons */}
+                                            <div className="flex gap-1 sm:gap-2">
+                                                <label className="cursor-pointer p-1 sm:p-2 hover:bg-gray-100 rounded-full transition-colors">
                                                     <img
                                                         src={curriculumIcon}
-                                                        alt="Resume"
+                                                        alt="Image"
                                                         className="w-4 h-4 sm:w-5 sm:h-5"
                                                     />
                                                     <input
                                                         type="file"
                                                         className="hidden"
-                                                        onChange={
-                                                            handleFileChange
-                                                        }
+                                                        onChange={handleFileChange}
                                                         accept="image/*"
                                                     />
                                                 </label>
 
-                                                <label className="cursor-pointer p-1 sm:p-2 hover:bg-gray-100 rounded-full">
+                                                <label className="cursor-pointer p-1 sm:p-2 hover:bg-gray-100 rounded-full transition-colors">
                                                     <img
                                                         src={paperClip}
-                                                        alt="Attach"
+                                                        alt="Document"
                                                         className="w-4 h-4 sm:w-5 sm:h-5"
                                                     />
                                                     <input
                                                         type="file"
                                                         className="hidden"
-                                                        onChange={
-                                                            handleDocumentChange
-                                                        }
+                                                        onChange={handleDocumentChange}
                                                         accept=".pdf,.doc,.docx,.xls,.xlsx,.txt"
                                                     />
                                                 </label>
 
-                                                <button onClick={handleOpenAppointmentModal} className="p-1 sm:p-2 hover:bg-gray-100 rounded-full">
+                                                <button 
+                                                    onClick={handleOpenAppointmentModal} 
+                                                    className="p-1 sm:p-2 hover:bg-gray-100 rounded-full transition-colors"
+                                                >
                                                     <img
                                                         src={calendar}
                                                         alt="Schedule"
-
                                                         className="w-4 h-4 sm:w-5 sm:h-5"
                                                     />
                                                 </button>
                                             </div>
 
+                                            {/* Text Input */}
                                             <input
                                                 type="text"
                                                 placeholder="Type a message..."
-                                                className="flex-1 py-2 px-3 sm:px-4 text-sm sm:text-base border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-purple-300"
+                                                className="flex-1 py-2 px-3 sm:px-4 text-sm sm:text-base border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-purple-300 min-w-0"
                                                 value={text}
-                                                onChange={(e) =>
-                                                    setText(e.target.value)
-                                                }
+                                                onChange={(e) => setText(e.target.value)}
                                                 onKeyPress={(e) => {
                                                     if (e.key === 'Enter') {
                                                         handleSend()
@@ -1173,14 +1055,15 @@ const InboxPage = () => {
                                                 }}
                                             />
 
+                                            {/* Send Button */}
                                             <button
-                                                className={`ml-2 sm:ml-3 ${text.trim() === '' && !img.file ? 'bg-gray-400' : 'bg-[#5F4B8B]'} text-white rounded-full w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center`}
+                                                className={`flex-shrink-0 ${
+                                                    text.trim() === '' && !img.file && !documentFile
+                                                        ? 'bg-gray-400' 
+                                                        : 'bg-[#5F4B8B] hover:bg-[#4A3B7A]'
+                                                } text-white rounded-full w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center transition-colors`}
                                                 onClick={handleSend}
-                                                disabled={
-                                                    text.trim() === '' &&
-                                                    !img.file &&
-                                                    !documentFile
-                                                }
+                                                disabled={text.trim() === '' && !img.file && !documentFile}
                                             >
                                                 <img
                                                     src={sendIcon}
@@ -1192,17 +1075,16 @@ const InboxPage = () => {
                                     </div>
                                 </>
                             ) : (
+                                /* No Chat Selected */
                                 <div className="flex-1 flex items-center justify-center bg-gray-50">
                                     <div className="text-center p-4 sm:p-6">
-                                        <div className="text-gray-400 text-base sm:text-lg mb-2">
+                                        <div className="text-gray-400 text-base sm:text-lg mb-3 sm:mb-4">
                                             Select a chat to start messaging
                                         </div>
                                         {isMobile && !showChatList && (
                                             <button
-                                                className="px-3 py-1 sm:px-4 sm:py-2 bg-purple-500 text-white rounded-lg"
-                                                onClick={() =>
-                                                    setShowChatList(true)
-                                                }
+                                                className="px-4 py-2 bg-purple-500 text-white rounded-lg text-sm sm:text-base hover:bg-purple-600 transition-colors"
+                                                onClick={() => setShowChatList(true)}
                                             >
                                                 See Conversations
                                             </button>
@@ -1214,26 +1096,28 @@ const InboxPage = () => {
                     )}
                 </div>
             </div>
-        <ToastContainer></ToastContainer>
-            {showAppointmentModal && (
-  <AppointmentModal
-  onClose={() => setShowAppointmentModal(false)}
-  onSchedule={handleSaveAppointment}
-  selectedPartner={selectedPartner} // Provide a fallback array
-/>
-)}
 
-            {showNewChatModal && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                    <AddBuyerChat
-                        onClose={() => setShowNewChatModal(false)}
-                        onBuyerSelect={handleNewBuyerSelect}
-                        userRole={currentUser?.role}
-                        searchRole={
-                            currentUser?.role === 'vendor' ? 'buyer' : 'vendor'
-                        }
-                    />
-                </div>
+            {/* Toast Container */}
+            <ToastContainer 
+                position={isMobile ? "top-center" : "bottom-right"}
+                autoClose={3000}
+                hideProgressBar={false}
+                newestOnTop={false}
+                closeOnClick
+                rtl={false}
+                pauseOnFocusLoss
+                draggable
+                pauseOnHover
+                className={isMobile ? "mt-16" : ""}
+            />
+
+            {/* Appointment Modal */}
+            {showAppointmentModal && (
+                <AppointmentModal
+                    onClose={() => setShowAppointmentModal(false)}
+                    onSchedule={handleSaveAppointment}
+                    selectedPartner={selectedPartner}
+                />
             )}
         </BaseLayout>
     )

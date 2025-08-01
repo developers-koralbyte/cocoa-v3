@@ -15,15 +15,17 @@ import {
   ActivityFeedWidget,
   NotificationsWidget,
   PerformanceMetricsWidget,
-  SystemHealthWidget,
 } from '../../../components/AdminDashboard/components/AnalyticsWidgets';
 import {
   collection,
   getDocs,
   getDoc,
+  setDoc, 
   doc,
   query,
   where,
+  limit,
+  orderBy, // ✅ Added missing import
   Timestamp,
   QueryDocumentSnapshot,
   DocumentData,
@@ -48,13 +50,8 @@ import {
   ComposedChart,
 } from 'recharts';
 import {
-  TrendingUp,
-  Users,
-  Briefcase,
-  Target,
   Download,
   RefreshCw,
-  Calendar,
   Settings,
   BarChart3,
   PieChart as PieChartIcon,
@@ -62,7 +59,6 @@ import {
   DollarSign,
   Percent,
   Clock,
-  AlertTriangle,
 } from 'lucide-react';
 
 /* -----------------------------------------------------------------------
@@ -224,10 +220,15 @@ const EnhancedAnalyticsDashboard: React.FC = () => {
 
   /* ---------------- presence helper ------------------------------- */
   const getOnlineUsers = async (): Promise<number> => {
-    const snap = await getDocs(
-      query(collection(db, 'presence'), where('state', '==', 'online'))
-    );
-    return snap.size;
+    try {
+      const snap = await getDocs(
+        query(collection(db, 'presence'), where('state', '==', 'online'))
+      );
+      return snap.size;
+    } catch (error) {
+      console.log('No presence collection found, returning 0');
+      return 0;
+    }
   };
 
   /* ---------------- fetchers -------------------------------------- */
@@ -302,23 +303,39 @@ const EnhancedAnalyticsDashboard: React.FC = () => {
         const monthId = `${start.getFullYear()}-${String(
           start.getMonth() + 1
         ).padStart(2, '0')}`;
-        const statDoc = await getDoc(doc(db, 'monthly_stats', monthId));
-        const revenue = statDoc.exists()
-          ? (statDoc.data().revenue as number)
-          : monthProducts * 100 + monthServices * 150;
+        try {
+          const statDoc = await getDoc(doc(db, 'monthly_stats', monthId));
+          const revenue = statDoc.exists()
+            ? (statDoc.data().revenue as number)
+            : monthProducts * 100 + monthServices * 150;
 
-        out.push({
-          date: start.toLocaleDateString('en-US', {
-            month: 'short',
-            year: 'numeric',
-          }),
-          users: monthUsers,
-          vendors: monthVendors,
-          products: monthProducts,
-          services: monthServices,
-          orders,
-          revenue,
-        });
+          out.push({
+            date: start.toLocaleDateString('en-US', {
+              month: 'short',
+              year: 'numeric',
+            }),
+            users: monthUsers,
+            vendors: monthVendors,
+            products: monthProducts,
+            services: monthServices,
+            orders,
+            revenue,
+          });
+        } catch (error) {
+          // If monthly_stats doesn't exist, use estimated revenue
+          out.push({
+            date: start.toLocaleDateString('en-US', {
+              month: 'short',
+              year: 'numeric',
+            }),
+            users: monthUsers,
+            vendors: monthVendors,
+            products: monthProducts,
+            services: monthServices,
+            orders,
+            revenue: monthProducts * 100 + monthServices * 150,
+          });
+        }
       }
       return out;
     },
@@ -388,6 +405,171 @@ const EnhancedAnalyticsDashboard: React.FC = () => {
     []
   );
 
+  /* -----------------------------------------------------------------------
+    //Key performance metrics generator
+  ------------------------------------------------------------------------ */
+
+  // Helper function to calculate monthly stats dynamically from existing data
+  const calculateMonthlyStats = async (year: number, month: number) => {
+    // Month range (e.g., July 2025)
+    const startOfMonth = new Date(year, month - 1, 1); // month-1 because JS months are 0-indexed
+    const endOfMonth = new Date(year, month, 1);
+
+    try {
+      // Get all data for the specific month using date filters
+      const [usersSnap, vendorsSnap, productsSnap, servicesSnap] = await Promise.all([
+        getDocs(query(
+          collection(db, 'users'),
+          where('createdAt', '>=', Timestamp.fromDate(startOfMonth)),
+          where('createdAt', '<', Timestamp.fromDate(endOfMonth))
+        )),
+        getDocs(query(
+          collection(db, 'Vendors'),
+          where('createdAt', '>=', Timestamp.fromDate(startOfMonth)),
+          where('createdAt', '<', Timestamp.fromDate(endOfMonth))
+        )),
+        getDocs(query(
+          collection(db, 'products'),
+          where('createdAt', '>=', Timestamp.fromDate(startOfMonth)),
+          where('createdAt', '<', Timestamp.fromDate(endOfMonth))
+        )),
+        getDocs(query(
+          collection(db, 'services'),
+          where('createdAt', '>=', Timestamp.fromDate(startOfMonth)),
+          where('createdAt', '<', Timestamp.fromDate(endOfMonth))
+        ))
+      ]);
+
+      // Try to get appointments and reviews, but handle if they don't exist
+      let appointmentsSnap, reviewsSnap;
+      try {
+        [appointmentsSnap, reviewsSnap] = await Promise.all([
+          getDocs(query(
+            collection(db, 'appointments'),
+            where('createdAt', '>=', Timestamp.fromDate(startOfMonth)),
+            where('createdAt', '<', Timestamp.fromDate(endOfMonth))
+          )),
+          getDocs(query(
+            collection(db, 'reviews'),
+            where('createdAt', '>=', Timestamp.fromDate(startOfMonth)),
+            where('createdAt', '<', Timestamp.fromDate(endOfMonth))
+          ))
+        ]);
+      } catch (error) {
+        console.log('Appointments or reviews collection not found, using empty data');
+        appointmentsSnap = { docs: [], size: 0 } as any;
+        reviewsSnap = { docs: [], size: 0 } as any;
+      }
+
+      // Calculate revenue from actual transactions
+      let monthlyRevenue = 0;
+      
+      // Revenue from appointments (services booked)
+      if (appointmentsSnap && appointmentsSnap.docs) {
+        appointmentsSnap.docs.forEach((doc: any) => {
+          const appointment = doc.data();
+          if (appointment.status === 'completed' && appointment.price) {
+            monthlyRevenue += appointment.price;
+          }
+        });
+      }
+
+      // Revenue from product sales (estimate)
+      productsSnap.docs.forEach(doc => {
+        const product = doc.data();
+        if (product.price) {
+          // Estimate: assume 10% of products listed in a month get sold
+          monthlyRevenue += (product.price * 0.1);
+        }
+      });
+
+      // Revenue from service listings
+      servicesSnap.docs.forEach(doc => {
+        const service = doc.data();
+        if (service.price) {
+          // Estimate: assume 15% of services listed get booked
+          monthlyRevenue += (service.price * 0.15);
+        }
+      });
+
+      // Calculate other metrics
+      const newUsersThisMonth = usersSnap.size;
+      const newVendorsThisMonth = vendorsSnap.size;
+      const newProductsThisMonth = productsSnap.size;
+      const newServicesThisMonth = servicesSnap.size;
+      
+      // Get total counts (all time)
+      const [totalUsersSnap, totalVendorsSnap] = await Promise.all([
+        getDocs(collection(db, 'users')),
+        getDocs(collection(db, 'Vendors'))
+      ]);
+
+      const totalUsers = totalUsersSnap.size;
+      const totalVendors = totalVendorsSnap.size;
+
+      // Estimate active sessions based on activity
+      const appointmentCount = appointmentsSnap ? appointmentsSnap.size : 0;
+      const activityLevel = (newProductsThisMonth + newServicesThisMonth + appointmentCount) / Math.max(newUsersThisMonth, 1);
+      const estimatedActiveSessions = Math.floor(totalUsers * Math.min(0.1, activityLevel * 0.02));
+
+      // Estimate session duration based on platform engagement
+      const reviewCount = reviewsSnap ? reviewsSnap.size : 0;
+      const engagementScore = (reviewCount + appointmentCount) / Math.max(newUsersThisMonth, 1);
+      const avgSessionDuration = Math.round(180 + (engagementScore * 60)); // 3-8 minutes based on engagement
+
+      // Conversions = vendors who actually listed something
+      const activeVendorsSnap = await getDocs(query(
+        collection(db, 'Vendors'),
+        where('createdAt', '<=', Timestamp.fromDate(endOfMonth))
+      ));
+      
+      let conversions = 0;
+      for (const vendorDoc of activeVendorsSnap.docs) {
+        const vendorId = vendorDoc.id;
+        
+        // Check if this vendor has any products or services
+        const [vendorProducts, vendorServices] = await Promise.all([
+          getDocs(query(collection(db, 'products'), where('vendorId', '==', vendorId), limit(1))),
+          getDocs(query(collection(db, 'services'), where('vendorId', '==', vendorId), limit(1)))
+        ]);
+        
+        if (vendorProducts.size > 0 || vendorServices.size > 0) {
+          conversions++;
+        }
+      }
+
+      return {
+        revenue: Math.round(monthlyRevenue * 100) / 100, // Round to 2 decimal places
+        totalVendors: totalVendors,
+        totalUsers: totalUsers,
+        newUsersThisMonth: newUsersThisMonth,
+        newVendorsThisMonth: newVendorsThisMonth,
+        activeSessions: estimatedActiveSessions,
+        avgSessionDuration: avgSessionDuration,
+        conversions: conversions,
+        timestamp: Timestamp.fromDate(startOfMonth)
+      };
+
+    } catch (error) {
+      console.error('Error calculating monthly stats:', error);
+      return null;
+    }
+  };
+
+  // Function to create or update monthly stats
+  const updateMonthlyStats = async (year: number, month: number) => {
+    const stats = await calculateMonthlyStats(year, month);
+    
+    if (stats) {
+      const monthId = `${year}-${String(month).padStart(2, '0')}`;
+      await setDoc(doc(db, 'monthly_stats', monthId), stats);
+      console.log(`Updated monthly stats for ${monthId}:`, stats);
+      return stats;
+    }
+    return null;
+  };
+
+  // Updated generatePerformanceMetrics function that auto-creates missing stats
   const generatePerformanceMetrics = useCallback(
     async (
       data: AnalyticsState & { products: ProductDoc[]; services: ServiceDoc[] }
@@ -395,191 +577,433 @@ const EnhancedAnalyticsDashboard: React.FC = () => {
       const {
         totalUsers,
         totalVendors,
-        totalBuyers,
-        totalProducts,
-        totalServices,
-        products,
-        services,
+        onlineUsers,
       } = data;
 
-      const prodPrices = products
-        .filter((p) => p.price && p.price > 0)
-        .map((p) => p.price!);
-      const servPrices = services
-        .filter((s) => s.price && s.price > 0)
-        .map((s) => s.price!);
+      // Get current and previous month
+      const now = new Date();
+      const currentMonth = now.getMonth() + 1;
+      const currentYear = now.getFullYear();
+      const previousMonth = currentMonth === 1 ? 12 : currentMonth - 1;
+      const previousYear = currentMonth === 1 ? currentYear - 1 : currentYear;
 
-      const avgProd =
-        prodPrices.length > 0
-          ? prodPrices.reduce((a, b) => a + b, 0) / prodPrices.length
-          : 0;
-      const avgServ =
-        servPrices.length > 0
-          ? servPrices.reduce((a, b) => a + b, 0) / servPrices.length
-          : 0;
+      const currentMonthId = `${currentYear}-${String(currentMonth).padStart(2, '0')}`;
+      const previousMonthId = `${previousYear}-${String(previousMonth).padStart(2, '0')}`;
 
-      // monthly revenue from current stats doc
-      const monthId = new Date().toISOString().slice(0, 7);
-      const statSnap = await getDoc(doc(db, 'monthly_stats', monthId));
-      const monthlyRevenue = statSnap.exists()
-        ? (statSnap.data().revenue as number)
-        : totalProducts * avgProd * 0.1 + totalServices * avgServ * 0.1;
+      try {
+        // Try to get existing stats
+        let [currentStatSnap, previousStatSnap] = await Promise.all([
+          getDoc(doc(db, 'monthly_stats', currentMonthId)),
+          getDoc(doc(db, 'monthly_stats', previousMonthId))
+        ]);
 
-      const conversion = totalBuyers
-        ? (totalVendors / totalBuyers) * 100
-        : 0;
-      const activeSessions = Math.floor(totalUsers * 0.05);
+        // If current month stats don't exist, calculate them
+        let currentStats;
+        if (!currentStatSnap.exists()) {
+          console.log(`Calculating stats for ${currentMonthId}...`);
+          currentStats = await updateMonthlyStats(currentYear, currentMonth);
+        } else {
+          currentStats = currentStatSnap.data();
+        }
 
-      return [
-        {
-          label: 'Monthly Revenue',
-          value: monthlyRevenue,
-          change: 12.5,
-          format: 'currency' as const,
-          icon: <DollarSign className="w-5 h-5" />,
-          color: 'bg-green-100 text-green-600',
-        },
-        {
-          label: 'Conversion Rate',
-          value: conversion,
-          change: 0.5,
-          format: 'percentage' as const,
-          icon: <Percent className="w-5 h-5" />,
-          color: 'bg-blue-100 text-blue-600',
-        },
-        {
-          label: 'Active Sessions',
-          value: activeSessions,
-          change: -2.1,
-          format: 'number' as const,
-          icon: <ActivityIcon className="w-5 h-5" />,
-          color: 'bg-purple-100 text-purple-600',
-        },
-        {
-          label: 'Avg Session Duration',
-          value: 240,
-          change: 15.2,
-          format: 'number' as const,
-          icon: <Clock className="w-5 h-5" />,
-          color: 'bg-orange-100 text-orange-600',
-        },
-      ];
+        // If previous month stats don't exist, calculate them
+        let previousStats;
+        if (!previousStatSnap.exists()) {
+          console.log(`Calculating stats for ${previousMonthId}...`);
+          previousStats = await updateMonthlyStats(previousYear, previousMonth);
+        } else {
+          previousStats = previousStatSnap.data();
+        }
+
+        // Use calculated stats or fallbacks
+        const currentRevenue = currentStats?.revenue || 0;
+        const previousRevenue = previousStats?.revenue || 0;
+        const revenueChange = previousRevenue > 0 ? ((currentRevenue - previousRevenue) / previousRevenue) * 100 : 0;
+
+        const currentConversions = currentStats?.conversions || totalVendors;
+        const previousConversions = previousStats?.conversions || Math.floor(totalVendors * 0.9);
+        const conversionRate = totalUsers > 0 ? (currentConversions / totalUsers) * 100 : 0;
+        const conversionChange = previousConversions > 0 ? ((currentConversions - previousConversions) / previousConversions) * 100 : 0;
+
+        const activeSessions = currentStats?.activeSessions || Math.max(onlineUsers, Math.floor(totalUsers * 0.05));
+        const previousActiveSessions = previousStats?.activeSessions || Math.floor(activeSessions * 0.9);
+        const sessionChange = previousActiveSessions > 0 ? ((activeSessions - previousActiveSessions) / previousActiveSessions) * 100 : 0;
+
+        const avgSessionDuration = currentStats?.avgSessionDuration || 240;
+        const previousAvgDuration = previousStats?.avgSessionDuration || 230;
+        const durationChange = previousAvgDuration > 0 ? ((avgSessionDuration - previousAvgDuration) / previousAvgDuration) * 100 : 0;
+
+        return [
+          {
+            label: 'Monthly Revenue',
+            value: currentRevenue,
+            change: revenueChange,
+            format: 'currency' as const,
+            icon: <DollarSign className="w-5 h-5" />,
+            color: 'bg-green-100 text-green-600',
+          },
+          {
+            label: 'Conversion Rate',
+            value: conversionRate,
+            change: conversionChange,
+            format: 'percentage' as const,
+            icon: <Percent className="w-5 h-5" />,
+            color: 'bg-blue-100 text-blue-600',
+          },
+          {
+            label: 'Active Sessions',
+            value: activeSessions,
+            change: sessionChange,
+            format: 'number' as const,
+            icon: <ActivityIcon className="w-5 h-5" />,
+            color: 'bg-purple-100 text-purple-600',
+          },
+          {
+            label: 'Avg Session Duration',
+            value: avgSessionDuration,
+            change: durationChange,
+            format: 'number' as const,
+            icon: <Clock className="w-5 h-5" />,
+            color: 'bg-orange-100 text-orange-600',
+          },
+        ];
+
+      } catch (error) {
+        console.error('Error generating performance metrics:', error);
+        // Return basic fallback metrics
+        return [
+          {
+            label: 'Monthly Revenue',
+            value: 0,
+            change: 0,
+            format: 'currency' as const,
+            icon: <DollarSign className="w-5 h-5" />,
+            color: 'bg-green-100 text-green-600',
+          },
+          {
+            label: 'Conversion Rate',
+            value: totalUsers > 0 ? (totalVendors / totalUsers) * 100 : 0,
+            change: 0,
+            format: 'percentage' as const,
+            icon: <Percent className="w-5 h-5" />,
+            color: 'bg-blue-100 text-blue-600',
+          },
+          {
+            label: 'Active Sessions',
+            value: Math.max(onlineUsers, Math.floor(totalUsers * 0.05)),
+            change: 0,
+            format: 'number' as const,
+            icon: <ActivityIcon className="w-5 h-5" />,
+            color: 'bg-purple-100 text-purple-600',
+          },
+          {
+            label: 'Avg Session Duration',
+            value: 240,
+            change: 0,
+            format: 'number' as const,
+            icon: <Clock className="w-5 h-5" />,
+            color: 'bg-orange-100 text-orange-600',
+          },
+        ];
+      }
     },
     []
   );
 
+  // Enhanced generateActivity function - make it fully dynamic from Firebase
   const generateActivity = useCallback(
-    (
-      users: UserDoc[],
-      vendors: VendorDoc[],
-      products: ProductDoc[],
-      services: ServiceDoc[]
-    ): ActivityEntry[] => {
-      const list: ActivityEntry[] = [];
-      const sortBy = <T extends { createdAt?: Timestamp | Date }>(arr: T[]) =>
-        [...arr].sort(
-          (a, b) => toDate(b.createdAt).getTime() - toDate(a.createdAt).getTime()
-        );
+    async (): Promise<ActivityEntry[]> => {
+      try {
+        const list: ActivityEntry[] = [];
 
-      sortBy(users)
-        .slice(0, 3)
-        .forEach((u) =>
-          list.push({
-            id: `user-${u.id}`,
-            type: u.role === 'vendor' ? 'vendor_joined' : 'user_registered',
-            message:
-              u.role === 'vendor'
-                ? 'New vendor joined the platform'
-                : 'New user registered',
-            timestamp: toDate(u.createdAt),
-            userName:
-              `${u.firstName ?? ''} ${u.lastName ?? ''}`.trim() ||
-              u.email ||
-              'User',
-          })
-        );
+        // Option 1: If you have an 'activities' collection (recommended)
+        try {
+          const activitiesSnap = await getDocs(
+            query(
+              collection(db, 'activities'),
+              orderBy('timestamp', 'desc'),
+              limit(10)
+            )
+          );
 
-      sortBy(products)
-        .slice(0, 3)
-        .forEach((p) =>
+          if (activitiesSnap.size > 0) {
+            activitiesSnap.docs.forEach(doc => {
+              const activity = doc.data();
+              list.push({
+                id: doc.id,
+                type: activity.type,
+                message: activity.message,
+                timestamp: activity.timestamp.toDate(),
+                userName: activity.userName || 'User'
+              });
+            });
+            return list;
+          }
+        } catch (error) {
+          console.log('No activities collection found, generating from other collections...');
+        }
+
+        // Option 2: Generate from existing collections with real-time queries
+        const now = new Date();
+        const last7Days = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+        const [recentUsers, recentVendors, recentProducts, recentServices] = await Promise.all([
+          getDocs(query(
+            collection(db, 'users'),
+            where('createdAt', '>=', Timestamp.fromDate(last7Days)),
+            orderBy('createdAt', 'desc'),
+            limit(5)
+          )),
+          getDocs(query(
+            collection(db, 'Vendors'),
+            where('createdAt', '>=', Timestamp.fromDate(last7Days)),
+            orderBy('createdAt', 'desc'),
+            limit(5)
+          )),
+          getDocs(query(
+            collection(db, 'products'),
+            where('createdAt', '>=', Timestamp.fromDate(last7Days)),
+            orderBy('createdAt', 'desc'),
+            limit(5)
+          )),
+          getDocs(query(
+            collection(db, 'services'),
+            where('createdAt', '>=', Timestamp.fromDate(last7Days)),
+            orderBy('createdAt', 'desc'),
+            limit(5)
+          ))
+        ]);
+
+        // Add recent users
+        recentUsers.docs.forEach(doc => {
+          const user = doc.data();
           list.push({
-            id: `product-${p.id}`,
+            id: `user-${doc.id}`,
+            type: user.role === 'vendor' ? 'vendor_joined' : 'user_registered',
+            message: user.role === 'vendor' 
+              ? 'New vendor joined the platform'
+              : 'New user registered',
+            timestamp: toDate(user.createdAt),
+            userName: `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email || 'User'
+          });
+        });
+
+        // Add recent vendors
+        recentVendors.docs.forEach(doc => {
+          const vendor = doc.data();
+          list.push({
+            id: `vendor-${doc.id}`,
+            type: 'vendor_joined',
+            message: 'New vendor joined the platform',
+            timestamp: toDate(vendor.createdAt),
+            userName: vendor.businessName || `${vendor.firstName || ''} ${vendor.lastName || ''}`.trim() || 'Vendor'
+          });
+        });
+
+        // Add recent products
+        recentProducts.docs.forEach(doc => {
+          const product = doc.data();
+          list.push({
+            id: `product-${doc.id}`,
             type: 'product_added',
-            message: `New product added: ${p.name ?? 'Product'}`,
-            timestamp: toDate(p.createdAt),
-            userName: 'Vendor',
-          })
-        );
+            message: `New product added: ${product.name || 'Product'}`,
+            timestamp: toDate(product.createdAt),
+            userName: 'Vendor'
+          });
+        });
 
-      sortBy(services)
-        .slice(0, 3)
-        .forEach((s) =>
+        // Add recent services
+        recentServices.docs.forEach(doc => {
+          const service = doc.data();
           list.push({
-            id: `service-${s.id}`,
+            id: `service-${doc.id}`,
             type: 'service_added',
-            message: `New service added: ${s.name ?? 'Service'}`,
-            timestamp: toDate(s.createdAt),
-            userName: 'Vendor',
-          })
-        );
+            message: `New service added: ${service.name || 'Service'}`,
+            timestamp: toDate(service.createdAt),
+            userName: 'Vendor'
+          });
+        });
 
-      return list
-        .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
-        .slice(0, 10);
+        // Try to add recent appointments/orders if available
+        try {
+          const recentAppointments = await getDocs(query(
+            collection(db, 'appointments'),
+            where('createdAt', '>=', Timestamp.fromDate(last7Days)),
+            orderBy('createdAt', 'desc'),
+            limit(3)
+          ));
+
+          recentAppointments.docs.forEach(doc => {
+            const appointment = doc.data();
+            list.push({
+              id: `appointment-${doc.id}`,
+              type: 'order_placed',
+              message: `New appointment booked: ${appointment.serviceName || 'Service'}`,
+              timestamp: toDate(appointment.createdAt),
+              userName: appointment.buyerName || 'Customer'
+            });
+          });
+        } catch (error) {
+          console.log('No appointments collection for recent activity');
+        }
+
+        // Sort by timestamp and return top 10
+        return list
+          .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
+          .slice(0, 10);
+
+      } catch (error) {
+        console.error('Error generating activity:', error);
+        return [];
+      }
     },
     []
   );
 
+  // Enhanced generateNotifications function - make it dynamic based on real metrics
   const generateNotifications = useCallback(
-    (data: AnalyticsState): NotificationEntry[] => {
-      const notes: NotificationEntry[] = [];
+    async (data: AnalyticsState): Promise<NotificationEntry[]> => {
+      try {
+        const notes: NotificationEntry[] = [];
 
-      if (data.totalUsers > 1000) {
-        notes.push({
-          id: 'milestone-users',
-          type: 'success',
-          title: 'Milestone Reached',
-          message: `Congratulations! You now have ${data.totalUsers} registered users.`,
+        // Get recent stats for comparison
+        const now = new Date();
+        const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+        const lastWeek = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+        // Check for growth milestones
+        if (data.totalUsers >= 1000 && data.totalUsers < 1010) {
+          notes.push({
+            id: 'milestone-users-1000',
+            type: 'success',
+            title: 'Major Milestone! 🎉',
+            message: `Congratulations! You've reached ${data.totalUsers.toLocaleString()} registered users!`,
+            timestamp: new Date(),
+            read: false,
+          });
+        }
+
+        if (data.totalVendors >= 100 && data.totalVendors < 105) {
+          notes.push({
+            id: 'milestone-vendors-100',
+            type: 'success',
+            title: 'Vendor Milestone! 🚀',
+            message: `Amazing! Platform now has ${data.totalVendors} active vendors!`,
+            timestamp: new Date(),
+            read: false,
+          });
+        }
+
+        // Check daily growth
+        const [yesterdayUsers, lastWeekUsers] = await Promise.all([
+          getDocs(query(
+            collection(db, 'users'),
+            where('createdAt', '>=', Timestamp.fromDate(yesterday))
+          )),
+          getDocs(query(
+            collection(db, 'users'),
+            where('createdAt', '>=', Timestamp.fromDate(lastWeek))
+          ))
+        ]);
+
+        if (yesterdayUsers.size > 10) {
+          notes.push({
+            id: 'high-signups-today',
+            type: 'info',
+            title: 'High Activity Today! 📈',
+            message: `${yesterdayUsers.size} new users signed up in the last 24 hours!`,
+            timestamp: new Date(),
+            read: false,
+          });
+        }
+
+        if (lastWeekUsers.size > 50) {
+          notes.push({
+            id: 'weekly-growth',
+            type: 'success',
+            title: 'Great Weekly Growth! 🔥',
+            message: `${lastWeekUsers.size} new users joined this week!`,
+            timestamp: new Date(),
+            read: false,
+          });
+        }
+
+        // Check for low activity warnings
+        if (data.recentActivity.length < 3) {
+          notes.push({
+            id: 'low-activity',
+            type: 'warning',
+            title: 'Low Activity Alert ⚠️',
+            message: 'Platform activity seems quiet today. Consider running a promotion!',
+            timestamp: new Date(),
+            read: false,
+          });
+        }
+
+        // Check content warnings
+        if (data.totalProducts + data.totalServices < 10) {
+          notes.push({
+            id: 'low-content',
+            type: 'warning',
+            title: 'Content Alert 📦',
+            message: 'Consider encouraging vendors to add more products and services.',
+            timestamp: new Date(),
+            read: false,
+          });
+        }
+
+        // Check for system health issues
+        if (data.systemHealth === 'warning') {
+          notes.push({
+            id: 'system-warning',
+            type: 'warning',
+            title: 'System Performance ⚠️',
+            message: 'Some services may be running slower than usual.',
+            timestamp: new Date(),
+            read: false,
+          });
+        }
+
+        if (data.systemHealth === 'critical') {
+          notes.push({
+            id: 'system-critical',
+            type: 'error',
+            title: 'System Issues! 🚨',
+            message: 'Critical system issues detected. Please check server status.',
+            timestamp: new Date(),
+            read: false,
+          });
+        }
+
+        // Check for revenue milestones
+        const currentRevenue = data.performanceMetrics.find(m => m.label === 'Monthly Revenue')?.value || 0;
+        if (currentRevenue > 10000 && currentRevenue < 10500) {
+          notes.push({
+            id: 'revenue-milestone',
+            type: 'success',
+            title: 'Revenue Milestone! 💰',
+            message: `Monthly revenue has exceeded ${(currentRevenue/1000).toFixed(1)}K!`,
+            timestamp: new Date(),
+            read: false,
+          });
+        }
+
+        // Sort by timestamp (newest first) and limit to 5
+        return notes
+          .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
+          .slice(0, 5);
+
+      } catch (error) {
+        console.error('Error generating notifications:', error);
+        return [{
+          id: 'error-notification',
+          type: 'error',
+          title: 'System Error',
+          message: 'Unable to load notifications at this time.',
           timestamp: new Date(),
           read: false,
-        });
+        }];
       }
-
-      if (data.totalVendors > 100) {
-        notes.push({
-          id: 'milestone-vendors',
-          type: 'success',
-          title: 'Vendor Milestone',
-          message: `Platform now has ${data.totalVendors} active vendors!`,
-          timestamp: new Date(),
-          read: false,
-        });
-      }
-
-      if (data.recentActivity.length > 5) {
-        notes.push({
-          id: 'high-activity',
-          type: 'info',
-          title: 'High Activity',
-          message: 'Platform experiencing high user activity today.',
-          timestamp: new Date(),
-          read: false,
-        });
-      }
-
-      if (data.totalProducts + data.totalServices < 10) {
-        notes.push({
-          id: 'low-content',
-          type: 'warning',
-          title: 'Content Alert',
-          message:
-            'Consider encouraging vendors to add more products and services.',
-          timestamp: new Date(),
-          read: false,
-        });
-      }
-
-      return notes;
     },
     []
   );
@@ -610,26 +1034,25 @@ const EnhancedAnalyticsDashboard: React.FC = () => {
         products,
         services
       );
-      const recentActivity = generateActivity(
-        users,
-        vendors,
-        products,
-        services
-      );
+
+      // ✅ Generate activity dynamically from Firebase (await the promise)
+      const recentActivity = await generateActivity();
 
       const combined = {
         ...userStats,
         ...prodStats,
         products,
         services,
-        recentActivity,
+        recentActivity, // ✅ Now properly awaited
       } as AnalyticsState & {
         products: ProductDoc[];
         services: ServiceDoc[];
       };
 
       const performanceMetrics = await generatePerformanceMetrics(combined);
-      const notifications = generateNotifications(combined);
+      
+      // ✅ Generate notifications dynamically based on current data (await the promise)
+      const notifications = await generateNotifications(combined);
 
       const systemHealth: SystemHealth =
         combined.totalUsers > 100 && combined.totalVendors > 10
@@ -644,7 +1067,7 @@ const EnhancedAnalyticsDashboard: React.FC = () => {
         categoryData,
         performanceData,
         performanceMetrics,
-        notifications,
+        notifications, // ✅ Now properly awaited
         systemHealth,
       });
 
@@ -661,9 +1084,9 @@ const EnhancedAnalyticsDashboard: React.FC = () => {
     generateTimeSeriesData,
     generateCategoryData,
     generateVendorPerformance,
-    generateActivity,
+    generateActivity, // ✅ Now fully dynamic
     generatePerformanceMetrics,
-    generateNotifications,
+    generateNotifications, // ✅ Now fully dynamic
   ]);
 
   /* ---------------- lifecycle -------------------------------------- */
@@ -883,7 +1306,7 @@ const EnhancedAnalyticsDashboard: React.FC = () => {
               {/* Refresh */}
               <button
                 onClick={fetchAll}
-                className="px-3 py-1 text-sm bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center gap-1"
+                className="px-3 py-1 text-sm bg-buttonBg text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center gap-1"
               >
                 <RefreshCw className="w-4 h-4" />
                 Refresh
@@ -909,7 +1332,8 @@ const EnhancedAnalyticsDashboard: React.FC = () => {
             systemHealth={analyticsData.systemHealth}
           />
         )}
-{/* ================= Summary tiles ============== */}
+
+        {/* ================= Summary tiles ============== */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {/* Users */}
           <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg p-6 text-white">
@@ -971,8 +1395,6 @@ const EnhancedAnalyticsDashboard: React.FC = () => {
             />
           )}
         </div>
-
-
 
         {/* ================= Charts ===================== */}
         {dashboardLayout.showCharts &&
@@ -1080,8 +1502,6 @@ const EnhancedAnalyticsDashboard: React.FC = () => {
             </div>
           )}
 
-        
-        
         {/* ================= footer =================== */}
         <div className="bg-gray-50 rounded-lg p-4">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between text-sm text-gray-600">
