@@ -33,4 +33,3 @@ jobs:
           protocol: ftps
           port: 21
           local-dir: ./dist/
-          target-dir: public_html
