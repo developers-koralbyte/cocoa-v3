@@ -52,8 +52,14 @@ const VendorVerification: React.FC<Props> = ({ user, formData, avatarFile }) => 
         clearInterval(intv);
         try {
           // upload avatar
-          let avatarUrl = '';
-          if (avatarFile) avatarUrl = (await upload(avatarFile)) as string;
+          let avatarUrl = "";
+if (avatarFile) {
+  avatarUrl = await upload(avatarFile, {
+    folder: "avatars",
+    uid: user.uid,
+    // filename: "avatar.jpg", // uncomment if you want to overwrite same key
+  });
+}
           // write users doc
           await setDoc(userRef, {
             id: user.uid,
@@ -120,12 +126,8 @@ const VendorVerification: React.FC<Props> = ({ user, formData, avatarFile }) => 
 
     try {
       // 1) upload this proof file
-      const url = (await upload(file)) as string;
-
-      // 2) append it into a "documents" array—leave documentUploaded: false
-      await updateDoc(vendorRef, {
-        documents: arrayUnion(url),
-      });
+      const url = await upload(file, { folder: "documents", uid: user.uid });
+      await updateDoc(vendorRef, { documents: arrayUnion(url) });
 
       // 3) notify user & redirect immediately
       toast.info('Thank you! Your documents are under review.');

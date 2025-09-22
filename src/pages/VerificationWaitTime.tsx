@@ -53,15 +53,20 @@ const VerificationWaitTime: React.FC<Props> = ({
         clearInterval(interval)
         try {
           // 1) upload avatar if provided
-          let avatarUrl = ''
+          let avatarUrl = '';
           if (avatarFile) {
-            avatarUrl = (await upload(avatarFile)) as string
+            avatarUrl = await upload(avatarFile, {
+              folder: 'avatars',
+              uid: user.uid,
+            });
           }
 
           // 2) upload all business docs
           const docUrls = await Promise.all(
-            documents.map(d => upload(d.file) as Promise<string>)
-          )
+            (documents ?? []).map(d =>
+              upload(d.file, { folder: 'documents', uid: user.uid })
+            )
+          );
 
           // 3) write shared users doc
           await setDoc(doc(db, 'users', user.uid), {

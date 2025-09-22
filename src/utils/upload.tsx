@@ -1,54 +1,48 @@
-import { getDownloadURL, ref, uploadBytesResumable } from 'firebase/storage'
-import { storage } from './firebase'
+// src/utils/upload.ts
+import { getDownloadURL, ref, uploadBytesResumable } from "firebase/storage";
+import { auth, storage } from "./firebase";
 
-const upload = async (file) => {
-    if (!file) {
-        console.error('Upload called with no file');
-        return null;
-    }
-
-    // Choose folder based on file type
-    let folder = 'files';
-    if (file.type.startsWith('image/')) {
-        folder = 'images';
-    } else if (
-        file.type.includes('pdf') || 
-        file.type.includes('doc') || 
-        file.name.match(/\.(pdf|doc|docx|xls|xlsx|txt|csv|ppt|pptx)$/i)
-    ) {
-        folder = 'documents';
-    } else if (file.type.startsWith('audio/')) {
-        folder = 'audio';
-    }
-    
-    // Create a unique filename with timestamp
-    const timestamp = new Date().getTime();
-    const fileName = `${timestamp}_${file.name}`;
-    
-    // Create storage reference with proper path
-    const storageRef = ref(storage, `${folder}/${fileName}`);
-    console.log(`Uploading to: ${folder}/${fileName}`);
-
-    const uploadTask = uploadBytesResumable(storageRef, file);
-
-    return new Promise((resolve, reject) => {
-        uploadTask.on(
-            'state_changed',
-            (snapshot) => {
-                const progress =
-                    (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                console.log('Upload is ' + progress + '% done');
-            },
-            (error) => {
-                reject('Something went wrong! ' + error.code);
-            },
-            () => {
-                getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
-                    resolve(downloadURL);
-                });
-            }
-        );
-    });
+type UploadFolder = "avatars" | "documents" | "images";
+type UploadOpts = {
+  folder?: UploadFolder;      // default: infer from file.type
+  uid?: string;               // default: auth.currentUser?.uid
+  filename?: string;          // default: timestamped original name
+  onProgress?: (pct: number) => void;
 };
 
-export default upload;
+const sanitize = (name: string) => name.replace(/[^\w.\-]/g, "_");
+
+export default function upload(file: File, opts: UploadOpts = {}): Promise<string> {
+  if (!file) return Promise.reject(new Error("upload(file): file is required"));
+
+  // derive uid safely (your rules require it in the path)
+  const uid = opts.uid ?? auth.currentUser?.uid ?? "";
+  if (!uid) return Promise.reject(new Error("upload(file): uid is required (user not signed in?)"));
+
+  // derive folder safely
+  const folder: UploadFolder =
+    opts.folder ??
+    (file.type?.startsWith("image/") ? "images" : "documents"); // default by type
+
+  const safeName = sanitize(file.name || "file");
+  const name = opts.filename ?? `${Date.now()}_${safeName}`;
+
+  // build a path that matches your rules
+  // avatars/{uid}  (single object)  OR change your rules if you want avatars/{uid}/{file}
+  const path =
+    folder === "avatars"
+      ? `avatars/${uid}` // single object key; overwrite on each upload
+      : `${folder}/${uid}/${name}`;
+
+  const fileRef = ref(storage, path);
+  const task = uploadBytesResumable(fileRef, file, { contentType: file.type });
+
+  return new Promise<string>((resolve, reject) => {
+    task.on(
+      "state_changed",
+      (s) => opts.onProgress?.((s.bytesTransferred / s.totalBytes) * 100),
+      (err) => reject(err),
+      async () => resolve(await getDownloadURL(task.snapshot.ref))
+    );
+  });
+}

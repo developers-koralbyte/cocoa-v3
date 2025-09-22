@@ -10,7 +10,7 @@ import {
   signInWithPopup,
   sendEmailVerification,
 } from "firebase/auth";
-import { collection ,setDoc,doc, query, where, getDocs } from "firebase/firestore";
+import { collection ,setDoc,doc, query, where, getDocs, serverTimestamp, getDoc } from "firebase/firestore";
 import { toast } from "react-toastify";
 
 const SignupSelection = () => {
@@ -34,81 +34,90 @@ const SignupSelection = () => {
   
   const handleGoogleSignup = async () => {
     if (!selectedRole) return;
+    const role = selectedRole.toLowerCase() as "buyer" | "vendor";
+  
     try {
-      const result = await signInWithPopup(auth, googleProvider);
-      const user = result.user;
-      const userId = user.uid;
-      // Extract first and last name from displayName if available
+      const res = await signInWithPopup(auth, googleProvider);
+      const user = res.user;
+      const uid = user.uid;
+  
       const displayName = user.displayName || "";
       const [firstName = "", ...rest] = displayName.split(" ");
       const lastName = rest.join(" ");
-
-      // Check if user doc already exists
-      const userRef = query(collection(db, "users"), where("id", "==", userId));
-      const snapshot = await getDocs(userRef);
-
-      if (snapshot.empty) {
-        // Create minimal user doc in "users" collection
-        await setDoc(doc(db, "users", userId), {
-          id: userId,
-          email: user.email,
-          role: selectedRole,
+  
+      const userRef = doc(db, "users", uid);
+      const snap = await getDoc(userRef);
+      const existing = snap.exists() ? (snap.data() as any) : null;
+      const existingRole = (existing?.role as string | undefined)?.toLowerCase();
+  
+      // If a role already exists and differs, block switching.
+      if (existingRole && existingRole !== role) {
+        toast.error(`This Google account is already registered as a ${existingRole}.`);
+        navigate(`/google-onboarding?role=${existingRole}`, { replace: true });
+        return;
+      }
+  
+      const finalRole = (existingRole as "buyer" | "vendor") ?? role;
+  
+      // users/{uid} — keep/initialize status as 'pending'
+      await setDoc(
+        doc(db, "users", uid),
+        {
+          id: uid,
+          email: user.email ?? "",
+          role: finalRole,                 // buyer | vendor
           firstName,
           lastName,
-          createdAt: new Date(),
-          emailVerified: false,
-        });
-        
-        // Create an empty doc in the respective role collection with doc ID = userId
-        if (selectedRole === "buyer") {
-          await setDoc(doc(db, "Buyers", userId), {
-            uid: userId,
-            firstName,
-            lastName,
-            businessName: "",
-            countryRegion: "",
-            industry: "",
-            categories: "",
-            services: "",
-            createdAt: new Date(),
-          });
-        } else if (selectedRole === "vendor") {
-          await setDoc(doc(db, "Vendors", userId), {
-            uid: userId,
-            firstName,
-            lastName,
-            businessName: "",
-            countryRegion: "",
-            industry: "",
-            categories: "",
-            services: "",
-            createdAt: new Date(),
-          });
-        }
-
-        // Optionally send email verification
-        await sendEmailVerification(user);
-      }
-
-      // Redirect to the respective dashboard
-      setTimeout(() => {
-        if (selectedRole.toLowerCase() === "vendor") {
-          navigate("/vendor-dashboard", { replace: true });
-          console.log("Redirecting to vendor dashboard");
-        } else {
-          navigate("/buyer-dashboard", { replace: true });
-          console.log("Redirecting to buyer dashboard");
-        }
-      }, 2000);
+          avatar: existing?.avatar ?? "",
+          blocked: existing?.blocked ?? [],
+          createdAt: existing?.createdAt ?? serverTimestamp(),
+          updatedAt: serverTimestamp(),
+          emailVerified: !!user.emailVerified,
+          profileComplete:
+            typeof existing?.profileComplete === "boolean" ? existing.profileComplete : false,
+          status: typeof existing?.status === "string" ? existing.status : "pending", // ← ensure pending
+        },
+        { merge: true }
+      );
+  
+      // Upsert only the correct role doc
+      await setDoc(
+        doc(db, finalRole === "vendor" ? "Vendors" : "Buyers", uid),
+        {
+          uid,
+          firstName,
+          lastName,
+          businessName: "",
+          companyAddress: "",
+          countryRegion: "",
+          industry: "",
+          categories: [],
+          services: finalRole === "buyer" ? [] : "",
+          avatar: existing?.avatar ?? "",
+          blocked: [],
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+          emailVerified: !!user.emailVerified,
+          profileComplete: false,
+          status: "pending",               // ← ensure pending
+          documentUploaded: false,
+        },
+        { merge: true }
+      );
+  
+      navigate(`/google-onboarding?role=${finalRole}`, { replace: true });
     } catch (error: any) {
       console.error("Google sign-up error:", error);
-      if (error.code === "auth/email-already-in-use") {
-        toast.error("A user with this email already exists. Please log in or use a different email.");
+      if (error.code === "auth/account-exists-with-different-credential") {
+        toast.error("This email is already used with another sign-in method. Log in and link Google in settings.");
+      } else if (error.code === "auth/popup-closed-by-user") {
+        toast.info("Google popup closed. Try again.");
       } else {
-        toast.error("An error occurred during sign-up. Please try again or contact support.");
+        toast.error("An error occurred during Google sign-up. Please try again.");
       }
     }
   };
+  
 
 
   return (

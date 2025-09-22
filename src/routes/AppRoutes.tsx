@@ -21,6 +21,8 @@ const VendorServiceOversight = React.lazy(() => import('../pages/AdminDashboard/
 const NewPasswordPage = React.lazy(() => import('../pages/Forgot_Password/NewPasswordPage'));
 const VerificationPage = React.lazy(() => import('../pages/Forgot_Password/VerificationPage'));
 const SignupSelectionPage = React.lazy(() => import('../pages/SignUpSelectionPage'));
+const GoogleBusinessDetails = React.lazy(() => import('../components/LoginPage/GoogleBusinessDetails'));
+
 const VendorDashboard = React.lazy(() => import('../pages/Dashboard/VendorDashboard'));
 const BuyerDashboard = React.lazy(() => import('../pages/Dashboard/BuyerDashboard'));
 const BuyerInvoicePage = React.lazy(() => import('../pages/Dashboard/InvoicePage/BuyerInvoicePage'));
@@ -61,6 +63,7 @@ const AppRoutes: React.FC = () => {
                 <Route path="/verification" element={<VerificationPage />} />
                 <Route path="/product/:productId" element={<ProductDetailPage />} />
                 <Route path="/service/:serviceId" element={<ServiceDetailPage />} />
+                <Route path="/google-onboarding" element={<GoogleBusinessDetails />} />
 
                 {/* Public admin login */}
                 <Route path="/admin-login" element={<AdminLoginPage />} />
